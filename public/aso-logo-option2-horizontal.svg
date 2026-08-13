@@ -1,0 +1,13 @@
+<svg width="400" height="120" viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Option 2: Continuous Thread & Needle Interlock -->
+  <g transform="translate(20, 15)">
+    <!-- Needle Body -->
+    <path d="M24 76 L68 16" stroke="#111827" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="64" cy="20" r="3" fill="#FFFFFF"/>
+    <!-- Golden Thread Loop forming Intersecting A & S -->
+    <path d="M8 52 C 28 16, 68 24, 56 52 C 44 76, 84 76, 88 44" stroke="#C59B27" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="135" y="70" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="52" font-weight="800" letter-spacing="6" fill="#111827">ASO</text>
+  <text x="137" y="94" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="4" fill="#C59B27">MARKETPLACE</text>
+</svg>

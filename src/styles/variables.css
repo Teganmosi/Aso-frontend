@@ -1,0 +1,53 @@
+/* Aso Marketplace Design System - Custom Tokens */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
+:root {
+  /* Colors */
+  --color-primary: #0E4A38;
+  --color-primary-hover: #08382A;
+  --color-primary-light: #EAF2EF;
+  --color-primary-tint: #F3F7F5;
+
+  --color-accent: #D96B43;
+  --color-accent-hover: #C55A32;
+  --color-accent-light: #FDF4EC;
+
+  --color-gold: #D4AF37;
+  --color-gold-light: #FFF9E6;
+
+  --color-bg-main: #FAFAF9;
+  --color-bg-card: #FFFFFF;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #4B5563;
+  --color-text-muted: #6B7280;
+
+  --color-border: #E5E7EB;
+  --color-border-hover: #D1D5DB;
+
+  --color-error: #DC2626;
+  --color-error-bg: #FEF2F2;
+  --color-success: #10B981;
+  --color-success-bg: #ECFDF5;
+
+  /* Typography */
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Elevations */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}

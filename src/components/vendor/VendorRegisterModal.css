@@ -1,0 +1,50 @@
+.vendor-modal-card {
+  max-width: 540px;
+  padding: 0;
+  border-radius: var(--radius-lg);
+}
+
+.vendor-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.75rem 0 1.75rem;
+}
+
+.header-brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.725rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+  background-color: var(--color-primary-tint);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-full);
+}
+
+.vendor-modal-body {
+  padding: 1.5rem 2rem 2.25rem 2rem;
+}
+
+.vendor-title-wrapper {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.textarea-field {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.step-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn-flex-1 {
+  flex: 1;
+}

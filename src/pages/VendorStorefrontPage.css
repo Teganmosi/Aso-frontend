@@ -1,0 +1,228 @@
+.storefront-container {
+  min-height: 80vh;
+  background-color: var(--color-bg-main);
+  padding-bottom: 4rem;
+}
+
+.storefront-banner {
+  height: 240px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%);
+}
+
+.storefront-profile-card {
+  max-width: 1100px;
+  margin: -60px auto 2rem auto;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.profile-header-content {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 2rem 2.5rem;
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.avatar-wrapper {
+  flex-shrink: 0;
+}
+
+.store-logo-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #FFFFFF;
+  box-shadow: var(--shadow-sm);
+}
+
+.store-logo-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #FFFFFF;
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-main-meta {
+  flex: 1;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.store-name-serif {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.verified-badge-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: var(--color-primary-tint);
+  color: var(--color-primary);
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-full);
+  font-size: 0.725rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.meta-details-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rating-item {
+  font-weight: 700;
+}
+
+.star-filled {
+  color: #F59E0B;
+  fill: #F59E0B;
+}
+
+.rating-num {
+  color: var(--color-text-primary);
+}
+
+.reviews-count {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.store-description {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* Products Section */
+.storefront-products-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.section-title-row h2 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--color-text-primary);
+}
+
+.products-count-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.empty-catalog-box {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 4rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.empty-catalog-box h3 {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  color: var(--color-primary);
+}
+
+.empty-catalog-box p {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.storefront-loading-state,
+.storefront-error-state {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+@media (max-width: 640px) {
+  .storefront-banner {
+    height: 160px;
+  }
+  .storefront-profile-card {
+    margin-top: -40px;
+    padding: 0 1rem;
+  }
+  .profile-header-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1.5rem 1.25rem;
+    gap: 1.25rem;
+  }
+  .title-row {
+    justify-content: center;
+  }
+  .meta-details-row {
+    justify-content: center;
+    gap: 1rem;
+  }
+  .storefront-products-section {
+    padding: 0 1rem;
+  }
+}

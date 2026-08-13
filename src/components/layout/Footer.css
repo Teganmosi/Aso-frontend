@@ -1,0 +1,123 @@
+.stitch-footer {
+  background-color: #FFFFFF;
+  border-top: 1px solid #E5E7EB;
+  padding: 4rem 2rem 3rem 2rem;
+  margin-top: 4rem;
+}
+
+.footer-container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 2fr;
+  gap: 3rem;
+}
+
+.footer-brand-title {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.75rem;
+}
+
+.footer-brand-bio {
+  font-size: 0.875rem;
+  color: #4B5563;
+  line-height: 1.6;
+  max-width: 320px;
+  margin-bottom: 1.5rem;
+}
+
+.footer-copyright {
+  font-size: 0.75rem;
+  color: #9CA3AF;
+}
+
+.footer-col-header {
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #374151;
+  margin-bottom: 1.25rem;
+}
+
+.footer-links-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-links-list a {
+  font-size: 0.875rem;
+  color: #4B5563;
+  transition: var(--transition-fast);
+}
+
+.footer-links-list a:hover {
+  color: var(--color-primary);
+}
+
+.newsletter-subtitle {
+  font-size: 0.875rem;
+  color: #4B5563;
+  margin-bottom: 1rem;
+}
+
+.newsletter-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.newsletter-input {
+  flex: 1;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-sm);
+  background-color: #F9FAFB;
+  font-size: 0.85rem;
+}
+
+.newsletter-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: #FFFFFF;
+}
+
+.btn-newsletter-join {
+  padding: 0.65rem 1.25rem;
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.btn-newsletter-join:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.newsletter-success-msg {
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}

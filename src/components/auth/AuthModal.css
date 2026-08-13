@@ -1,0 +1,210 @@
+.auth-modal-card {
+  max-width: 500px;
+  border-radius: var(--radius-lg);
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.designer-mode-card {
+  border: 1px solid rgba(212, 175, 55, 0.4);
+}
+
+.designer-portal-badge-bar {
+  background-color: #111827;
+  color: #FFFFFF;
+  padding: 0.5rem 1.5rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.designer-badge-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #D4AF37;
+}
+
+.auth-header-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 1.5rem;
+  position: relative;
+  background-color: #FAFAFA;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.auth-tab-btn {
+  padding: 1.15rem 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  position: relative;
+  transition: var(--transition-fast);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.auth-tab-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.auth-tab-btn.active {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.auth-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--color-primary);
+  border-radius: 2px 2px 0 0;
+}
+
+.auth-close-btn {
+  color: #9CA3AF;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: var(--transition-fast);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.auth-close-btn:hover {
+  color: var(--color-text-primary);
+  background-color: #F3F4F6;
+}
+
+.auth-modal-content {
+  padding: 2rem 2.25rem 2.25rem 2.25rem;
+}
+
+.auth-title-container {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-serif-title {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 0.35rem;
+}
+
+.auth-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.auth-forgot-link-wrapper {
+  text-align: right;
+  margin-top: -0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.auth-forgot-link {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  transition: var(--transition-fast);
+}
+
+.auth-forgot-link:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
+.auth-submit-btn {
+  padding: 0.9rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.auth-role-switch-banner {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px stroke var(--color-border);
+  border-top: 1px dashed #E5E7EB;
+  text-align: center;
+}
+
+.role-switch-btn {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.25s ease;
+  width: 100%;
+}
+
+.role-switch-btn:hover {
+  background-color: #F3F4F6;
+  border-color: #D1D5DB;
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.auth-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: var(--color-error-bg);
+  border: 1px solid #FCA5A5;
+  color: var(--color-error);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .auth-modal-content {
+    padding: 1.5rem 1.25rem;
+  }
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+  .tab-buttons {
+    gap: 0.75rem;
+  }
+  .auth-tab-btn {
+    font-size: 0.85rem;
+  }
+}
