@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Search, ShoppingBag, User as UserIcon, LogOut, ChevronDown, Menu, X } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import { Search, ShoppingBag, User as UserIcon, LogOut, ChevronDown, Menu, X, MapPin } from 'lucide-react';
 import './Navbar.css';
 
 import { Logo, type LogoOption } from './Logo';
@@ -12,17 +14,26 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption = 2 }) => {
   const { user, openAuthModal, logout } = useAuth();
+  const { cartCount } = useCart();
+  const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+      setMobileMenuOpen(false);
+    }
+  };
 
   return (
     <header className="stitch-navbar-header">
       <div className="stitch-navbar-container">
         {/* Brand Logo */}
-        <a href="/" className="stitch-brand-logo">
+        <Link to="/" className="stitch-brand-logo">
           <Logo showTagline={true} option={logoOption} />
-        </a>
+        </Link>
 
         {/* Desktop Search Bar */}
         <div className="stitch-search-wrapper">
@@ -33,24 +44,28 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
             placeholder="Search designers, styles, or pieces..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchSubmit}
           />
         </div>
 
         {/* Desktop Nav Links */}
         <nav className="stitch-nav-links">
-          <a href="#men" className="stitch-nav-link">Men</a>
-          <a href="#women" className="stitch-nav-link">Women</a>
-          <a href="#traditional" className="stitch-nav-link">Traditional</a>
-          <a href="#streetwear" className="stitch-nav-link">Streetwear</a>
-          <a href="/store/lagos-couture" className="stitch-nav-link stitch-nav-highlight">Designers</a>
+          <a href="/#men" className="stitch-nav-link">Men</a>
+          <a href="/#women" className="stitch-nav-link">Women</a>
+          <a href="/#traditional" className="stitch-nav-link">Traditional</a>
+          <a href="/#streetwear" className="stitch-nav-link">Streetwear</a>
+          <a href="/#designers" className="stitch-nav-link stitch-nav-highlight">Designers</a>
         </nav>
 
         {/* Action Icons */}
         <div className="stitch-navbar-actions">
-          {/* Cart Icon */}
-          <a href="#cart" onClick={(e) => e.preventDefault()} className="stitch-icon-btn" title="Cart">
+          {/* Cart Icon with Badge */}
+          <Link to="/cart" className="stitch-icon-btn stitch-cart-btn" title="Cart">
             <ShoppingBag size={20} />
-          </a>
+            {cartCount > 0 && (
+              <span className="cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
+            )}
+          </Link>
 
           {/* User Account / Auth */}
           {user ? (
@@ -72,18 +87,30 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
                     <p className="dropdown-user-email">{user.email}</p>
                   </div>
                   <hr className="dropdown-divider" />
-                  <a href="/store/lagos-couture" className="dropdown-item">
-                    <span>View Storefront</span>
-                  </a>
-                  <a href="/vendor/dashboard" className="dropdown-item">
-                    <span>Vendor Dashboard</span>
-                  </a>
-                  <button
-                    className="dropdown-item dropdown-item-sell"
-                    onClick={onOpenVendorRegister}
-                  >
-                    <span>Register as a Designer</span>
-                  </button>
+                  <Link to="/profile" className="dropdown-item">
+                    <MapPin size={15} />
+                    <span>My Profile & Addresses</span>
+                  </Link>
+                  <Link to="/cart" className="dropdown-item">
+                    <ShoppingBag size={15} />
+                    <span>My Cart {cartCount > 0 && `(${cartCount})`}</span>
+                  </Link>
+                  {user.is_vendor && (
+                    <>
+                      <hr className="dropdown-divider" />
+                      <Link to="/vendor/dashboard" className="dropdown-item">
+                        <span>Vendor Dashboard</span>
+                      </Link>
+                    </>
+                  )}
+                  {!user.is_vendor && (
+                    <button
+                      className="dropdown-item dropdown-item-sell"
+                      onClick={onOpenVendorRegister}
+                    >
+                      <span>Become a Designer</span>
+                    </button>
+                  )}
                   <button className="dropdown-item dropdown-logout-btn" onClick={logout}>
                     <LogOut size={16} />
                     <span>Log Out</span>
@@ -120,21 +147,32 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
               placeholder="Search designers, styles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchSubmit}
             />
           </div>
 
           <nav className="mobile-nav-links" onClick={() => setMobileMenuOpen(false)}>
-            <a href="#men" className="mobile-nav-link">Men Collection</a>
-            <a href="#women" className="mobile-nav-link">Women Collection</a>
-            <a href="#traditional" className="mobile-nav-link">Traditional Bespoke</a>
-            <a href="#streetwear" className="mobile-nav-link">Lagos Streetwear</a>
-            <a href="/store/lagos-couture" className="mobile-nav-link">Fashion Houses</a>
-            
+            <a href="/#men" className="mobile-nav-link">Men Collection</a>
+            <a href="/#women" className="mobile-nav-link">Women Collection</a>
+            <a href="/#traditional" className="mobile-nav-link">Traditional Bespoke</a>
+            <a href="/#streetwear" className="mobile-nav-link">Lagos Streetwear</a>
+            <a href="/#designers" className="mobile-nav-link">Fashion Houses</a>
+            <Link to="/cart" className="mobile-nav-link">
+              Cart {cartCount > 0 && <span className="mobile-cart-count">({cartCount})</span>}
+            </Link>
+
             <hr className="mobile-drawer-divider" />
 
-            <button className="mobile-designer-btn" onClick={onOpenVendorRegister}>
-              Register as a Designer
-            </button>
+            {user ? (
+              <>
+                <Link to="/profile" className="mobile-nav-link">My Profile</Link>
+                {user.is_vendor && <Link to="/vendor/dashboard" className="mobile-nav-link">Vendor Dashboard</Link>}
+              </>
+            ) : (
+              <button className="mobile-designer-btn" onClick={onOpenVendorRegister}>
+                Register as a Designer
+              </button>
+            )}
           </nav>
         </div>
       )}

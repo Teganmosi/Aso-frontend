@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Plus, 
   Package, 
   CheckCircle2, 
   AlertCircle, 
-  AlertTriangle, 
   Search, 
-  Filter, 
   Edit3, 
-  Eye, 
-  MoreVertical 
+  Trash2,
+  Clock
 } from 'lucide-react';
-import type { ProductItem } from '../../types';
+import { categoryApi, productApi } from '../../api/client';
+import type { Category, ProductItem } from '../../types';
 
 interface ProductsListViewProps {
   onAddNewProduct: () => void;
@@ -25,53 +24,95 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [_loading, setLoading] = useState(true);
 
-  const [products] = useState<ProductItem[]>([
-    {
-      id: 'p1',
-      name: 'Indigo Adire Agbada',
-      sku: 'ASO-0921-A',
-      category: "Men's Traditional",
-      price: 145000,
-      stock_quantity: 15,
-      status: 'Active',
-      image_url: '/traditional-men-1.png',
-      created_at: 'Oct 12, 2023',
-    },
-    {
-      id: 'p2',
-      name: 'Gold Aso-Oke Gele',
-      sku: 'ASO-1044-G',
-      category: "Women's Accessories",
-      price: 32500,
-      stock_quantity: 2,
-      status: 'Active',
-      image_url: '/adire-1.png',
-      created_at: 'Nov 05, 2023',
-    },
-    {
-      id: 'p3',
-      name: 'Embroidered Urban Hoodie',
-      sku: 'ASO-0812-S',
-      category: 'Streetwear',
-      price: 58000,
-      stock_quantity: 0,
-      status: 'Out of Stock',
-      image_url: '/streetwear-4.png',
-      created_at: 'Sep 28, 2023',
-    },
-    {
-      id: 'p4',
-      name: 'Silk Batik Kaftan',
-      sku: 'ASO-1105-K',
-      category: "Women's Wear",
-      price: 85000,
-      stock_quantity: 42,
-      status: 'Draft',
-      image_url: '/adire-2.png',
-      created_at: 'Dec 01, 2023',
-    },
-  ]);
+  const loadVendorProducts = async () => {
+    setLoading(true);
+    try {
+      const [rawProducts, catData] = await Promise.all([
+        productApi.getVendorProducts().catch(() => []),
+        categoryApi.getCategories().catch(() => []),
+      ]);
+
+      setCategories(catData);
+
+      if (rawProducts && rawProducts.length > 0) {
+        const mapped: ProductItem[] = rawProducts.map((p) => {
+          let statusStr: 'Active' | 'Out of Stock' | 'Draft' | 'Pending Approval' = 'Active';
+          if (p.approval_status === 'PENDING') {
+            statusStr = 'Pending Approval';
+          } else if (p.status === 'DRAFT') {
+            statusStr = 'Draft';
+          } else if (p.status === 'PUBLISHED') {
+            statusStr = 'Active';
+          }
+
+          return {
+            id: p.id,
+            name: p.title,
+            sku: p.slug,
+            category: p.category?.name || 'Uncategorized',
+            price: p.base_price_naira,
+            stock_quantity: 10,
+            status: statusStr,
+            image_url: p.primary_image_url || '/traditional-men-1.png',
+            created_at: new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+            description: p.description,
+            preparation_time: `${p.preparation_time_days} Days`,
+            raw_product: p,
+          };
+        });
+        setProducts(mapped);
+      } else {
+        // Fallback default sample data if vendor hasn't created any products yet
+        setProducts([
+          {
+            id: 'p1',
+            name: 'Indigo Adire Agbada',
+            sku: 'ASO-0921-A',
+            category: "Men's Traditional",
+            price: 145000,
+            stock_quantity: 15,
+            status: 'Active',
+            image_url: '/traditional-men-1.png',
+            created_at: 'Oct 12, 2023',
+          },
+          {
+            id: 'p2',
+            name: 'Gold Aso-Oke Gele',
+            sku: 'ASO-1044-G',
+            category: "Women's Accessories",
+            price: 32500,
+            stock_quantity: 2,
+            status: 'Active',
+            image_url: '/adire-1.png',
+            created_at: 'Nov 05, 2023',
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error('Error fetching vendor products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadVendorProducts();
+  }, []);
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this product listing?')) return;
+    try {
+      await productApi.deleteVendorProduct(id);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error('Failed to delete product', err);
+      alert('Failed to delete product.');
+    }
+  };
 
   const filteredProducts = products.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -80,6 +121,11 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
     const matchesStatus = selectedStatus === 'All Statuses' || item.status === selectedStatus;
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  const totalProducts = products.length;
+  const activeListings = products.filter((p) => p.status === 'Active').length;
+  const pendingApproval = products.filter((p) => p.status === 'Pending Approval').length;
+  const outOfStock = products.filter((p) => p.stock_quantity === 0).length;
 
   return (
     <div className="designer-products-list-view">
@@ -104,7 +150,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
               <Package size={18} />
             </div>
           </div>
-          <div className="stat-value">124</div>
+          <div className="stat-value">{totalProducts}</div>
         </div>
 
         <div className="stat-card">
@@ -114,7 +160,17 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
               <CheckCircle2 size={18} />
             </div>
           </div>
-          <div className="stat-value">112</div>
+          <div className="stat-value">{activeListings}</div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-label">PENDING APPROVAL</span>
+            <div className="stat-icon-wrapper icon-warning">
+              <Clock size={18} />
+            </div>
+          </div>
+          <div className="stat-value text-amber">{pendingApproval}</div>
         </div>
 
         <div className="stat-card">
@@ -124,17 +180,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
               <AlertCircle size={18} />
             </div>
           </div>
-          <div className="stat-value text-red">3</div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-label">LOW INVENTORY</span>
-            <div className="stat-icon-wrapper icon-warning">
-              <AlertTriangle size={18} />
-            </div>
-          </div>
-          <div className="stat-value text-amber">9</div>
+          <div className="stat-value text-red">{outOfStock}</div>
         </div>
       </div>
 
@@ -157,10 +203,11 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
           <option value="All Categories">All Categories</option>
-          <option value="Men's Traditional">Men's Traditional</option>
-          <option value="Women's Accessories">Women's Accessories</option>
-          <option value="Women's Wear">Women's Wear</option>
-          <option value="Streetwear">Streetwear</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.name}>
+              {cat.name}
+            </option>
+          ))}
         </select>
 
         <select
@@ -170,14 +217,10 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
         >
           <option value="All Statuses">All Statuses</option>
           <option value="Active">Active</option>
+          <option value="Pending Approval">Pending Approval</option>
           <option value="Out of Stock">Out of Stock</option>
           <option value="Draft">Draft</option>
         </select>
-
-        <button className="btn-filter-more" onClick={() => alert('Advanced filters dialog')}>
-          <Filter size={16} />
-          <span>More Filters</span>
-        </button>
       </div>
 
       {/* Products Table Card */}
@@ -189,7 +232,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                 <th>PRODUCT</th>
                 <th>CATEGORY</th>
                 <th>PRICE (₦)</th>
-                <th>INVENTORY</th>
+                <th>PREPARATION</th>
                 <th>STATUS</th>
                 <th>CREATED</th>
                 <th style={{ textAlign: 'right' }}>ACTIONS</th>
@@ -215,16 +258,8 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                   <td className="font-mono font-bold">
                     ₦ {product.price.toLocaleString()}
                   </td>
-                  <td>
-                    <span className={
-                      product.stock_quantity === 0
-                        ? 'text-red font-medium'
-                        : product.stock_quantity <= 5
-                        ? 'text-amber font-medium'
-                        : 'text-dark font-medium'
-                    }>
-                      {product.stock_quantity} in stock
-                    </span>
+                  <td className="text-secondary">
+                    {product.preparation_time || '3 Days'}
                   </td>
                   <td>
                     <span className={`status-badge badge-${product.status.toLowerCase().replace(/\s+/g, '-')}`}>
@@ -234,18 +269,21 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                   <td className="text-secondary">{product.created_at}</td>
                   <td style={{ textAlign: 'right' }}>
                     <div className="table-actions-group">
+                      {onEditProduct && (
+                        <button 
+                          className="icon-action-btn" 
+                          title="Edit product"
+                          onClick={() => onEditProduct(product)}
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                      )}
                       <button 
-                        className="icon-action-btn" 
-                        title="Edit product"
-                        onClick={() => onEditProduct && onEditProduct(product)}
+                        className="icon-action-btn text-red" 
+                        title="Delete product"
+                        onClick={() => handleDeleteProduct(product.id)}
                       >
-                        <Edit3 size={16} />
-                      </button>
-                      <button className="icon-action-btn" title="Preview storefront view">
-                        <Eye size={16} />
-                      </button>
-                      <button className="icon-action-btn" title="More options">
-                        <MoreVertical size={16} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>

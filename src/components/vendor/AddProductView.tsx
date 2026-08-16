@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   ArrowLeft, 
   UploadCloud, 
@@ -12,7 +12,8 @@ import {
   X, 
   Plus 
 } from 'lucide-react';
-import type { ProductItem } from '../../types';
+import { categoryApi, productApi } from '../../api/client';
+import type { Category, ProductItem } from '../../types';
 
 interface AddProductViewProps {
   onBack: () => void;
@@ -25,7 +26,8 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 }) => {
   // Form State
   const [productName, setProductName] = useState('');
-  const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('');
@@ -52,6 +54,21 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    let isMounted = true;
+    categoryApi.getCategories().then((data) => {
+      if (isMounted && data && data.length > 0) {
+        setCategories(data);
+        setCategoryId(data[0].id);
+      }
+    }).catch((err) => {
+      console.error('Failed to load categories:', err);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const toggleSize = (size: string) => {
     if (selectedSizes.includes(size)) {
       setSelectedSizes(selectedSizes.filter((s) => s !== size));
@@ -71,33 +88,64 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     setColors(colors.filter((_, i) => i !== index));
   };
 
-  const handlePublish = (status: 'Active' | 'Draft') => {
-    if (!productName.trim() && status === 'Active') {
-      alert('Please provide a product name.');
+  const handlePublish = async (status: 'Active' | 'Draft') => {
+    if (!productName.trim()) {
+      alert('Please provide a product title.');
+      return;
+    }
+    if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+      alert('Please enter a valid price.');
       return;
     }
 
     setSaving(true);
-    setTimeout(() => {
+    try {
+      const numericPrice = parseFloat(price);
+      const koboPrice = Math.round(numericPrice * 100);
+      let targetCategoryId = categoryId;
+
+      if (!targetCategoryId && categories.length > 0) {
+        targetCategoryId = categories[0].id;
+      }
+
+      if (!targetCategoryId) {
+        alert('Please select a category.');
+        setSaving(false);
+        return;
+      }
+
+      const createdProduct = await productApi.createVendorProduct({
+        title: productName,
+        category_id: targetCategoryId,
+        description: description || 'No description provided.',
+        base_price_kobo: koboPrice,
+        preparation_time_days: 3,
+        status: status === 'Active' ? 'PUBLISHED' : 'DRAFT',
+      });
+
       if (onSaveProduct) {
         onSaveProduct({
-          name: productName || 'Handwoven Aso-Oke Set',
-          category: category || "Men's Traditional",
-          price: parseFloat(price) || 145000,
-          stock_quantity: parseInt(stockQuantity) || 15,
-          sku: sku || 'ASO-AGB-001',
-          status,
-          description,
-          sizes: selectedSizes,
-          colors: colors.map((c) => c.name),
-          preparation_time: prepTime,
-          ships_from: shipsFrom,
-          image_url: images[0] || '/traditional-men-1.png',
+          id: createdProduct.id,
+          name: createdProduct.title,
+          category: createdProduct.category?.name || 'Traditional',
+          price: createdProduct.base_price_naira,
+          stock_quantity: parseInt(stockQuantity) || 10,
+          sku: createdProduct.slug,
+          status: createdProduct.approval_status === 'PENDING' ? 'Pending Approval' : (status === 'Active' ? 'Active' : 'Draft'),
+          description: createdProduct.description,
+          image_url: createdProduct.primary_image_url || '/traditional-men-1.png',
         });
       }
-      setSaving(false);
+
+      alert(`Product "${createdProduct.title}" submitted successfully! It is now pending approval by admin moderation.`);
       onBack();
-    }, 600);
+    } catch (err: any) {
+      console.error('Failed to create vendor product:', err);
+      const errMsg = err?.response?.data ? JSON.stringify(err.response.data) : 'Failed to publish product. Please check your backend connection.';
+      alert(`Error creating product: ${errMsg}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -138,17 +186,16 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
               </label>
               <select
                 className="input-field"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
                 required
               >
-                <option value="">Select a category</option>
-                <option value="Men's Traditional">Men's Traditional</option>
-                <option value="Women's Wear">Women's Wear</option>
-                <option value="Women's Accessories">Women's Accessories</option>
-                <option value="Streetwear">Streetwear</option>
-                <option value="Bespoke Agbadas">Bespoke Agbadas</option>
-                <option value="Adire Textiles">Adire Textiles</option>
+                {categories.length === 0 && <option value="">Loading categories...</option>}
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
             </div>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { vendorApi } from '../api/client';
-import type { PublicVendorProfile } from '../types';
+import { useParams, Link } from 'react-router-dom';
+import { vendorApi, productApi } from '../api/client';
+import type { PublicVendorProfile, Product } from '../types';
 import { MapPin, CheckCircle2, Star, Globe, ShoppingBag } from 'lucide-react';
 import './VendorStorefrontPage.css';
 
@@ -65,7 +65,9 @@ const SAMPLE_PROFILES: Record<string, PublicVendorProfile> = {
 export const VendorStorefrontPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [profile, setProfile] = useState<PublicVendorProfile | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -78,6 +80,7 @@ export const VendorStorefrontPage: React.FC = () => {
     try {
       const data = await vendorApi.getPublicProfile(storeSlug);
       setProfile(data);
+      loadVendorProducts(data.id);
     } catch (err: any) {
       // Fallback to sample profiles
       if (SAMPLE_PROFILES[storeSlug]) {
@@ -109,6 +112,18 @@ export const VendorStorefrontPage: React.FC = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadVendorProducts = async (vendorId: string) => {
+    setProductsLoading(true);
+    try {
+      const data = await productApi.getPublicProducts({ vendor: vendorId });
+      setProducts(data);
+    } catch (err) {
+      console.error('Failed to load vendor products', err);
+    } finally {
+      setProductsLoading(false);
     }
   };
 
@@ -189,53 +204,46 @@ export const VendorStorefrontPage: React.FC = () => {
       <div className="storefront-products-section">
         <div className="section-title-row">
           <h2>Collection Showcase</h2>
-          <span className="products-count-label">3 Curated Pieces</span>
+          <span className="products-count-label">
+            {productsLoading ? 'Loading...' : `${products.length} piece${products.length !== 1 ? 's' : ''}`}
+          </span>
         </div>
 
-        {/* Sample Storefront Product Showcase Grid */}
-        <div className="storefront-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
-          <div className="product-showcase-card" style={{ background: '#FFF', borderRadius: '8px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-            <div style={{ height: '300px', backgroundImage: "url('/traditional-men-1.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-            <div style={{ padding: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '0.4rem' }}>Royal Navy Agbada Set</h3>
-              <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '0.8rem' }}>Intricately embroidered 3-piece luxury Agbada with Fila hat.</p>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F5132' }}>₦145,000</span>
-                <button style={{ padding: '0.45rem 0.9rem', backgroundColor: '#111827', color: '#FFF', borderRadius: '4px', border: 'none', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <ShoppingBag size={14} /> Add
-                </button>
-              </div>
-            </div>
+        {productsLoading ? (
+          <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>Loading collection...</div>
+        ) : products.length > 0 ? (
+          <div className="storefront-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
+            {products.map((prod) => (
+              <Link key={prod.id} to={`/products/${prod.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div className="product-showcase-card" style={{ background: '#FFF', borderRadius: '8px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)'; }}
+                >
+                  <div style={{ height: '300px', backgroundImage: `url(${prod.primary_image_url || '/traditional-men-1.png'})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                  <div style={{ padding: '1.25rem' }}>
+                    {prod.category && (
+                      <div style={{ fontSize: '0.72rem', color: '#0E4A38', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.3rem' }}>{prod.category.name}</div>
+                    )}
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '0.4rem', fontFamily: 'var(--font-serif)' }}>{prod.title}</h3>
+                    <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '0.8rem', lineHeight: 1.5 }}>{prod.description?.slice(0, 80)}{prod.description?.length > 80 ? '...' : ''}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0E4A38' }}>₦{prod.base_price_naira.toLocaleString()}</span>
+                      <span style={{ padding: '0.45rem 0.9rem', backgroundColor: '#111827', color: '#FFF', borderRadius: '4px', fontWeight: 600, fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <ShoppingBag size={14} /> View
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
-
-          <div className="product-showcase-card" style={{ background: '#FFF', borderRadius: '8px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-            <div style={{ height: '300px', backgroundImage: "url('/traditional-men-2.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-            <div style={{ padding: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '0.4rem' }}>Emerald Senator Suit</h3>
-              <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '0.8rem' }}>Tailored geometric chest embroidered Senator kaftan suit.</p>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F5132' }}>₦85,000</span>
-                <button style={{ padding: '0.45rem 0.9rem', backgroundColor: '#111827', color: '#FFF', borderRadius: '4px', border: 'none', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <ShoppingBag size={14} /> Add
-                </button>
-              </div>
-            </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#6B7280' }}>
+            <ShoppingBag size={40} color="#D1D5DB" style={{ marginBottom: '1rem' }} />
+            <p style={{ fontSize: '1rem', fontWeight: 600 }}>No published products yet</p>
+            <p style={{ fontSize: '0.875rem', marginTop: '0.4rem' }}>This designer hasn't published any pieces yet. Check back soon!</p>
           </div>
-
-          <div className="product-showcase-card" style={{ background: '#FFF', borderRadius: '8px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-            <div style={{ height: '300px', backgroundImage: "url('/adire-1.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-            <div style={{ padding: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '0.4rem' }}>Silk-Blend Adire Maxi</h3>
-              <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '0.8rem' }}>Hand-dyed authentic Nigerian indigo Adire silk dress.</p>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F5132' }}>₦95,000</span>
-                <button style={{ padding: '0.45rem 0.9rem', backgroundColor: '#111827', color: '#FFF', borderRadius: '4px', border: 'none', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <ShoppingBag size={14} /> Add
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

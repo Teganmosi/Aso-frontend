@@ -1,6 +1,8 @@
-import React from 'react';
-import { ShieldCheck, Globe, Lock, Truck, CheckCircle2, ArrowRight, Sparkles, Star } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { ShieldCheck, Globe, Lock, Truck, CheckCircle2, ArrowRight, Sparkles, Star, Tag, ShoppingBag } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { categoryApi, productApi } from '../api/client';
+import type { Category, Product } from '../types';
 import './HomePage.css';
 
 interface HomePageProps {
@@ -8,6 +10,41 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const fetchProducts = useCallback(async (categorySlug?: string | null, search?: string) => {
+    setLoading(true);
+    try {
+      const params: Record<string, string> = {};
+      if (categorySlug) params.category = categorySlug;
+      if (search) params.search = search;
+      const prodData = await productApi.getPublicProducts(params).catch(() => []);
+      setProducts(prodData);
+    } catch (err) {
+      console.error('Failed to load products:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    categoryApi.getCategories().then(setCategories).catch(() => []);
+  }, []);
+
+  useEffect(() => {
+    fetchProducts(selectedCategory, searchQuery);
+  }, [selectedCategory, searchQuery, fetchProducts]);
+
+  const handleCategorySelect = (slug: string | null) => {
+    setSelectedCategory(slug);
+  };
+
   return (
     <div className="stitch-homepage">
       {/* Hero Section */}
@@ -66,6 +103,103 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
           )}
         </div>
       </section>
+
+      {/* Categories Filter Bar */}
+      {categories.length > 0 && (
+        <section style={{ backgroundColor: '#FFF', padding: '1.25rem 0', borderBottom: '1px solid #E5E7EB' }}>
+          <div className="stitch-section-container" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0E4A38', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+              <Tag size={14} /> Filter:
+            </span>
+            <button
+              onClick={() => handleCategorySelect(null)}
+              style={{
+                padding: '0.38rem 1rem', borderRadius: '20px', fontSize: '0.82rem', fontWeight: 700,
+                cursor: 'pointer', whiteSpace: 'nowrap', border: 'none', transition: '0.15s ease',
+                backgroundColor: selectedCategory === null ? '#0E4A38' : '#F3F4F6',
+                color: selectedCategory === null ? '#FFFFFF' : '#374151',
+              }}
+            >All</button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleCategorySelect(cat.slug)}
+                style={{
+                  padding: '0.38rem 1rem', borderRadius: '20px', fontSize: '0.82rem', fontWeight: 600,
+                  cursor: 'pointer', whiteSpace: 'nowrap', border: 'none', transition: '0.15s ease',
+                  backgroundColor: selectedCategory === cat.slug ? '#0E4A38' : '#F3F4F6',
+                  color: selectedCategory === cat.slug ? '#FFFFFF' : '#374151',
+                }}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Published Products Section */}
+      <section id="featured-products" style={{ padding: '4rem 0', backgroundColor: '#FFFFFF' }}>
+        <div className="stitch-section-container">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+            <div>
+              <h2 className="stitch-section-title" style={{ textAlign: 'left', marginBottom: '0.3rem' }}>
+                {searchQuery ? `Search: "${searchQuery}"` : selectedCategory ? 'Filtered Collection' : 'Latest Published Creations'}
+              </h2>
+              <p style={{ color: '#6B7280', fontSize: '0.95rem' }}>
+                {products.length > 0 ? `${products.length} piece${products.length !== 1 ? 's' : ''} found` : loading ? 'Loading...' : 'No products found'}
+              </p>
+            </div>
+          </div>
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>Loading products...</div>
+          ) : products.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>
+              <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>No products found.</p>
+              {(selectedCategory || searchQuery) && (
+                <button onClick={() => handleCategorySelect(null)} style={{ color: '#0E4A38', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>Clear filter</button>
+              )}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.75rem' }}>
+              {products.map((prod) => (
+                <Link key={prod.id} to={`/products/${prod.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div style={{ borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden', backgroundColor: '#FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'transform 0.2s ease, box-shadow 0.2s ease', cursor: 'pointer' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; }}
+                  >
+                    <div style={{ height: '240px', backgroundColor: '#F3F4F6', backgroundImage: `url(${prod.primary_image_url || '/traditional-men-1.png'})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
+                      {prod.vendor && (
+                        <span style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', color: '#FFF', padding: '3px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                          {prod.vendor.store_name}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ padding: '1.25rem' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#0E4A38', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+                        {prod.category?.name || 'Traditional'}
+                      </div>
+                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '0.5rem' }}>
+                        {prod.title}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem' }}>
+                        <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0E4A38' }}>
+                          ₦{prod.base_price_naira.toLocaleString()}
+                        </span>
+                        <span style={{ backgroundColor: '#0E4A38', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.5rem 0.85rem', fontSize: '0.8rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <ShoppingBag size={14} /> View
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
 
       {/* Curated Collections Section */}
       <section id="collections" className="stitch-collections-section">

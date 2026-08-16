@@ -1,12 +1,16 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { AuthModal } from './components/auth/AuthModal';
 import { HomePage } from './pages/HomePage';
 import { VendorDashboardPage } from './pages/VendorDashboardPage';
 import { VendorStorefrontPage } from './pages/VendorStorefrontPage';
+import { ProductDetailPage } from './pages/ProductDetailPage';
+import { CartPage } from './pages/CartPage';
+import { ProfilePage } from './pages/ProfilePage';
 import './styles/global.css';
 
 const AppContent: React.FC = () => {
@@ -15,8 +19,8 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app-main-layout">
-      <Navbar 
-        onOpenVendorRegister={handleOpenDesignerRegister} 
+      <Navbar
+        onOpenVendorRegister={handleOpenDesignerRegister}
         logoOption={2}
       />
 
@@ -25,6 +29,9 @@ const AppContent: React.FC = () => {
           <Route path="/" element={<HomePage onOpenVendorRegister={handleOpenDesignerRegister} />} />
           <Route path="/vendor/dashboard" element={<VendorDashboardPage />} />
           <Route path="/store/:slug" element={<VendorStorefrontPage />} />
+          <Route path="/products/:identifier" element={<ProductDetailPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </main>
 
@@ -40,7 +47,9 @@ export const App: React.FC = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <AppContent />
+        <CartProvider>
+          <AppContent />
+        </CartProvider>
       </BrowserRouter>
     </AuthProvider>
   );
