@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Search, ShoppingBag, User as UserIcon, LogOut, ChevronDown, Menu, X, MapPin } from 'lucide-react';
+import { Search, ShoppingBag, User as UserIcon, LogOut, ChevronDown, Menu, X, MapPin, Sparkles, Store } from 'lucide-react';
 import './Navbar.css';
 
 import { Logo, type LogoOption } from './Logo';
@@ -20,12 +20,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
       navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`);
       setMobileMenuOpen(false);
+    } else {
+      navigate('/');
     }
   };
+
+  const isDesigner = user?.is_vendor || !!user?.vendor_profile;
 
   return (
     <header className="stitch-navbar-header">
@@ -35,44 +40,91 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
           <Logo showTagline={true} option={logoOption} />
         </Link>
 
-        {/* Desktop Search Bar */}
-        <div className="stitch-search-wrapper">
-          <Search size={16} className="stitch-search-icon" />
+        {/* Desktop Search Bar Form */}
+        <form onSubmit={handleSearchSubmit} className="stitch-search-wrapper">
+          <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }} title="Search">
+            <Search size={16} className="stitch-search-icon" />
+          </button>
           <input
             type="text"
             className="stitch-search-input"
             placeholder="Search designers, styles, or pieces..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearchSubmit}
           />
-        </div>
+        </form>
 
         {/* Desktop Nav Links */}
         <nav className="stitch-nav-links">
-          <a href="/#men" className="stitch-nav-link">Men</a>
-          <a href="/#women" className="stitch-nav-link">Women</a>
-          <a href="/#traditional" className="stitch-nav-link">Traditional</a>
-          <a href="/#streetwear" className="stitch-nav-link">Streetwear</a>
-          <a href="/#designers" className="stitch-nav-link stitch-nav-highlight">Designers</a>
+          <Link to="/?category=men" className="stitch-nav-link">Men</Link>
+          <Link to="/?category=women" className="stitch-nav-link">Women</Link>
+          <Link to="/?category=traditional" className="stitch-nav-link">Traditional</Link>
+          <Link to="/?category=streetwear" className="stitch-nav-link">Streetwear</Link>
+          <a href="/#designers" className="stitch-nav-link stitch-nav-highlight">Fashion Houses</a>
         </nav>
 
-        {/* Action Icons */}
+        {/* Action Icons & Status */}
         <div className="stitch-navbar-actions">
+          {/* Quick Vendor Action Button */}
+          {isDesigner ? (
+            <Link
+              to="/vendor/dashboard"
+              className="navbar-designer-pill"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                backgroundColor: '#064E3B',
+                color: '#FFF',
+                padding: '0.45rem 0.9rem',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(6, 78, 59, 0.2)'
+              }}
+            >
+              <Store size={14} color="#D4AF37" />
+              <span>Studio Dashboard</span>
+            </Link>
+          ) : (
+            <button
+              onClick={onOpenVendorRegister}
+              className="navbar-sell-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                background: 'transparent',
+                border: '1px solid #D1D5DB',
+                color: '#374151',
+                padding: '0.4rem 0.85rem',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <Sparkles size={13} color="#D4AF37" />
+              <span>Sell on Aso</span>
+            </button>
+          )}
+
           {/* Cart Icon with Badge */}
-          <Link to="/cart" className="stitch-icon-btn stitch-cart-btn" title="Cart">
+          <Link to="/cart" className="stitch-icon-btn stitch-cart-btn" title="Shopping Cart">
             <ShoppingBag size={20} />
             {cartCount > 0 && (
               <span className="cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
             )}
           </Link>
 
-          {/* User Account / Auth */}
+          {/* User Account / Auth Dropdown */}
           {user ? (
             <div className="user-dropdown-wrapper">
               <button
                 className="user-menu-trigger"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 <div className="user-avatar-circle">
                   {user.first_name?.[0]?.toUpperCase() || 'U'}
@@ -89,28 +141,30 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
                   <hr className="dropdown-divider" />
                   <Link to="/profile" className="dropdown-item">
                     <MapPin size={15} />
-                    <span>My Profile & Addresses</span>
+                    <span>My Profile & Orders</span>
                   </Link>
                   <Link to="/cart" className="dropdown-item">
                     <ShoppingBag size={15} />
                     <span>My Cart {cartCount > 0 && `(${cartCount})`}</span>
                   </Link>
-                  {user.is_vendor && (
+                  {isDesigner ? (
                     <>
                       <hr className="dropdown-divider" />
                       <Link to="/vendor/dashboard" className="dropdown-item">
+                        <Store size={15} color="#064E3B" />
                         <span>Vendor Dashboard</span>
                       </Link>
                     </>
-                  )}
-                  {!user.is_vendor && (
+                  ) : (
                     <button
                       className="dropdown-item dropdown-item-sell"
                       onClick={onOpenVendorRegister}
                     >
+                      <Sparkles size={15} color="#D4AF37" />
                       <span>Become a Designer</span>
                     </button>
                   )}
+                  <hr className="dropdown-divider" />
                   <button className="dropdown-item dropdown-logout-btn" onClick={logout}>
                     <LogOut size={16} />
                     <span>Log Out</span>
@@ -119,7 +173,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
               )}
             </div>
           ) : (
-            <button className="stitch-icon-btn" onClick={() => openAuthModal('login')} title="Account">
+            <button className="stitch-icon-btn" onClick={() => openAuthModal('login')} title="Sign In">
               <UserIcon size={20} />
             </button>
           )}
@@ -139,7 +193,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
       {mobileMenuOpen && (
         <div className="stitch-mobile-drawer">
           {/* Mobile Search */}
-          <div className="mobile-search-wrapper">
+          <form onSubmit={handleSearchSubmit} className="mobile-search-wrapper">
             <Search size={16} className="stitch-search-icon" />
             <input
               type="text"
@@ -147,15 +201,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
               placeholder="Search designers, styles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchSubmit}
             />
-          </div>
+          </form>
 
           <nav className="mobile-nav-links" onClick={() => setMobileMenuOpen(false)}>
-            <a href="/#men" className="mobile-nav-link">Men Collection</a>
-            <a href="/#women" className="mobile-nav-link">Women Collection</a>
-            <a href="/#traditional" className="mobile-nav-link">Traditional Bespoke</a>
-            <a href="/#streetwear" className="mobile-nav-link">Lagos Streetwear</a>
+            <Link to="/?category=men" className="mobile-nav-link">Men Collection</Link>
+            <Link to="/?category=women" className="mobile-nav-link">Women Collection</Link>
+            <Link to="/?category=traditional" className="mobile-nav-link">Traditional Bespoke</Link>
+            <Link to="/?category=streetwear" className="mobile-nav-link">Lagos Streetwear</Link>
             <a href="/#designers" className="mobile-nav-link">Fashion Houses</a>
             <Link to="/cart" className="mobile-nav-link">
               Cart {cartCount > 0 && <span className="mobile-cart-count">({cartCount})</span>}
@@ -165,8 +218,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
 
             {user ? (
               <>
-                <Link to="/profile" className="mobile-nav-link">My Profile</Link>
-                {user.is_vendor && <Link to="/vendor/dashboard" className="mobile-nav-link">Vendor Dashboard</Link>}
+                <Link to="/profile" className="mobile-nav-link">My Profile & Orders</Link>
+                {isDesigner ? (
+                  <Link to="/vendor/dashboard" className="mobile-nav-link" style={{ fontWeight: 700, color: '#064E3B' }}>
+                    Vendor Studio Dashboard
+                  </Link>
+                ) : (
+                  <button className="mobile-designer-btn" onClick={onOpenVendorRegister}>
+                    Register as a Designer
+                  </button>
+                )}
+                <button className="mobile-nav-link" onClick={logout} style={{ color: '#DC2626', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                  Log Out
+                </button>
               </>
             ) : (
               <button className="mobile-designer-btn" onClick={onOpenVendorRegister}>

@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ShieldCheck, Globe, Lock, Truck, CheckCircle2, ArrowRight, Sparkles, Star, Tag, ShoppingBag } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { ArrowRight, Star, Sparkles, Store, ShieldCheck, Scissors, Clock } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { categoryApi, productApi } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import type { Category, Product } from '../types';
+import { SAMPLE_CATEGORIES, SAMPLE_PRODUCTS } from '../data/sampleData';
 import './HomePage.css';
 
 interface HomePageProps {
@@ -10,13 +12,22 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
-  const [searchParams] = useSearchParams();
-  const searchQuery = searchParams.get('search') || '';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const searchQuery = searchParams.get('search') || '';
+  const urlCategory = searchParams.get('category') || null;
+
+  const [categories, setCategories] = useState<Category[]>(SAMPLE_CATEGORIES);
+  const [products, setProducts] = useState<Product[]>(SAMPLE_PRODUCTS);
+  const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(urlCategory);
+
+  // Sync category state when URL changes
+  useEffect(() => {
+    setSelectedCategory(urlCategory);
+  }, [urlCategory]);
 
   const fetchProducts = useCallback(async (categorySlug?: string | null, search?: string) => {
     setLoading(true);
@@ -24,8 +35,30 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
       const params: Record<string, string> = {};
       if (categorySlug) params.category = categorySlug;
       if (search) params.search = search;
+      
       const prodData = await productApi.getPublicProducts(params).catch(() => []);
-      setProducts(prodData);
+      
+      if (Array.isArray(prodData) && prodData.length > 0) {
+        setProducts(prodData);
+      } else {
+        // Filter sample products as fallback
+        let filtered = [...SAMPLE_PRODUCTS];
+        if (categorySlug) {
+          filtered = filtered.filter(p => 
+            p.category?.slug?.toLowerCase() === categorySlug.toLowerCase() ||
+            p.category?.name?.toLowerCase().includes(categorySlug.toLowerCase())
+          );
+        }
+        if (search) {
+          const q = search.toLowerCase();
+          filtered = filtered.filter(p => 
+            p.title.toLowerCase().includes(q) || 
+            p.description?.toLowerCase().includes(q) ||
+            p.vendor?.store_name?.toLowerCase().includes(q)
+          );
+        }
+        setProducts(filtered);
+      }
     } catch (err) {
       console.error('Failed to load products:', err);
     } finally {
@@ -34,7 +67,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
   }, []);
 
   useEffect(() => {
-    categoryApi.getCategories().then(setCategories).catch(() => []);
+    categoryApi.getCategories().then((cats) => {
+      if (Array.isArray(cats) && cats.length > 0) {
+        setCategories(cats);
+      }
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -43,154 +80,161 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
 
   const handleCategorySelect = (slug: string | null) => {
     setSelectedCategory(slug);
+    if (slug) {
+      setSearchParams({ category: slug });
+    } else {
+      setSearchParams({});
+    }
   };
+
+  const isDesigner = user?.is_vendor || !!user?.vendor_profile;
+  const safeCategories = Array.isArray(categories) && categories.length > 0 ? categories : SAMPLE_CATEGORIES;
+  const safeProducts = Array.isArray(products) ? products : [];
+
+  const vendorsList = React.useMemo(() => {
+    const map = new Map<string, any>();
+    for (const p of safeProducts) {
+      if (p.vendor && p.vendor.slug && !map.has(p.vendor.slug)) {
+        map.set(p.vendor.slug, p.vendor);
+      }
+    }
+    return Array.from(map.values());
+  }, [safeProducts]);
 
   return (
     <div className="stitch-homepage">
-      {/* Hero Section */}
-      <section className="stitch-hero">
-        <div className="stitch-hero-bg">
-          <div className="stitch-hero-overlay"></div>
+      {/* ── 1. Editorial Hero Section ── */}
+      <section className="editorial-hero">
+        <div className="editorial-hero-bg">
+          <div className="editorial-hero-overlay"></div>
         </div>
 
-        <div className="stitch-hero-content">
-          <h1 className="stitch-hero-headline">
-            Authentic Nigerian <br /> Craftsmanship.
+        <div className="editorial-hero-content">
+          <div className="hero-eyebrow">
+            <Sparkles size={14} className="text-gold" />
+            <span>NIGERIAN LUXURY & BESPOKE CRAFTSMANSHIP</span>
+          </div>
+
+          <h1 className="editorial-hero-headline">
+            Authentic Nigerian <br />
+            <span>Craftsmanship.</span>
           </h1>
 
-          <p className="stitch-hero-subtitle">
-            Discover premium traditional and contemporary fashion from verified designers across Nigeria.
+          <p className="editorial-hero-subtitle">
+            A curated digital marketplace connecting discerning patrons with verified master tailors and bespoke fashion houses across Nigeria.
           </p>
 
-          <a href="#collections" className="stitch-btn-hero">
-            Explore Collections
-          </a>
-        </div>
-      </section>
-
-      {/* Sub-Hero Trust Bar */}
-      <section className="stitch-trust-bar">
-        <div className="trust-bar-container">
-          <div className="trust-bar-item">
-            <ShieldCheck size={18} className="trust-icon" />
-            <span>Verified Designers</span>
-          </div>
-
-          <div className="trust-bar-item">
-            <Globe size={18} className="trust-icon" />
-            <span>Authentically Nigerian</span>
-          </div>
-
-          <div className="trust-bar-item">
-            <Lock size={18} className="trust-icon" />
-            <span>Secure Payments</span>
-          </div>
-
-          <div className="trust-bar-item">
-            <Truck size={18} className="trust-icon" />
-            <span>Global Shipping</span>
-          </div>
-
-          {onOpenVendorRegister && (
+          <div className="editorial-hero-actions">
             <button
-              onClick={onOpenVendorRegister}
-              className="trust-bar-item trust-bar-designer-btn"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+              onClick={() => {
+                document.getElementById('curated-edit')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="btn-editorial-primary"
             >
-              <Sparkles size={18} style={{ color: '#D4AF37' }} />
-              <span style={{ color: '#0E4A38', fontWeight: 700 }}>Sell on Aso</span>
+              <span>Explore The Edit</span>
+              <ArrowRight size={16} />
             </button>
-          )}
+
+            <button
+              onClick={() => {
+                document.getElementById('ateliers')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="btn-editorial-secondary"
+            >
+              <span>Featured Ateliers</span>
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* Categories Filter Bar */}
-      {categories.length > 0 && (
-        <section style={{ backgroundColor: '#FFF', padding: '1.25rem 0', borderBottom: '1px solid #E5E7EB' }}>
-          <div className="stitch-section-container" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0E4A38', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-              <Tag size={14} /> Filter:
-            </span>
+      {/* ── 2. The Curated Edit (Catalog Showcase) ── */}
+      <section id="curated-edit" className="curated-edit-section">
+        <div className="editorial-container">
+          <div className="section-header-row">
+            <div className="section-title-wrap">
+              <span className="section-eyebrow">SPRING / SUMMER CURATION</span>
+              <h2 className="section-main-title">
+                {searchQuery ? `Search Results for "${searchQuery}"` : selectedCategory ? `${selectedCategory.toUpperCase()} COLLECTION` : 'The Curated Edit'}
+              </h2>
+            </div>
+
+            {(selectedCategory || searchQuery) && (
+              <button
+                onClick={() => handleCategorySelect(null)}
+                className="btn-reset-filters"
+              >
+                Clear Filters ✕
+              </button>
+            )}
+          </div>
+
+          {/* Minimal Category Tabs */}
+          <div className="editorial-category-tabs">
             <button
               onClick={() => handleCategorySelect(null)}
-              style={{
-                padding: '0.38rem 1rem', borderRadius: '20px', fontSize: '0.82rem', fontWeight: 700,
-                cursor: 'pointer', whiteSpace: 'nowrap', border: 'none', transition: '0.15s ease',
-                backgroundColor: selectedCategory === null ? '#0E4A38' : '#F3F4F6',
-                color: selectedCategory === null ? '#FFFFFF' : '#374151',
-              }}
-            >All</button>
-            {categories.map((cat) => (
+              className={`editorial-tab ${selectedCategory === null ? 'tab-active' : ''}`}
+            >
+              All Pieces
+            </button>
+            {safeCategories.map((cat) => (
               <button
-                key={cat.id}
+                key={cat.id || cat.slug}
                 onClick={() => handleCategorySelect(cat.slug)}
-                style={{
-                  padding: '0.38rem 1rem', borderRadius: '20px', fontSize: '0.82rem', fontWeight: 600,
-                  cursor: 'pointer', whiteSpace: 'nowrap', border: 'none', transition: '0.15s ease',
-                  backgroundColor: selectedCategory === cat.slug ? '#0E4A38' : '#F3F4F6',
-                  color: selectedCategory === cat.slug ? '#FFFFFF' : '#374151',
-                }}
+                className={`editorial-tab ${selectedCategory === cat.slug ? 'tab-active' : ''}`}
               >
                 {cat.name}
               </button>
             ))}
           </div>
-        </section>
-      )}
 
-      {/* Published Products Section */}
-      <section id="featured-products" style={{ padding: '4rem 0', backgroundColor: '#FFFFFF' }}>
-        <div className="stitch-section-container">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
-            <div>
-              <h2 className="stitch-section-title" style={{ textAlign: 'left', marginBottom: '0.3rem' }}>
-                {searchQuery ? `Search: "${searchQuery}"` : selectedCategory ? 'Filtered Collection' : 'Latest Published Creations'}
-              </h2>
-              <p style={{ color: '#6B7280', fontSize: '0.95rem' }}>
-                {products.length > 0 ? `${products.length} piece${products.length !== 1 ? 's' : ''} found` : loading ? 'Loading...' : 'No products found'}
-              </p>
-            </div>
-          </div>
-
+          {/* Product Grid */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>Loading products...</div>
-          ) : products.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>
-              <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>No products found.</p>
-              {(selectedCategory || searchQuery) && (
-                <button onClick={() => handleCategorySelect(null)} style={{ color: '#0E4A38', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>Clear filter</button>
-              )}
+            <div className="catalog-loading-state">
+              <p>Loading pieces...</p>
+            </div>
+          ) : safeProducts.length === 0 ? (
+            <div className="catalog-empty-state">
+              <p className="empty-title">No pieces found matching your criteria</p>
+              <button onClick={() => handleCategorySelect(null)} className="btn-explore-all">
+                Browse Full Catalog
+              </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.75rem' }}>
-              {products.map((prod) => (
-                <Link key={prod.id} to={`/products/${prod.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div style={{ borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden', backgroundColor: '#FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'transform 0.2s ease, box-shadow 0.2s ease', cursor: 'pointer' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; }}
-                  >
-                    <div style={{ height: '240px', backgroundColor: '#F3F4F6', backgroundImage: `url(${prod.primary_image_url || '/traditional-men-1.png'})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
-                      {prod.vendor && (
-                        <span style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', color: '#FFF', padding: '3px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-                          {prod.vendor.store_name}
+            <div className="editorial-products-grid">
+              {safeProducts.map((prod) => (
+                <Link key={prod.id} to={`/products/${prod.slug}`} className="luxury-product-card">
+                  <div className="card-image-box">
+                    <div
+                      className="card-image"
+                      style={{ backgroundImage: `url(${prod.primary_image_url || (prod.media && prod.media[0]?.url) || '/traditional-men-1.png'})` }}
+                    />
+                    {prod.average_rating && (
+                      <div className="card-rating-badge">
+                        <Star size={11} fill="#D4AF37" color="#D4AF37" />
+                        <span>{Number(prod.average_rating).toFixed(1)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="card-details">
+                    <div className="card-meta-top">
+                      <span className="card-atelier-name">{prod.vendor?.store_name || 'Bespoke Atelier'}</span>
+                      {prod.preparation_time_days && (
+                        <span className="card-prep-time">
+                          <Clock size={11} /> {prod.preparation_time_days}d bespoke
                         </span>
                       )}
                     </div>
-                    <div style={{ padding: '1.25rem' }}>
-                      <div style={{ fontSize: '0.75rem', color: '#0E4A38', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.3rem' }}>
-                        {prod.category?.name || 'Traditional'}
-                      </div>
-                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '0.5rem' }}>
-                        {prod.title}
-                      </h3>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem' }}>
-                        <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0E4A38' }}>
-                          ₦{prod.base_price_naira.toLocaleString()}
-                        </span>
-                        <span style={{ backgroundColor: '#0E4A38', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.5rem 0.85rem', fontSize: '0.8rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <ShoppingBag size={14} /> View
-                        </span>
-                      </div>
+
+                    <h3 className="card-product-title">{prod.title}</h3>
+
+                    <div className="card-price-row">
+                      <span className="card-price-naira">
+                        ₦{(prod.base_price_naira ?? (prod.base_price_kobo ? Math.round(prod.base_price_kobo / 100) : 0)).toLocaleString()}
+                      </span>
+                      <span className="card-view-link">
+                        View Piece <ArrowRight size={13} />
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -200,226 +244,180 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
         </div>
       </section>
 
+      {/* ── 3. Master Ateliers & Boutiques Spotlight ── */}
+      <section id="ateliers" className="ateliers-spotlight-section">
+        <div className="editorial-container">
+          <div className="section-header-center">
+            <span className="section-eyebrow">VERIFIED HOUSES</span>
+            <h2 className="section-main-title">Master Ateliers</h2>
+            <p className="section-sub-desc">
+              Direct access to Nigeria’s premier independent fashion houses and master tailors.
+            </p>
+          </div>
 
-      {/* Curated Collections Section */}
-      <section id="collections" className="stitch-collections-section">
-        <div className="stitch-section-container">
-          <h2 className="stitch-section-title">Curated Collections</h2>
+          <div className="ateliers-grid">
+            {vendorsList.length > 0 ? (
+              vendorsList.slice(0, 3).map((v) => (
+                <Link key={v.id || v.slug} to={`/store/${v.slug}`} className="atelier-card">
+                  <div
+                    className="atelier-banner"
+                    style={{ backgroundImage: `url(${v.banner_url || '/hero-bg.png'})` }}
+                  >
+                    <div
+                      className="atelier-avatar"
+                      style={{ backgroundImage: `url(${v.logo_url || '/traditional-men-1.png'})` }}
+                    />
+                  </div>
+                  <div className="atelier-content">
+                    <div className="atelier-header-info">
+                      <h3 className="atelier-name">{v.store_name}</h3>
+                      <p className="atelier-location">
+                        {v.city ? `${v.city}, ${v.state || 'Nigeria'}` : 'Lagos, Nigeria'} • {v.average_rating ? `${Number(v.average_rating).toFixed(1)} ★` : '5.0 ★'} ({v.review_count || 1})
+                      </p>
+                    </div>
+                    <p className="atelier-bio">
+                      {v.description || 'Premier bespoke Nigerian fashion atelier.'}
+                    </p>
+                    <div className="atelier-link">
+                      <span>Visit Boutique</span>
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <>
+                {/* Fallback Atelier 1 */}
+                <Link to="/store/lagos-couture" className="atelier-card">
+                  <div className="atelier-banner" style={{ backgroundImage: "url('/hero-bg.png')" }}>
+                    <div className="atelier-avatar" style={{ backgroundImage: "url('/traditional-men-1.png')" }} />
+                  </div>
+                  <div className="atelier-content">
+                    <div className="atelier-header-info">
+                      <h3 className="atelier-name">Lagos Couture House</h3>
+                      <p className="atelier-location">Victoria Island, Lagos • 4.9 ★ (38)</p>
+                    </div>
+                    <p className="atelier-bio">
+                      Premier Nigerian bespoke house crafting royal Agbadas & Senator kaftans with heritage Italian wools.
+                    </p>
+                    <div className="atelier-link">
+                      <span>Visit Boutique</span>
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
+                </Link>
 
-          <div className="collections-grid">
-            {/* Left Tall Card - Modern Adire */}
-            <a
-              href="#featured-products"
-              className="collection-card tall-card"
-              onClick={(e) => {
-                e.preventDefault();
-                handleCategorySelect('women');
-                document.getElementById('featured-products')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              <div
-                className="collection-card-bg"
-                style={{
-                  backgroundImage: `url('/adire-1.png')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center 20%',
-                }}
-              ></div>
-              <div className="card-gradient-overlay"></div>
-              <div className="card-text-overlay">
-                <h3 className="card-serif-title">Modern Adire</h3>
-                <p className="card-link-sub" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span>Shop Women's</span>
-                  <ArrowRight size={15} />
-                </p>
+                {/* Fallback Atelier 2 */}
+                <Link to="/store/heritage-cuts" className="atelier-card">
+                  <div className="atelier-banner" style={{ backgroundImage: "url('/traditional-men-2.png')" }}>
+                    <div className="atelier-avatar" style={{ backgroundImage: "url('/traditional-men-3.png')" }} />
+                  </div>
+                  <div className="atelier-content">
+                    <div className="atelier-header-info">
+                      <h3 className="atelier-name">Heritage Cuts & Threads</h3>
+                      <p className="atelier-location">Maitama, Abuja • 4.8 ★ (24)</p>
+                    </div>
+                    <p className="atelier-bio">
+                      Bespoke African menswear and structured ceremonial suiting handcrafted by master tailors.
+                    </p>
+                    <div className="atelier-link">
+                      <span>Visit Boutique</span>
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Fallback Atelier 3 */}
+                <Link to="/store/adire-house" className="atelier-card">
+                  <div className="atelier-banner" style={{ backgroundImage: "url('/adire-1.png')" }}>
+                    <div className="atelier-avatar" style={{ backgroundImage: "url('/adire-2.png')" }} />
+                  </div>
+                  <div className="atelier-content">
+                    <div className="atelier-header-info">
+                      <h3 className="atelier-name">Adire Mastercraft Atelier</h3>
+                      <p className="atelier-location">Ibadan, Oyo State • 5.0 ★ (52)</p>
+                    </div>
+                    <p className="atelier-bio">
+                      Contemporary indigo dyed textiles, modern Adire dresses, and luxury silk-blend creations.
+                    </p>
+                    <div className="atelier-link">
+                      <span>Visit Boutique</span>
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. The Aso Standard (Quiet Luxury Value Pillars) ── */}
+      <section className="aso-standard-section">
+        <div className="editorial-container">
+          <div className="standard-grid">
+            <div className="standard-pillar">
+              <div className="pillar-icon-box">
+                <Scissors size={20} />
               </div>
-            </a>
+              <h3 className="pillar-title">Bespoke Precision</h3>
+              <p className="pillar-text">
+                Every piece is individually handcrafted to exact measurements by verified master tailors.
+              </p>
+            </div>
 
-            {/* Right Column - Stacked Cards */}
-            <div className="right-collections-stack">
-              {/* Top Right Card - Traditional Men */}
-              <a
-                href="#featured-products"
-                className="collection-card stacked-card"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleCategorySelect('men');
-                  document.getElementById('featured-products')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                <div
-                  className="collection-card-bg"
-                  style={{
-                    backgroundImage: `url('/traditional-men-1.png')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center 20%',
-                  }}
-                ></div>
-                <div className="card-gradient-overlay"></div>
-                <div className="card-text-overlay">
-                  <h3 className="card-bold-title">Traditional Men</h3>
-                  <p className="card-sub-text">Explore Agbadas</p>
-                </div>
-              </a>
+            <div className="standard-pillar">
+              <div className="pillar-icon-box">
+                <ShieldCheck size={20} />
+              </div>
+              <h3 className="pillar-title">72h Protection Escrow</h3>
+              <p className="pillar-text">
+                Your payment is securely reserved in escrow until your garment arrives and matches specifications.
+              </p>
+            </div>
 
-              {/* Bottom Right Card - Lagos Streetwear */}
-              <a
-                href="#featured-products"
-                className="collection-card stacked-card"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleCategorySelect('streetwear');
-                  document.getElementById('featured-products')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                <div
-                  className="collection-card-bg"
-                  style={{
-                    backgroundImage: `url('/streetwear-4.png')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center 20%',
-                  }}
-                ></div>
-                <div className="card-gradient-overlay"></div>
-                <div className="card-text-overlay">
-                  <h3 className="card-bold-title">Lagos Streetwear</h3>
-                  <p className="card-sub-text">Urban Edge</p>
-                </div>
-              </a>
+            <div className="standard-pillar">
+              <div className="pillar-icon-box">
+                <Store size={20} />
+              </div>
+              <h3 className="pillar-title">Direct Atelier Access</h3>
+              <p className="pillar-text">
+                Direct transparent access to independent Nigerian design studios without intermediary markup.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Featured Vendor Storefronts Section */}
-      <section id="designers" className="stitch-designers-section" style={{ backgroundColor: '#FAFAFA', padding: '4rem 0', borderTop: '1px solid #E5E7EB' }}>
-        <div className="stitch-section-container">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h2 className="stitch-section-title" style={{ textAlign: 'left', marginBottom: '0.4rem' }}>Featured Fashion Houses</h2>
-              <p style={{ color: '#6B7280', fontSize: '0.95rem' }}>Explore verified bespoke tailors & independent Nigerian designers</p>
-            </div>
-            <Link to="/store/lagos-couture" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#0E4A38', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
-              View All Storefronts <ArrowRight size={16} />
-            </Link>
+      {/* ── 5. Atelier Invitation (Subtle & Elegant) ── */}
+      <section className="atelier-invite-section">
+        <div className="editorial-container">
+          <div className="invite-box">
+            <span className="invite-eyebrow">
+              {isDesigner ? 'STUDIO MANAGEMENT' : 'PARTNER WITH ASO'}
+            </span>
+            <h2 className="invite-title">
+              {isDesigner ? 'Your Bespoke Fashion Studio is Live' : 'Are You a Fashion Designer in Nigeria?'}
+            </h2>
+            <p className="invite-text">
+              {isDesigner
+                ? 'Manage your catalogue, track 48h SLA customer orders, monitor double-entry ledger balances, and request payout withdrawals.'
+                : 'Join Nigeria’s premier digital luxury marketplace. Showcase bespoke collections to patrons worldwide with guaranteed digital payments.'}
+            </p>
+
+            {isDesigner ? (
+              <button onClick={() => navigate('/vendor/dashboard')} className="btn-invite-action">
+                <Store size={16} />
+                <span>Go to Studio Dashboard</span>
+                <ArrowRight size={16} />
+              </button>
+            ) : (
+              <button onClick={onOpenVendorRegister} className="btn-invite-action">
+                <span>Onboard Your Atelier</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-            {/* Storefront Card 1 */}
-            <Link to="/store/lagos-couture" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transition: 'transform 0.3s ease, box-shadow 0.3s ease' }}>
-                <div style={{ height: '140px', backgroundImage: "url('/hero-bg.png')", backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
-                  <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, color: '#0E4A38', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <CheckCircle2 size={13} /> VERIFIED
-                  </div>
-                </div>
-                <div style={{ padding: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                    <div style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundImage: "url('/traditional-men-1.png')", backgroundSize: 'cover', border: '2px solid #FFF', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}></div>
-                    <div>
-                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>Lagos Couture House</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#6B7280', marginTop: '0.2rem' }}>
-                        <span>Lagos, Nigeria • 4.9</span>
-                        <Star size={13} fill="#F59E0B" color="#F59E0B" />
-                        <span>(38 reviews)</span>
-                      </div>
-                    </div>
-                  </div>
-                  <p style={{ fontSize: '0.875rem', color: '#4B5563', lineHeight: 1.5 }}>Premier Nigerian bespoke tailoring house crafting royal Agbadas & Senator kaftans.</p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Storefront Card 2 */}
-            <Link to="/store/heritage-cuts" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transition: 'transform 0.3s ease, box-shadow 0.3s ease' }}>
-                <div style={{ height: '140px', backgroundImage: "url('/traditional-men-2.png')", backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
-                  <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, color: '#0E4A38', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <CheckCircle2 size={13} /> VERIFIED
-                  </div>
-                </div>
-                <div style={{ padding: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                    <div style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundImage: "url('/traditional-men-3.png')", backgroundSize: 'cover', border: '2px solid #FFF', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}></div>
-                    <div>
-                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>Heritage Cuts & Threads</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#6B7280', marginTop: '0.2rem' }}>
-                        <span>Abuja, FCT • 4.8</span>
-                        <Star size={13} fill="#F59E0B" color="#F59E0B" />
-                        <span>(24 reviews)</span>
-                      </div>
-                    </div>
-                  </div>
-                  <p style={{ fontSize: '0.875rem', color: '#4B5563', lineHeight: 1.5 }}>Authentic traditional African menswear and custom bespoke suits handcrafted by master tailors.</p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Storefront Card 3 */}
-            <Link to="/store/adire-house" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transition: 'transform 0.3s ease, box-shadow 0.3s ease' }}>
-                <div style={{ height: '140px', backgroundImage: "url('/adire-1.png')", backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
-                  <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, color: '#0E4A38', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <CheckCircle2 size={13} /> VERIFIED
-                  </div>
-                </div>
-                <div style={{ padding: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                    <div style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundImage: "url('/adire-2.png')", backgroundSize: 'cover', border: '2px solid #FFF', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}></div>
-                    <div>
-                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>Adire Mastercraft Atelier</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#6B7280', marginTop: '0.2rem' }}>
-                        <span>Ibadan, Oyo State • 5.0</span>
-                        <Star size={13} fill="#F59E0B" color="#F59E0B" />
-                        <span>(52 reviews)</span>
-                      </div>
-                    </div>
-                  </div>
-                  <p style={{ fontSize: '0.875rem', color: '#4B5563', lineHeight: 1.5 }}>Contemporary indigo dyed textiles, modern Adire dresses, and luxury silk-blend women’s fashion.</p>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Become a Designer CTA Banner (Desktop & Mobile) */}
-      <section style={{ backgroundColor: '#111827', color: '#FFFFFF', padding: '4.5rem 1.5rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ maxWidth: '780px', margin: '0 auto', position: 'relative', zIndex: 10 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'rgba(212, 175, 55, 0.15)', color: '#D4AF37', padding: '0.4rem 1rem', borderRadius: '30px', fontSize: '0.8rem', fontWeight: 700, marginBottom: '1.25rem', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
-            <Sparkles size={15} />
-            <span>FOR NIGERIAN FASHION DESIGNERS & TAILORS</span>
-          </div>
-
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.2, marginBottom: '1rem' }}>
-            Are You a Fashion Designer in Nigeria?
-          </h2>
-
-          <p style={{ fontSize: '1.05rem', color: '#9CA3AF', lineHeight: 1.6, marginBottom: '2.25rem' }}>
-            Get your own verified digital storefront, accept secure digital payments, and showcase your luxury bespoke collections to customers worldwide.
-          </p>
-
-          <button
-            onClick={onOpenVendorRegister}
-            style={{
-              padding: '1rem 2.25rem',
-              backgroundColor: '#D4AF37',
-              color: '#111827',
-              fontSize: '0.95rem',
-              fontWeight: 800,
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 8px 20px rgba(212, 175, 55, 0.25)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              transition: 'transform 0.2s ease',
-            }}
-          >
-            <span>Register as a Designer</span>
-            <ArrowRight size={18} />
-          </button>
         </div>
       </section>
     </div>

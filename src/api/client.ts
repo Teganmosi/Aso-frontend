@@ -26,7 +26,7 @@ import type {
   CreateReviewPayload,
 } from '../types';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -36,6 +36,8 @@ export const apiClient = axios.create({
   },
 });
 
+let memoryCsrfToken: string | null = null;
+
 function getCookie(name: string): string | null {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -44,7 +46,7 @@ function getCookie(name: string): string | null {
 }
 
 apiClient.interceptors.request.use((config) => {
-  const csrfToken = getCookie('csrftoken');
+  const csrfToken = getCookie('csrftoken') || memoryCsrfToken;
   if (csrfToken && config.headers) {
     config.headers['X-CSRFToken'] = csrfToken;
   }
@@ -54,11 +56,39 @@ apiClient.interceptors.request.use((config) => {
 export const fetchCsrfToken = async () => {
   try {
     const res = await apiClient.get('/auth/csrf/');
-    return res.data?.csrfToken;
+    const token = res.data?.csrfToken || res.data?.csrf_token || null;
+    if (token) {
+      memoryCsrfToken = token;
+    }
+    return token;
   } catch (err) {
     console.error('Failed to fetch CSRF token', err);
     return null;
   }
+};
+
+const normalizeArray = <T>(data: any): T[] => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.products)) return data.products;
+  if (Array.isArray(data.categories)) return data.categories;
+  if (Array.isArray(data.vendors)) return data.vendors;
+  if (Array.isArray(data.orders)) return data.orders;
+  if (Array.isArray(data.results)) return data.results;
+  if (Array.isArray(data.data)) return data.data;
+  if (Array.isArray(data.reviews)) return data.reviews;
+  if (Array.isArray(data.ledger)) return data.ledger;
+  if (Array.isArray(data.payout_requests)) return data.payout_requests;
+  if (Array.isArray(data.items)) return data.items;
+  if (Array.isArray(data.variants)) return data.variants;
+  if (Array.isArray(data.media)) return data.media;
+  if (Array.isArray(data.addresses)) return data.addresses;
+  for (const key of Object.keys(data)) {
+    if (Array.isArray(data[key])) {
+      return data[key];
+    }
+  }
+  return [];
 };
 
 // ─── Auth API ────────────────────────────────────────────────────────────────
@@ -92,7 +122,7 @@ export const authApi = {
 
   getMe: async (): Promise<User> => {
     const res = await apiClient.get('/me/');
-    return res.data;
+    return res.data.user || res.data.data || res.data;
   },
 };
 
@@ -101,7 +131,7 @@ export const authApi = {
 export const addressApi = {
   getAddresses: async (): Promise<Address[]> => {
     const res = await apiClient.get('/auth/addresses/');
-    return res.data.results || res.data;
+    return normalizeArray<Address>(res.data);
   },
 
   createAddress: async (payload: Omit<Address, 'id' | 'created_at'>): Promise<Address> => {
@@ -133,18 +163,18 @@ export const vendorApi = {
 
   getPublicProfile: async (slug: string): Promise<PublicVendorProfile> => {
     const res = await apiClient.get(`/vendors/${slug}/`);
-    return res.data;
+    return res.data.vendor || res.data.profile || res.data.data || res.data;
   },
 
   getBankAccount: async (): Promise<BankAccount> => {
     const res = await apiClient.get('/vendors/bank-account/');
-    return res.data;
+    return res.data.bank_account || res.data.data || res.data;
   },
 
   saveBankAccount: async (payload: BankAccountPayload): Promise<BankAccount> => {
     await fetchCsrfToken();
     const res = await apiClient.post('/vendors/bank-account/', payload);
-    return res.data;
+    return res.data.bank_account || res.data.data || res.data;
   },
 };
 
@@ -153,12 +183,12 @@ export const vendorApi = {
 export const categoryApi = {
   getCategories: async (): Promise<Category[]> => {
     const res = await apiClient.get('/categories/');
-    return res.data.results || res.data;
+    return normalizeArray<Category>(res.data);
   },
 
   getCategoryBySlug: async (slug: string): Promise<Category> => {
     const res = await apiClient.get(`/categories/${slug}/`);
-    return res.data;
+    return res.data.category || res.data.data || res.data;
   },
 };
 
@@ -172,17 +202,17 @@ export const productApi = {
     ordering?: string;
   }): Promise<Product[]> => {
     const res = await apiClient.get('/products/', { params });
-    return res.data.results || res.data;
+    return normalizeArray<Product>(res.data);
   },
 
   getPublicProductDetail: async (identifier: string): Promise<Product> => {
     const res = await apiClient.get(`/products/${identifier}/`);
-    return res.data;
+    return res.data.product || res.data.data || res.data;
   },
 
   getVendorProducts: async (): Promise<Product[]> => {
     const res = await apiClient.get('/vendor/products/');
-    return res.data.results || res.data;
+    return normalizeArray<Product>(res.data);
   },
 
   createVendorProduct: async (payload: CreateProductPayload): Promise<Product> => {
@@ -208,31 +238,31 @@ export const productApi = {
 export const cartApi = {
   getCart: async (): Promise<Cart> => {
     const res = await apiClient.get('/cart/');
-    return res.data.data;
+    return res.data.data || res.data;
   },
 
   addItem: async (variant_id: string, quantity: number = 1): Promise<Cart> => {
     await fetchCsrfToken();
     const res = await apiClient.post('/cart/items/', { variant_id, quantity });
-    return res.data.data;
+    return res.data.data || res.data;
   },
 
   updateItem: async (item_id: string, quantity: number): Promise<Cart> => {
     await fetchCsrfToken();
     const res = await apiClient.patch(`/cart/items/${item_id}/`, { quantity });
-    return res.data.data;
+    return res.data.data || res.data;
   },
 
   removeItem: async (item_id: string): Promise<Cart> => {
     await fetchCsrfToken();
     const res = await apiClient.delete(`/cart/items/${item_id}/`);
-    return res.data.data;
+    return res.data.data || res.data;
   },
 
   clearCart: async (): Promise<Cart> => {
     await fetchCsrfToken();
     const res = await apiClient.delete('/cart/');
-    return res.data.data;
+    return res.data.data || res.data;
   },
 };
 
@@ -241,7 +271,7 @@ export const cartApi = {
 export const variantApi = {
   listVariants: async (product_id: string): Promise<ProductVariant[]> => {
     const res = await apiClient.get(`/products/${product_id}/variants/`);
-    return res.data.results || res.data;
+    return normalizeArray<ProductVariant>(res.data);
   },
 
   createVariant: async (product_id: string, payload: CreateVariantPayload): Promise<ProductVariant> => {
@@ -281,7 +311,7 @@ export const mediaApi = {
 
   listMedia: async (product_id: string): Promise<ProductMedia[]> => {
     const res = await apiClient.get(`/products/${product_id}/media/`);
-    return res.data.results || res.data;
+    return normalizeArray<ProductMedia>(res.data);
   },
 
   attachMedia: async (product_id: string, payload: CreateMediaPayload): Promise<ProductMedia> => {
@@ -301,7 +331,7 @@ export const mediaApi = {
 export const orderApi = {
   getOrders: async (): Promise<Order[]> => {
     const res = await apiClient.get('/orders/');
-    return res.data.data || res.data;
+    return normalizeArray<Order>(res.data);
   },
 
   createOrder: async (addressId: string): Promise<Order> => {
@@ -317,7 +347,7 @@ export const orderApi = {
 
   vendorGetOrders: async (): Promise<Order[]> => {
     const res = await apiClient.get('/vendors/orders/');
-    return res.data.data || res.data;
+    return normalizeArray<Order>(res.data);
   },
 
   vendorGetOrderDetail: async (orderId: string): Promise<Order> => {
@@ -398,12 +428,12 @@ export const payoutApi = {
 
   getLedger: async (): Promise<LedgerEntry[]> => {
     const res = await apiClient.get('/payouts/ledger/');
-    return res.data.results || res.data.data || res.data;
+    return normalizeArray<LedgerEntry>(res.data);
   },
 
   getPayoutRequests: async (): Promise<PayoutRequest[]> => {
     const res = await apiClient.get('/payouts/requests/');
-    return res.data.results || res.data.data || res.data;
+    return normalizeArray<PayoutRequest>(res.data);
   },
 };
 
@@ -418,11 +448,11 @@ export const reviewApi = {
 
   getProductReviews: async (productId: string): Promise<Review[]> => {
     const res = await apiClient.get(`/products/${productId}/reviews/`);
-    return res.data.results || res.data.data || res.data;
+    return normalizeArray<Review>(res.data);
   },
 
   getVendorReviews: async (vendorIdOrSlug: string): Promise<Review[]> => {
     const res = await apiClient.get(`/vendors/${vendorIdOrSlug}/reviews/`);
-    return res.data.results || res.data.data || res.data;
+    return normalizeArray<Review>(res.data);
   },
 };

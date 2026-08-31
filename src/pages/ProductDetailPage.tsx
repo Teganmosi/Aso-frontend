@@ -4,6 +4,7 @@ import { productApi, reviewApi } from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import type { Product, ProductVariant, Review } from '../types';
+import { SAMPLE_PRODUCTS, SAMPLE_REVIEWS } from '../data/sampleData';
 import {
   ArrowLeft, ShoppingBag, MapPin, Clock, CheckCircle2, Star,
   ChevronLeft, ChevronRight, AlertCircle, Loader, Package, MessageSquare, ShieldCheck
@@ -46,8 +47,18 @@ export const ProductDetailPage: React.FC = () => {
       }
       // Load reviews for this product
       loadReviews(data.id);
-    } catch (err: any) {
-      setError('Product not found or is no longer available.');
+    } catch {
+      // Check sample products fallback
+      const sample = SAMPLE_PRODUCTS.find(p => p.id === id || p.slug === id);
+      if (sample) {
+        setProduct(sample);
+        if (sample.variants && sample.variants.length > 0) {
+          setSelectedVariant(sample.variants[0]);
+        }
+        setReviews(SAMPLE_REVIEWS[sample.id] || []);
+      } else {
+        setError('Product not found or is no longer available.');
+      }
     } finally {
       setLoading(false);
     }

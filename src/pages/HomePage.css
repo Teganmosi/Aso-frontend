@@ -1,364 +1,604 @@
+/* ─── Editorial Luxury Homepage Styling ───────────────────────────── */
+
 .stitch-homepage {
   background-color: #FFFFFF;
+  color: #111827;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 }
 
-.stitch-section-container {
-  max-width: 1280px;
+.editorial-container {
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 0 1.5rem;
 }
 
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes heroZoom {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1.06);
-  }
-}
-
-/* Hero Section */
-.stitch-hero {
+/* ── 1. Editorial Hero ── */
+.editorial-hero {
   position: relative;
-  height: 82vh;
-  min-height: 560px;
-  max-height: 720px;
+  min-height: 75vh;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   color: #FFFFFF;
+  padding: 5rem 1.5rem 6rem;
   overflow: hidden;
 }
 
-.stitch-hero-bg {
+.editorial-hero-bg {
   position: absolute;
   inset: 0;
   background-image: url('/hero-bg.png');
   background-size: cover;
   background-position: center 25%;
-  animation: heroZoom 14s ease-out forwards;
+  transform: scale(1.02);
+  transition: transform 12s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.stitch-hero-overlay {
+.editorial-hero:hover .editorial-hero-bg {
+  transform: scale(1.05);
+}
+
+.editorial-hero-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.55) 100%);
+  background: linear-gradient(180deg, rgba(6, 46, 36, 0.72) 0%, rgba(17, 24, 39, 0.85) 100%);
 }
 
-.stitch-hero-content {
+.editorial-hero-content {
   position: relative;
   z-index: 10;
-  max-width: 820px;
-  padding: 0 1.5rem;
+  max-width: 780px;
+  margin: 0 auto;
 }
 
-.stitch-hero-headline {
-  font-family: var(--font-serif);
-  font-size: 3.5rem;
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #D4AF37;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  background: rgba(6, 78, 59, 0.4);
+  padding: 0.35rem 0.9rem;
+  border-radius: 30px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.editorial-hero-headline {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 700;
   line-height: 1.15;
   margin-bottom: 1.25rem;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.4);
-  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  letter-spacing: -0.01em;
 }
 
-.stitch-hero-subtitle {
-  font-size: 1.1rem;
-  color: #F3F4F6;
+.editorial-hero-headline span {
+  font-style: italic;
   font-weight: 400;
-  max-width: 640px;
-  margin: 0 auto 2.25rem auto;
-  line-height: 1.6;
-  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  color: #F3F4F6;
 }
 
-.stitch-btn-hero {
-  display: inline-block;
-  padding: 0.9rem 2.25rem;
-  background-color: var(--color-primary);
-  color: #FFFFFF;
-  font-weight: 600;
-  font-size: 0.9rem;
-  border-radius: var(--radius-sm);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+.editorial-hero-subtitle {
+  font-size: 1.05rem;
+  color: #E5E7EB;
+  line-height: 1.65;
+  max-width: 620px;
+  margin: 0 auto 2.5rem;
+  font-weight: 400;
 }
 
-.stitch-btn-hero:hover {
-  background-color: var(--color-primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-}
-
-/* Trust Bar */
-.stitch-trust-bar {
-  background-color: #FAFAFA;
-  border-bottom: 1px solid #E5E7EB;
-  padding: 1.25rem 2rem;
-}
-
-.trust-bar-container {
-  max-width: 1280px;
-  margin: 0 auto;
+.editorial-hero-actions {
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 1rem;
   flex-wrap: wrap;
-  gap: 1.5rem;
 }
 
-.trust-bar-item {
-  display: flex;
+.btn-editorial-primary {
+  display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 0.875rem;
+  gap: 0.5rem;
+  background-color: #D4AF37;
+  color: #111827;
+  padding: 0.85rem 1.85rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-editorial-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(212, 175, 55, 0.4);
+}
+
+.btn-editorial-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  padding: 0.85rem 1.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #374151;
-  animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.trust-bar-item:nth-child(1) { animation-delay: 0.35s; }
-.trust-bar-item:nth-child(2) { animation-delay: 0.45s; }
-.trust-bar-item:nth-child(3) { animation-delay: 0.55s; }
-.trust-bar-item:nth-child(4) { animation-delay: 0.65s; }
-
-.trust-bar-item:hover .trust-icon {
-  transform: scale(1.15);
-  color: var(--color-primary);
+.btn-editorial-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
-.trust-icon {
-  color: #4B5563;
-  transition: transform 0.25s ease, color 0.25s ease;
+/* ── 2. The Curated Edit ── */
+.curated-edit-section {
+  padding: 4.5rem 0 5rem;
+  background-color: #FFFFFF;
 }
 
-/* Curated Collections */
-.stitch-collections-section {
-  padding-top: 2rem;
+.section-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.stitch-section-title {
-  font-family: var(--font-serif);
-  font-size: 2.35rem;
+.section-eyebrow {
+  display: block;
+  font-size: 0.725rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #064E3B;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.section-main-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 2rem;
   font-weight: 700;
   color: #111827;
-  text-align: center;
-  margin-bottom: 2.5rem;
-  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+  letter-spacing: -0.01em;
 }
 
-.collections-grid {
+.btn-reset-filters {
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  color: #4B5563;
+  padding: 0.4rem 0.85rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-filters:hover {
+  background: #E5E7EB;
+  color: #111827;
+}
+
+/* Minimal Category Tabs */
+.editorial-category-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 1.25rem;
+  margin-bottom: 2.25rem;
+  border-bottom: 1px solid #F3F4F6;
+  scrollbar-width: none;
+}
+
+.editorial-category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.editorial-tab {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6B7280;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.editorial-tab:hover {
+  color: #111827;
+  background-color: #F9FAFB;
+}
+
+.editorial-tab.tab-active {
+  background-color: #064E3B;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+/* Products Grid */
+.editorial-products-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 2rem;
 }
 
-.collection-card {
-  position: relative;
-  border-radius: var(--radius-md);
+.luxury-product-card {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border-radius: 8px;
   overflow: hidden;
-  display: block;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
-  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 
-.collection-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 30px -10px rgba(0,0,0,0.22);
+.luxury-product-card:hover {
+  transform: translateY(-4px);
 }
 
-.collection-card-bg {
-  position: absolute;
-  inset: 0;
+.card-image-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background-color: #F3F4F6;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
   background-size: cover;
   background-position: center;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Custom Streetwear Framing - Full Fit Zoom Out */
-.streetwear-card-bg {
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center top;
-  background-color: #0E1217;
+.luxury-product-card:hover .card-image {
+  transform: scale(1.05);
 }
 
-.collection-card:hover .collection-card-bg {
-  transform: scale(1.06);
-}
-
-.card-gradient-overlay {
+.card-rating-badge {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.75) 100%);
-  transition: opacity 0.3s ease;
-}
-
-.collection-card:hover .card-gradient-overlay {
-  background: linear-gradient(180deg, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.85) 100%);
-}
-
-.card-text-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 2rem;
-  color: #FFFFFF;
-  z-index: 10;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.collection-card:hover .card-text-overlay {
-  transform: translateY(-2px);
-}
-
-/* Tall Card Left */
-.tall-card {
-  min-height: 540px;
-}
-
-.card-serif-title {
-  font-family: var(--font-serif);
-  font-size: 1.85rem;
-  font-weight: 700;
-  margin-bottom: 0.3rem;
-}
-
-.card-link-sub {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #F3F4F6;
-  display: inline-block;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.collection-card:hover .card-link-sub {
-  transform: translateX(6px);
-  color: #FFFFFF;
-}
-
-/* Stacked Cards Right */
-.right-collections-stack {
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  padding: 3px 8px;
+  border-radius: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.stacked-card {
-  height: 258px;
-}
-
-.card-bold-title {
-  font-size: 1.35rem;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.725rem;
   font-weight: 700;
+  color: #111827;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.card-details {
+  padding: 1rem 0.25rem 0.5rem;
+}
+
+.card-meta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.card-atelier-name {
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #064E3B;
+  text-transform: uppercase;
+}
+
+.card-prep-time {
+  font-size: 0.725rem;
+  color: #6B7280;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.card-product-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.35;
+  margin-bottom: 0.75rem;
+}
+
+.card-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.4rem;
+  border-top: 1px solid #F3F4F6;
+}
+
+.card-price-naira {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.card-view-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #064E3B;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: gap 0.2s ease;
+}
+
+.luxury-product-card:hover .card-view-link {
+  gap: 6px;
+}
+
+/* Empty / Loading States */
+.catalog-empty-state, .catalog-loading-state {
+  text-align: center;
+  padding: 4rem 1.5rem;
+  color: #6B7280;
+  background-color: #FAFAFA;
+  border-radius: 8px;
+}
+
+.empty-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.btn-explore-all {
+  background: none;
+  border: 1px solid #064E3B;
+  color: #064E3B;
+  padding: 0.5rem 1.25rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* ── 3. Master Ateliers Section ── */
+.ateliers-spotlight-section {
+  padding: 5rem 0;
+  background-color: #FAFAFA;
+  border-top: 1px solid #F3F4F6;
+}
+
+.section-header-center {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 3rem;
+}
+
+.section-sub-desc {
+  font-size: 0.95rem;
+  color: #6B7280;
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
+.ateliers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.atelier-card {
+  text-decoration: none;
+  color: inherit;
+  background: #FFFFFF;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.atelier-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
+
+.atelier-banner {
+  height: 130px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.atelier-avatar {
+  position: absolute;
+  bottom: -22px;
+  left: 1.5rem;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.atelier-content {
+  padding: 2rem 1.5rem 1.5rem;
+}
+
+.atelier-name {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111827;
   margin-bottom: 0.2rem;
 }
 
-.card-sub-text {
+.atelier-location {
+  font-size: 0.8rem;
+  color: #6B7280;
+  margin-bottom: 0.75rem;
+}
+
+.atelier-bio {
   font-size: 0.85rem;
-  color: #D1D5DB;
-  transition: color 0.3s ease;
+  color: #4B5563;
+  line-height: 1.55;
+  margin-bottom: 1.25rem;
 }
 
-.collection-card:hover .card-sub-text {
+.atelier-link {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #064E3B;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ── 4. The Aso Standard ── */
+.aso-standard-section {
+  padding: 4.5rem 0;
+  background-color: #FBFBF9;
+  border-top: 1px solid #EFEFEA;
+  border-bottom: 1px solid #EFEFEA;
+}
+
+.standard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 3rem;
+}
+
+.standard-pillar {
+  text-align: left;
+}
+
+.pillar-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background-color: #064E3B;
+  color: #D4AF37;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.pillar-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.pillar-text {
+  font-size: 0.9rem;
+  color: #6B7280;
+  line-height: 1.6;
+}
+
+/* ── 5. Atelier Invitation ── */
+.atelier-invite-section {
+  padding: 5rem 0;
+  background-color: #FFFFFF;
+}
+
+.invite-box {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 3.5rem 2rem;
+  background-color: #062E24;
   color: #FFFFFF;
+  border-radius: 12px;
+  position: relative;
+  box-shadow: 0 12px 36px rgba(6, 46, 36, 0.15);
 }
 
-@media (max-width: 900px) {
-  .collections-grid {
-    grid-template-columns: 1fr;
-  }
-  .tall-card {
-    min-height: 420px;
-  }
-  .stitch-hero-headline {
-    font-size: 2.75rem;
-  }
+.invite-eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #D4AF37;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
 }
 
-@media (max-width: 640px) {
-  .stitch-hero {
-    height: auto;
-    min-height: 480px;
-    padding: 5rem 1rem 4rem 1rem;
-  }
+.invite-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.85rem;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  line-height: 1.3;
+}
 
-  .stitch-hero-headline {
-    font-size: 2rem;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-  }
+.invite-text {
+  font-size: 0.95rem;
+  color: #D1D5DB;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
 
-  .stitch-hero-subtitle {
-    font-size: 0.95rem;
-    line-height: 1.5;
-    margin-bottom: 1.75rem;
-  }
+.btn-invite-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #D4AF37;
+  color: #111827;
+  padding: 0.85rem 1.85rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-  .stitch-btn-hero {
-    width: 100%;
-    max-width: 280px;
-    padding: 0.85rem 1.5rem;
-    text-align: center;
-  }
+.btn-invite-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+}
 
-  .stitch-trust-bar {
-    padding: 1rem 1rem;
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .editorial-hero {
+    min-height: 60vh;
+    padding: 4rem 1rem 5rem;
   }
-
-  .trust-bar-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem 0.5rem;
-    justify-items: start;
+  .section-main-title {
+    font-size: 1.6rem;
   }
-
-  .trust-bar-item {
-    font-size: 0.8rem;
+  .editorial-products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
   }
-
-  .stitch-section-container {
-    padding: 2.5rem 1rem;
-  }
-
-  .stitch-section-title {
-    font-size: 1.75rem;
-    margin-bottom: 1.75rem;
-  }
-
-  .tall-card {
-    min-height: 340px;
-  }
-
-  .stacked-card {
-    height: 220px;
-  }
-
-  .card-text-overlay {
-    padding: 1.25rem;
-  }
-
-  .card-serif-title {
-    font-size: 1.5rem;
-  }
-
-  .card-bold-title {
-    font-size: 1.2rem;
+  .standard-grid {
+    gap: 2rem;
   }
 }

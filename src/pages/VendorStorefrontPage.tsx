@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { vendorApi, productApi, reviewApi } from '../api/client';
 import type { PublicVendorProfile, Product, Review } from '../types';
+import { SAMPLE_PRODUCTS, SAMPLE_REVIEWS } from '../data/sampleData';
 import { MapPin, CheckCircle2, Star, Globe, ShoppingBag, MessageSquare, ShieldCheck } from 'lucide-react';
 import './VendorStorefrontPage.css';
 
@@ -91,6 +92,7 @@ export const VendorStorefrontPage: React.FC = () => {
         const p = SAMPLE_PROFILES[storeSlug];
         setProfile(p);
         loadVendorProducts(p.id);
+        loadVendorReviews(storeSlug);
       } else {
         const formattedTitle = storeSlug
           .split('-')
@@ -115,6 +117,8 @@ export const VendorStorefrontPage: React.FC = () => {
           logo_url: '/traditional-men-1.png',
           created_at: new Date().toISOString(),
         });
+        loadVendorProducts('99');
+        loadVendorReviews(storeSlug);
       }
     } finally {
       setLoading(false);
@@ -125,9 +129,19 @@ export const VendorStorefrontPage: React.FC = () => {
     setProductsLoading(true);
     try {
       const data = await productApi.getPublicProducts({ vendor: vendorId });
-      setProducts(data);
-    } catch (err) {
-      console.error('Failed to load vendor products', err);
+      if (Array.isArray(data) && data.length > 0) {
+        setProducts(data);
+      } else {
+        const sampleMatches = SAMPLE_PRODUCTS.filter(
+          p => p.vendor?.id === vendorId || p.vendor?.slug === slug
+        );
+        setProducts(sampleMatches);
+      }
+    } catch {
+      const sampleMatches = SAMPLE_PRODUCTS.filter(
+        p => p.vendor?.id === vendorId || p.vendor?.slug === slug
+      );
+      setProducts(sampleMatches);
     } finally {
       setProductsLoading(false);
     }
@@ -137,9 +151,16 @@ export const VendorStorefrontPage: React.FC = () => {
     setReviewsLoading(true);
     try {
       const data = await reviewApi.getVendorReviews(vendorSlug);
-      setReviews(data);
-    } catch (err) {
-      console.error('Failed to load vendor reviews', err);
+      if (Array.isArray(data) && data.length > 0) {
+        setReviews(data);
+      } else {
+        // Collect reviews from sample
+        const sampleRevs = Object.values(SAMPLE_REVIEWS).flat();
+        setReviews(sampleRevs);
+      }
+    } catch {
+      const sampleRevs = Object.values(SAMPLE_REVIEWS).flat();
+      setReviews(sampleRevs);
     } finally {
       setReviewsLoading(false);
     }
