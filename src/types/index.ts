@@ -259,3 +259,166 @@ export interface CreateMediaPayload {
   is_primary?: boolean;
   display_order?: number;
 }
+
+// ─── Order & Delivery Types (Sprint 6, 7 & 8) ───────────────────────────────
+
+export type OrderStatus =
+  | 'PENDING_PAYMENT'
+  | 'PAID'
+  | 'VENDOR_ACCEPTED'
+  | 'PREPARING'
+  | 'READY_FOR_PICKUP'
+  | 'PICKED_UP'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'REFUNDED'
+  | 'DISPUTED';
+
+export type DeliveryStatus =
+  | 'PENDING'
+  | 'PICKED_UP'
+  | 'IN_TRANSIT'
+  | 'DELIVERED'
+  | 'FAILED_DELIVERY';
+
+export interface OrderItem {
+  id: string;
+  product_id?: string;
+  variant_id: string | null;
+  product_title_snapshot: string;
+  variant_size_snapshot: string;
+  variant_color_snapshot: string | null;
+  sku_snapshot: string;
+  unit_price_kobo: number;
+  unit_price_naira: number;
+  quantity: number;
+  total_price_kobo: number;
+  total_price_naira: number;
+  created_at: string;
+  review?: Review | null;
+}
+
+export interface Delivery {
+  id: string;
+  tracking_number: string;
+  carrier_name: string;
+  status: DeliveryStatus;
+  status_display: string;
+  dispatch_notes: string | null;
+  picked_up_at: string | null;
+  dispatched_at: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Order {
+  id: string;
+  order_number: string;
+  vendor: PublicVendorProfile;
+  order_status: OrderStatus;
+  subtotal_kobo: number;
+  subtotal_naira: number;
+  delivery_fee_kobo: number;
+  delivery_fee_naira: number;
+  total_amount_kobo: number;
+  total_amount_naira: number;
+  payment_expires_at: string;
+  is_expired: boolean;
+  vendor_accept_due_by: string | null;
+  vendor_accepted_at: string | null;
+  prepared_at: string | null;
+  ready_for_pickup_at: string | null;
+  shipping_address_snapshot: any;
+  cancellation_reason: string | null;
+  items: OrderItem[];
+  created_at: string;
+  updated_at: string;
+  delivery?: Delivery | null;
+}
+
+export interface PaymentRequest {
+  id: string;
+  order: string;
+  order_number: string;
+  provider: string;
+  reference: string;
+  authorization_url: string;
+  amount_kobo: number;
+  currency: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED';
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Payout & Financial Ledger Types (Sprint 9) ─────────────────────────────
+
+export type PayoutStatus =
+  | 'PAYOUT_RESERVED'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'REVERSED';
+
+export interface VendorBalance {
+  pending_balance_kobo: number;
+  available_balance_kobo: number;
+  reserved_balance_kobo: number;
+  withdrawn_balance_kobo: number;
+  pending_balance_naira: number;
+  available_balance_naira: number;
+  reserved_balance_naira: number;
+  withdrawn_balance_naira: number;
+}
+
+export interface PayoutRequest {
+  id: string;
+  reference: string;
+  amount_kobo: number;
+  amount_naira: number;
+  status: PayoutStatus;
+  bank_name_snapshot?: string;
+  account_number_snapshot?: string;
+  account_name_snapshot?: string;
+  failure_reason?: string | null;
+  created_at: string;
+  processed_at?: string | null;
+}
+
+export interface LedgerEntry {
+  id: string;
+  entry_type: string;
+  amount_kobo: number;
+  amount_naira: number;
+  description: string;
+  created_at: string;
+}
+
+// ─── Review Types (Sprint 10) ───────────────────────────────────────────────
+
+export interface Review {
+  id: string;
+  order_item: string;
+  product: string;
+  vendor: string;
+  customer?: {
+    id: number;
+    email: string;
+    first_name: string;
+    last_name: string;
+  } | string;
+  customer_name?: string;
+  rating: number;
+  comment: string;
+  is_verified_purchase: boolean;
+  created_at: string;
+}
+
+export interface CreateReviewPayload {
+  order_item_id: string;
+  rating: number;
+  comment: string;
+}
+

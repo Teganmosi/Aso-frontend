@@ -208,7 +208,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
 
           <div className="collections-grid">
             {/* Left Tall Card - Modern Adire */}
-            <a href="#women" className="collection-card tall-card">
+            <a
+              href="#featured-products"
+              className="collection-card tall-card"
+              onClick={(e) => {
+                e.preventDefault();
+                handleCategorySelect('women');
+                document.getElementById('featured-products')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               <div
                 className="collection-card-bg"
                 style={{
@@ -230,7 +238,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
             {/* Right Column - Stacked Cards */}
             <div className="right-collections-stack">
               {/* Top Right Card - Traditional Men */}
-              <a href="#men" className="collection-card stacked-card">
+              <a
+                href="#featured-products"
+                className="collection-card stacked-card"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleCategorySelect('men');
+                  document.getElementById('featured-products')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 <div
                   className="collection-card-bg"
                   style={{
@@ -247,7 +263,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
               </a>
 
               {/* Bottom Right Card - Lagos Streetwear */}
-              <a href="#streetwear" className="collection-card stacked-card">
+              <a
+                href="#featured-products"
+                className="collection-card stacked-card"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleCategorySelect('streetwear');
+                  document.getElementById('featured-products')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 <div
                   className="collection-card-bg"
                   style={{

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { productApi } from '../api/client';
+import { productApi, reviewApi } from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import type { Product, ProductVariant } from '../types';
+import type { Product, ProductVariant, Review } from '../types';
 import {
   ArrowLeft, ShoppingBag, MapPin, Clock, CheckCircle2, Star,
-  ChevronLeft, ChevronRight, AlertCircle, Loader, Package
+  ChevronLeft, ChevronRight, AlertCircle, Loader, Package, MessageSquare, ShieldCheck
 } from 'lucide-react';
 import './ProductDetailPage.css';
 
@@ -17,6 +17,8 @@ export const ProductDetailPage: React.FC = () => {
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +29,9 @@ export const ProductDetailPage: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    if (identifier) loadProduct(identifier);
+    if (identifier) {
+      loadProduct(identifier);
+    }
   }, [identifier]);
 
   const loadProduct = async (id: string) => {
@@ -40,10 +44,24 @@ export const ProductDetailPage: React.FC = () => {
         const firstAvailable = data.variants.find(v => v.stock_quantity > 0 && v.is_active);
         setSelectedVariant(firstAvailable || data.variants[0]);
       }
+      // Load reviews for this product
+      loadReviews(data.id);
     } catch (err: any) {
       setError('Product not found or is no longer available.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadReviews = async (productId: string) => {
+    setReviewsLoading(true);
+    try {
+      const revs = await reviewApi.getProductReviews(productId);
+      setReviews(revs);
+    } catch (err) {
+      console.error('Failed to load reviews', err);
+    } finally {
+      setReviewsLoading(false);
     }
   };
 
@@ -108,6 +126,8 @@ export const ProductDetailPage: React.FC = () => {
       </div>
     );
   }
+
+  const avgRatingNum = Number(product.average_rating) || 0;
 
   return (
     <div className="pdp-page">
@@ -191,13 +211,13 @@ export const ProductDetailPage: React.FC = () => {
                 <Star
                   key={s}
                   size={15}
-                  fill={s <= Math.round(Number(product.average_rating)) ? '#F59E0B' : 'none'}
-                  color={s <= Math.round(Number(product.average_rating)) ? '#F59E0B' : '#D1D5DB'}
+                  fill={s <= Math.round(avgRatingNum) ? '#F59E0B' : 'none'}
+                  color={s <= Math.round(avgRatingNum) ? '#F59E0B' : '#D1D5DB'}
                 />
               ))}
             </div>
             <span className="pdp-rating-text">
-              {Number(product.average_rating).toFixed(1)} ({product.review_count} review{product.review_count !== 1 ? 's' : ''})
+              {avgRatingNum > 0 ? avgRatingNum.toFixed(1) : 'New'} ({product.review_count} verified review{product.review_count !== 1 ? 's' : ''})
             </span>
           </div>
 
@@ -209,7 +229,7 @@ export const ProductDetailPage: React.FC = () => {
             {product.preparation_time_days > 0 && (
               <div className="pdp-prep-badge">
                 <Clock size={13} />
-                <span>{product.preparation_time_days} day{product.preparation_time_days !== 1 ? 's' : ''} prep time</span>
+                <span>{product.preparation_time_days} day{product.preparation_time_days !== 1 ? 's' : ''} bespoke tailoring</span>
               </div>
             )}
           </div>
@@ -299,6 +319,109 @@ export const ProductDetailPage: React.FC = () => {
             <p>{product.description}</p>
           </div>
         </div>
+      </div>
+
+      {/* VERIFIED BUYER REVIEWS SECTION (Sprint 10) */}
+      <div className="pdp-reviews-section" style={{ marginTop: '4rem', borderTop: '1px solid #E5E7EB', paddingTop: '3rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Cinzel, Georgia, serif', color: '#111827', margin: 0 }}>
+              Verified Buyer Reviews
+            </h2>
+            <p style={{ color: '#6B7280', fontSize: '0.9rem', marginTop: '0.3rem' }}>
+              Authentic feedback from customers who purchased and received this bespoke creation.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#F9FAFB', padding: '0.75rem 1.25rem', borderRadius: '8px' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111827', fontFamily: 'Cinzel, Georgia, serif' }}>
+              {avgRatingNum > 0 ? avgRatingNum.toFixed(1) : '5.0'}
+            </div>
+            <div>
+              <div style={{ display: 'flex', gap: '2px' }}>
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    size={16}
+                    fill={s <= Math.round(avgRatingNum || 5) ? '#F59E0B' : 'none'}
+                    color={s <= Math.round(avgRatingNum || 5) ? '#F59E0B' : '#D1D5DB'}
+                  />
+                ))}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.2rem' }}>
+                Based on {product.review_count} review{product.review_count !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {reviewsLoading ? (
+          <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>
+            <Loader size={24} className="cart-spinner" />
+            <p style={{ marginTop: '0.5rem' }}>Loading verified reviews...</p>
+          </div>
+        ) : reviews.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem 2rem', background: '#F9FAFB', borderRadius: '12px', color: '#6B7280' }}>
+            <MessageSquare size={36} style={{ color: '#9CA3AF', marginBottom: '0.75rem' }} />
+            <h3 style={{ fontSize: '1.1rem', color: '#374151', margin: 0 }}>No Customer Reviews Yet</h3>
+            <p style={{ fontSize: '0.875rem', maxWidth: '400px', margin: '0.5rem auto 0' }}>
+              Be the first to purchase and review this bespoke piece once your order is fulfilled and delivered!
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            {reviews.map((rev) => {
+              const reviewerName = typeof rev.customer === 'object' && rev.customer?.first_name 
+                ? `${rev.customer.first_name} ${rev.customer.last_name?.[0] || ''}.`
+                : rev.customer_name || 'Verified Customer';
+
+              return (
+                <div 
+                  key={rev.id} 
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '10px',
+                    padding: '1.5rem',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#111827' }}>
+                        {reviewerName}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#059669', fontSize: '0.75rem', fontWeight: 600, marginTop: '0.2rem' }}>
+                        <ShieldCheck size={13} />
+                        <span>Verified Buyer</span>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '1px' }}>
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            size={14}
+                            fill={s <= rev.rating ? '#F59E0B' : 'none'}
+                            color={s <= rev.rating ? '#F59E0B' : '#D1D5DB'}
+                          />
+                        ))}
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.2rem', display: 'block' }}>
+                        {new Date(rev.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: '0.9rem', color: '#4B5563', lineHeight: 1.6, margin: 0 }}>
+                    "{rev.comment}"
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { vendorApi, productApi } from '../api/client';
-import type { PublicVendorProfile, Product } from '../types';
-import { MapPin, CheckCircle2, Star, Globe, ShoppingBag } from 'lucide-react';
+import { vendorApi, productApi, reviewApi } from '../api/client';
+import type { PublicVendorProfile, Product, Review } from '../types';
+import { MapPin, CheckCircle2, Star, Globe, ShoppingBag, MessageSquare, ShieldCheck } from 'lucide-react';
 import './VendorStorefrontPage.css';
 
 const SAMPLE_PROFILES: Record<string, PublicVendorProfile> = {
@@ -66,8 +66,11 @@ export const VendorStorefrontPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [profile, setProfile] = useState<PublicVendorProfile | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [activeTab, setActiveTab] = useState<'collection' | 'reviews'>('collection');
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -81,10 +84,13 @@ export const VendorStorefrontPage: React.FC = () => {
       const data = await vendorApi.getPublicProfile(storeSlug);
       setProfile(data);
       loadVendorProducts(data.id);
+      loadVendorReviews(storeSlug);
     } catch (err: any) {
       // Fallback to sample profiles
       if (SAMPLE_PROFILES[storeSlug]) {
-        setProfile(SAMPLE_PROFILES[storeSlug]);
+        const p = SAMPLE_PROFILES[storeSlug];
+        setProfile(p);
+        loadVendorProducts(p.id);
       } else {
         const formattedTitle = storeSlug
           .split('-')
@@ -127,6 +133,18 @@ export const VendorStorefrontPage: React.FC = () => {
     }
   };
 
+  const loadVendorReviews = async (vendorSlug: string) => {
+    setReviewsLoading(true);
+    try {
+      const data = await reviewApi.getVendorReviews(vendorSlug);
+      setReviews(data);
+    } catch (err) {
+      console.error('Failed to load vendor reviews', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="storefront-loading-state">
@@ -139,6 +157,8 @@ export const VendorStorefrontPage: React.FC = () => {
   if (!profile) {
     return null;
   }
+
+  const avgRating = parseFloat(profile.average_rating || '5.0');
 
   return (
     <div className="storefront-container">
@@ -191,8 +211,8 @@ export const VendorStorefrontPage: React.FC = () => {
 
               <div className="meta-item rating-item">
                 <Star size={15} className="star-filled" />
-                <span className="rating-num">{parseFloat(profile.average_rating || '5.0').toFixed(1)}</span>
-                <span className="reviews-count">({profile.review_count} reviews)</span>
+                <span className="rating-num">{avgRating.toFixed(1)}</span>
+                <span className="reviews-count">({profile.review_count} verified reviews)</span>
               </div>
             </div>
 
@@ -201,50 +221,150 @@ export const VendorStorefrontPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="storefront-products-section">
-        <div className="section-title-row">
-          <h2>Collection Showcase</h2>
-          <span className="products-count-label">
-            {productsLoading ? 'Loading...' : `${products.length} piece${products.length !== 1 ? 's' : ''}`}
-          </span>
-        </div>
+      {/* Tabs Row */}
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #E5E7EB', marginTop: '2rem', paddingBottom: '0.5rem' }}>
+        <button
+          onClick={() => setActiveTab('collection')}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: '0.75rem 1rem',
+            fontSize: '1rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            color: activeTab === 'collection' ? '#064E3B' : '#6B7280',
+            borderBottom: activeTab === 'collection' ? '2px solid #064E3B' : '2px solid transparent',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            fontFamily: 'var(--font-sans)'
+          }}
+        >
+          <ShoppingBag size={18} />
+          <span>Collection Showcase ({products.length})</span>
+        </button>
 
-        {productsLoading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>Loading collection...</div>
-        ) : products.length > 0 ? (
-          <div className="storefront-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
-            {products.map((prod) => (
-              <Link key={prod.id} to={`/products/${prod.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="product-showcase-card" style={{ background: '#FFF', borderRadius: '8px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)'; }}
-                >
-                  <div style={{ height: '300px', backgroundImage: `url(${prod.primary_image_url || '/traditional-men-1.png'})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                  <div style={{ padding: '1.25rem' }}>
-                    {prod.category && (
-                      <div style={{ fontSize: '0.72rem', color: '#0E4A38', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.3rem' }}>{prod.category.name}</div>
-                    )}
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '0.4rem', fontFamily: 'var(--font-serif)' }}>{prod.title}</h3>
-                    <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '0.8rem', lineHeight: 1.5 }}>{prod.description?.slice(0, 80)}{prod.description?.length > 80 ? '...' : ''}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0E4A38' }}>₦{prod.base_price_naira.toLocaleString()}</span>
-                      <span style={{ padding: '0.45rem 0.9rem', backgroundColor: '#111827', color: '#FFF', borderRadius: '4px', fontWeight: 600, fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <ShoppingBag size={14} /> View
-                      </span>
+        <button
+          onClick={() => setActiveTab('reviews')}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: '0.75rem 1rem',
+            fontSize: '1rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            color: activeTab === 'reviews' ? '#064E3B' : '#6B7280',
+            borderBottom: activeTab === 'reviews' ? '2px solid #064E3B' : '2px solid transparent',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            fontFamily: 'var(--font-sans)'
+          }}
+        >
+          <Star size={18} />
+          <span>Client Reviews ({profile.review_count || reviews.length})</span>
+        </button>
+      </div>
+
+      {/* TAB 1: Collection */}
+      {activeTab === 'collection' && (
+        <div className="storefront-products-section" style={{ marginTop: '1.5rem' }}>
+          {productsLoading ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>Loading collection...</div>
+          ) : products.length > 0 ? (
+            <div className="storefront-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
+              {products.map((prod) => (
+                <Link key={prod.id} to={`/products/${prod.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="product-showcase-card" style={{ background: '#FFF', borderRadius: '8px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)'; }}
+                  >
+                    <div style={{ height: '300px', backgroundImage: `url(${prod.primary_image_url || '/traditional-men-1.png'})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                    <div style={{ padding: '1.25rem' }}>
+                      {prod.category && (
+                        <div style={{ fontSize: '0.72rem', color: '#0E4A38', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.3rem' }}>{prod.category.name}</div>
+                      )}
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '0.4rem', fontFamily: 'var(--font-serif)' }}>{prod.title}</h3>
+                      <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '0.8rem', lineHeight: 1.5 }}>{prod.description?.slice(0, 80)}{prod.description?.length > 80 ? '...' : ''}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0E4A38' }}>₦{prod.base_price_naira.toLocaleString()}</span>
+                        <span style={{ padding: '0.45rem 0.9rem', backgroundColor: '#111827', color: '#FFF', borderRadius: '4px', fontWeight: 600, fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <ShoppingBag size={14} /> View
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#6B7280' }}>
-            <ShoppingBag size={40} color="#D1D5DB" style={{ marginBottom: '1rem' }} />
-            <p style={{ fontSize: '1rem', fontWeight: 600 }}>No published products yet</p>
-            <p style={{ fontSize: '0.875rem', marginTop: '0.4rem' }}>This designer hasn't published any pieces yet. Check back soon!</p>
-          </div>
-        )}
-      </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#6B7280' }}>
+              <ShoppingBag size={40} color="#D1D5DB" style={{ marginBottom: '1rem' }} />
+              <p style={{ fontSize: '1rem', fontWeight: 600 }}>No published products yet</p>
+              <p style={{ fontSize: '0.875rem', marginTop: '0.4rem' }}>This designer hasn't published any pieces yet. Check back soon!</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 2: Reviews */}
+      {activeTab === 'reviews' && (
+        <div style={{ marginTop: '2rem' }}>
+          {reviewsLoading ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>Loading client reviews...</div>
+          ) : reviews.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '4rem 2rem', background: '#F9FAFB', borderRadius: '12px', color: '#6B7280' }}>
+              <MessageSquare size={36} color="#9CA3AF" style={{ marginBottom: '0.75rem' }} />
+              <h3 style={{ fontSize: '1.1rem', color: '#374151', margin: 0 }}>No Verified Reviews Yet</h3>
+              <p style={{ fontSize: '0.875rem', maxWidth: '400px', margin: '0.5rem auto 0' }}>
+                Completed customer orders and verified craftsmanship ratings will appear here.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+              {reviews.map((rev) => {
+                const reviewerName = typeof rev.customer === 'object' && rev.customer?.first_name
+                  ? `${rev.customer.first_name} ${rev.customer.last_name?.[0] || ''}.`
+                  : rev.customer_name || 'Verified Buyer';
+
+                return (
+                  <div key={rev.id} style={{ background: '#FFF', border: '1px solid #E5E7EB', padding: '1.5rem', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#111827' }}>{reviewerName}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#059669', fontSize: '0.75rem', fontWeight: 600, marginTop: '0.2rem' }}>
+                          <ShieldCheck size={13} />
+                          <span>Verified Purchase</span>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '1px' }}>
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              size={14}
+                              fill={s <= rev.rating ? '#F59E0B' : 'none'}
+                              color={s <= rev.rating ? '#F59E0B' : '#D1D5DB'}
+                            />
+                          ))}
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.2rem', display: 'block' }}>
+                          {new Date(rev.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p style={{ fontSize: '0.9rem', color: '#4B5563', lineHeight: 1.6, margin: 0 }}>
+                      "{rev.comment}"
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

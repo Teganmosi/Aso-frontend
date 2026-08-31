@@ -16,6 +16,14 @@ import type {
   PresignedUrlResponse,
   CreateMediaPayload,
   Cart,
+  Order,
+  Delivery,
+  PaymentRequest,
+  VendorBalance,
+  PayoutRequest,
+  LedgerEntry,
+  Review,
+  CreateReviewPayload,
 } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
@@ -285,5 +293,136 @@ export const mediaApi = {
   deleteMedia: async (product_id: string, media_id: string): Promise<void> => {
     await fetchCsrfToken();
     await apiClient.delete(`/products/${product_id}/media/${media_id}/`);
+  },
+};
+
+// ─── Order API ───────────────────────────────────────────────────────────────
+
+export const orderApi = {
+  getOrders: async (): Promise<Order[]> => {
+    const res = await apiClient.get('/orders/');
+    return res.data.data || res.data;
+  },
+
+  createOrder: async (addressId: string): Promise<Order> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post('/orders/', { address_id: addressId });
+    return res.data.data || res.data;
+  },
+
+  getOrderDetail: async (orderId: string): Promise<Order> => {
+    const res = await apiClient.get(`/orders/${orderId}/`);
+    return res.data.data || res.data;
+  },
+
+  vendorGetOrders: async (): Promise<Order[]> => {
+    const res = await apiClient.get('/vendors/orders/');
+    return res.data.data || res.data;
+  },
+
+  vendorGetOrderDetail: async (orderId: string): Promise<Order> => {
+    const res = await apiClient.get(`/vendors/orders/${orderId}/`);
+    return res.data.data || res.data;
+  },
+
+  acceptOrder: async (orderId: string): Promise<Order> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/orders/${orderId}/accept/`);
+    return res.data.data || res.data;
+  },
+
+  preparingOrder: async (orderId: string): Promise<Order> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/orders/${orderId}/preparing/`);
+    return res.data.data || res.data;
+  },
+
+  readyOrder: async (orderId: string): Promise<Order> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/orders/${orderId}/ready/`);
+    return res.data.data || res.data;
+  },
+};
+
+// ─── Payment API ─────────────────────────────────────────────────────────────
+
+export const paymentApi = {
+  initializePayment: async (orderId: string): Promise<PaymentRequest> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post('/payments/initialize/', { order_id: orderId });
+    return res.data.data || res.data;
+  },
+
+  simulateWebhook: async (payload: any, signature: string): Promise<any> => {
+    const res = await apiClient.post('/payments/webhook/paystack/', payload, {
+      headers: {
+        'X-Paystack-Signature': signature,
+        'Content-Type': 'application/json',
+      },
+    });
+    return res.data;
+  },
+};
+
+// ─── Delivery API ────────────────────────────────────────────────────────────
+
+export const deliveryApi = {
+  getDeliveryDetail: async (orderId: string): Promise<Delivery> => {
+    const res = await apiClient.get(`/orders/${orderId}/delivery/`);
+    return res.data.data || res.data;
+  },
+
+  updateDeliveryStatus: async (deliveryId: string, status: string, notes?: string): Promise<Delivery> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/deliveries/${deliveryId}/update-status/`, {
+      status,
+      notes,
+    });
+    return res.data.data || res.data;
+  },
+};
+
+// ─── Payout & Ledger API (Sprint 9) ──────────────────────────────────────────
+
+export const payoutApi = {
+  getBalance: async (): Promise<VendorBalance> => {
+    const res = await apiClient.get('/payouts/balance/');
+    return res.data.data || res.data;
+  },
+
+  requestWithdrawal: async (amountKobo: number): Promise<PayoutRequest> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post('/payouts/withdraw/', { amount_kobo: amountKobo });
+    return res.data.data || res.data;
+  },
+
+  getLedger: async (): Promise<LedgerEntry[]> => {
+    const res = await apiClient.get('/payouts/ledger/');
+    return res.data.results || res.data.data || res.data;
+  },
+
+  getPayoutRequests: async (): Promise<PayoutRequest[]> => {
+    const res = await apiClient.get('/payouts/requests/');
+    return res.data.results || res.data.data || res.data;
+  },
+};
+
+// ─── Review API (Sprint 10) ──────────────────────────────────────────────────
+
+export const reviewApi = {
+  submitReview: async (productId: string, payload: CreateReviewPayload): Promise<Review> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/products/${productId}/reviews/`, payload);
+    return res.data.data || res.data;
+  },
+
+  getProductReviews: async (productId: string): Promise<Review[]> => {
+    const res = await apiClient.get(`/products/${productId}/reviews/`);
+    return res.data.results || res.data.data || res.data;
+  },
+
+  getVendorReviews: async (vendorIdOrSlug: string): Promise<Review[]> => {
+    const res = await apiClient.get(`/vendors/${vendorIdOrSlug}/reviews/`);
+    return res.data.results || res.data.data || res.data;
   },
 };

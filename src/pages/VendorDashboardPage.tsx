@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { vendorApi } from '../api/client';
-import type { BankAccount } from '../types';
+import { vendorApi, payoutApi } from '../api/client';
+import type { BankAccount, VendorBalance, PayoutRequest, LedgerEntry } from '../types';
 import { 
   Landmark, 
   CheckCircle2, 
@@ -14,12 +14,17 @@ import {
   Plus, 
   Sparkles, 
   ShoppingBag, 
-  Lock, 
-  ArrowRight 
+  ArrowRight,
+  Wallet,
+  Clock,
+  History,
+  X,
+  Loader
 } from 'lucide-react';
 import { DashboardOverviewView } from '../components/vendor/DashboardOverviewView';
 import { ProductsListView } from '../components/vendor/ProductsListView';
 import { AddProductView } from '../components/vendor/AddProductView';
+import { OrdersManagementView } from '../components/vendor/OrdersManagementView';
 import './VendorDashboardPage.css';
 
 export type DesignerPortalTab = 'dashboard' | 'products' | 'add-product' | 'orders' | 'earnings' | 'profile';
@@ -28,6 +33,19 @@ export const VendorDashboardPage: React.FC = () => {
   const { user, refreshMe, openAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState<DesignerPortalTab>('dashboard');
   const [previewDemo, setPreviewDemo] = useState(false);
+
+  // Financial Ledger & Payout States
+  const [balance, setBalance] = useState<VendorBalance | null>(null);
+  const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
+  const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
+  const [financeLoading, setFinanceLoading] = useState(false);
+
+  // Withdrawal Modal States in Earnings tab
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
+  const [withdrawModalError, setWithdrawModalError] = useState('');
+  const [withdrawModalSuccess, setWithdrawModalSuccess] = useState('');
 
   // Payout Bank Account Details
   const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
@@ -69,6 +87,30 @@ export const VendorDashboardPage: React.FC = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if ((user?.is_vendor || user?.vendor_profile) && activeTab === 'earnings') {
+      loadFinancialData();
+    }
+  }, [user, activeTab]);
+
+  const loadFinancialData = async () => {
+    setFinanceLoading(true);
+    try {
+      const [bal, ledger, reqs] = await Promise.allSettled([
+        payoutApi.getBalance(),
+        payoutApi.getLedger(),
+        payoutApi.getPayoutRequests(),
+      ]);
+      if (bal.status === 'fulfilled') setBalance(bal.value);
+      if (ledger.status === 'fulfilled') setLedgerEntries(ledger.value);
+      if (reqs.status === 'fulfilled') setPayoutRequests(reqs.value);
+    } catch (err) {
+      console.error('Failed to load financial records', err);
+    } finally {
+      setFinanceLoading(false);
+    }
+  };
+
   const loadBankAccount = async () => {
     try {
       const data = await vendorApi.getBankAccount();
@@ -81,6 +123,43 @@ export const VendorDashboardPage: React.FC = () => {
       }
     } catch {
       // Bank account not set yet
+    }
+  };
+
+  const handleWithdrawalFromEarnings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWithdrawModalError('');
+    setWithdrawModalSuccess('');
+
+    const val = parseFloat(withdrawAmount);
+    if (isNaN(val) || val <= 0) {
+      setWithdrawModalError('Please enter a valid withdrawal amount.');
+      return;
+    }
+
+    const valKobo = Math.round(val * 100);
+    const availKobo = balance?.available_balance_kobo ?? 0;
+
+    if (valKobo > availKobo) {
+      setWithdrawModalError(`Amount exceeds your available balance of ₦${(availKobo / 100).toLocaleString()}.`);
+      return;
+    }
+
+    setWithdrawSubmitting(true);
+    try {
+      await payoutApi.requestWithdrawal(valKobo);
+      setWithdrawModalSuccess(`Withdrawal of ₦${val.toLocaleString()} submitted!`);
+      setWithdrawAmount('');
+      await loadFinancialData();
+      setTimeout(() => {
+        setShowWithdrawModal(false);
+        setWithdrawModalSuccess('');
+      }, 2000);
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to submit withdrawal request.';
+      setWithdrawModalError(msg);
+    } finally {
+      setWithdrawSubmitting(false);
     }
   };
 
@@ -147,58 +226,53 @@ export const VendorDashboardPage: React.FC = () => {
           </div>
 
           <h1 className="gate-serif-headline">
-            Welcome to the ASO Designer Suite
+            The Studio Dashboard for Nigerian Fashion Artisans
           </h1>
 
-          <p className="gate-sub-description">
-            Sign in or register your brand to manage your bespoke catalog, track orders, and showcase your luxury Nigerian fashion house to buyers worldwide.
+          <p className="gate-subtitle">
+            Manage your bespoke catalogue, process client orders, track delivery dispatches, and withdraw earnings directly to your Nigerian bank account.
           </p>
 
-          {/* 3 Pillars Grid */}
           <div className="gate-pillars-grid">
-            <div className="gate-pillar-item">
+            <div className="pillar-item">
               <div className="pillar-icon-box">
-                <Store size={22} className="text-emerald-icon" />
+                <Store size={22} color="#064E3B" />
               </div>
-              <h4 className="pillar-title">Verified Storefront</h4>
-              <p className="pillar-desc">Get a dedicated digital boutique URL for your bespoke fashion house.</p>
+              <h4 className="pillar-title">Digital Storefront</h4>
+              <p className="pillar-desc">Custom luxury storefront showcasing your craft to thousands of fashion lovers nationwide.</p>
             </div>
 
-            <div className="gate-pillar-item">
+            <div className="pillar-item">
               <div className="pillar-icon-box">
-                <ShoppingBag size={22} className="text-emerald-icon" />
+                <ShoppingBag size={22} color="#064E3B" />
               </div>
-              <h4 className="pillar-title">Order Management</h4>
-              <p className="pillar-desc">Accept custom sizing requests and track nationwide shipping.</p>
+              <h4 className="pillar-title">Bespoke SLA Orders</h4>
+              <p className="pillar-desc">48-hour order acceptance, real-time tailoring status tracker, and nationwide courier dispatch.</p>
             </div>
 
-            <div className="gate-pillar-item">
+            <div className="pillar-item">
               <div className="pillar-icon-box">
-                <ShieldCheck size={22} className="text-emerald-icon" />
+                <Landmark size={22} color="#064E3B" />
               </div>
               <h4 className="pillar-title">Automated Payouts</h4>
-              <p className="pillar-desc">Receive sales earnings directly into your Nigerian bank account.</p>
+              <p className="pillar-desc">Clear financial ledger accounting with direct settlements to your registered bank account.</p>
             </div>
           </div>
 
-          {/* Primary Action Buttons */}
           <div className="gate-actions-row">
-            <button className="btn-gate-primary" onClick={() => openAuthModal('login', 'designer')}>
-              <Lock size={16} />
-              <span>Log In as Designer</span>
+            <button
+              className="btn-primary-emerald"
+              onClick={() => openAuthModal('login', 'designer')}
+            >
+              <span>Sign In to Designer Portal</span>
+              <ArrowRight size={18} />
             </button>
 
-            <button className="btn-gate-secondary" onClick={() => openAuthModal('register', 'designer')}>
-              <Sparkles size={16} />
-              <span>Register Your Storefront</span>
-            </button>
-          </div>
-
-          {/* Interactive Demo Preview Option */}
-          <div className="gate-demo-preview">
-            <button className="btn-demo-preview" onClick={() => setPreviewDemo(true)}>
-              <span>Preview Designer Portal Interactive Demo</span>
-              <ArrowRight size={15} />
+            <button
+              className="btn-secondary-dark"
+              onClick={() => setPreviewDemo(true)}
+            >
+              <span>Preview Demo Portal</span>
             </button>
           </div>
         </div>
@@ -206,45 +280,68 @@ export const VendorDashboardPage: React.FC = () => {
     );
   }
 
-  const vp = user?.vendor_profile;
+  const storeSlug = user?.vendor_profile?.slug || 'lagos-couture';
+  const availableNaira = balance?.available_balance_naira ?? 0;
+  const pendingNaira = balance?.pending_balance_naira ?? 0;
+  const reservedNaira = balance?.reserved_balance_naira ?? 0;
+  const withdrawnNaira = balance?.withdrawn_balance_naira ?? 0;
 
   return (
-    <div className="designer-portal-wrapper">
-      {/* Top Designer Portal Sub-Navbar */}
-      <div className="designer-sub-navbar">
-        <div className="sub-navbar-container">
-          <nav className="designer-tab-links">
-            <button
-              className={`designer-tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
-            >
-              Dashboard
-            </button>
-            <button
-              className={`designer-tab-btn ${activeTab === 'products' ? 'active' : ''}`}
-              onClick={() => setActiveTab('products')}
-            >
-              Products
-            </button>
-            <button
-              className={`designer-tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-              onClick={() => setActiveTab('orders')}
-            >
-              Orders
-            </button>
-            <button
-              className={`designer-tab-btn ${activeTab === 'earnings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('earnings')}
-            >
-              Earnings & Verification
-            </button>
-            <button
-              className={`designer-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
-            >
-              Profile
-            </button>
-          </nav>
+    <div className="designer-portal-layout">
+      {/* Top Designer Header Bar */}
+      <div className="designer-top-bar">
+        <div className="designer-top-bar-inner">
+          <div className="designer-navbar-left">
+            <div className="designer-brand-badge">
+              <Sparkles size={16} color="#D4AF37" />
+              <span className="designer-brand-title">
+                {user?.vendor_profile?.store_name || 'STUDIO ATELIER'}
+              </span>
+              {user?.vendor_profile?.is_verified && (
+                <span className="badge-verified-designer">
+                  <CheckCircle2 size={12} />
+                  <span>VERIFIED</span>
+                </span>
+              )}
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="designer-nav-tabs">
+              <button
+                className={`designer-tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+                onClick={() => setActiveTab('dashboard')}
+              >
+                Overview
+              </button>
+              <button
+                className={`designer-tab-btn ${activeTab === 'products' ? 'active' : ''}`}
+                onClick={() => setActiveTab('products')}
+              >
+                Products
+              </button>
+              <button
+                className={`designer-tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
+                onClick={() => setActiveTab('orders')}
+              >
+                Orders & Fulfillment
+              </button>
+              <button
+                className={`designer-tab-btn ${activeTab === 'earnings' ? 'active' : ''}`}
+                onClick={() => setActiveTab('earnings')}
+              >
+                Earnings & Payouts
+              </button>
+              <a
+                href={`/store/${storeSlug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="designer-tab-btn tab-link-external"
+              >
+                <span>View Public Store</span>
+                <ArrowRight size={13} />
+              </a>
+            </div>
+          </div>
 
           <div className="designer-navbar-right">
             {previewDemo && (
@@ -292,20 +389,129 @@ export const VendorDashboardPage: React.FC = () => {
         )}
 
         {activeTab === 'orders' && (
-          <DashboardOverviewView
-            onNavigateToProducts={() => setActiveTab('products')}
-            onNavigateToOrders={() => setActiveTab('orders')}
-          />
+          <OrdersManagementView />
         )}
 
         {activeTab === 'earnings' && (
           <div className="earnings-verification-tab-view">
-            <div className="dashboard-welcome-header">
-              <h1 className="dashboard-serif-title">Earnings & Identity Verification (KYC)</h1>
-              <p className="dashboard-subtitle">Manage payout bank account details and submit government NIN verification.</p>
+            <div className="dashboard-welcome-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h1 className="dashboard-serif-title">Earnings, Ledger & Bank Settlements</h1>
+                <p className="dashboard-subtitle">Real-time marketplace balances, payout withdrawal requests, and immutable financial ledger.</p>
+              </div>
+              <button
+                className="btn-primary"
+                onClick={() => setShowWithdrawModal(true)}
+                disabled={availableNaira <= 0}
+                style={{ backgroundColor: '#064E3B', color: '#FFF', padding: '0.75rem 1.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}
+              >
+                <Landmark size={18} />
+                <span>Withdraw to Bank</span>
+              </button>
             </div>
 
-            <div className="dashboard-grid-main" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem', marginTop: '1.5rem' }}>
+            {/* 4 Financial Metric Cards */}
+            <div className="dashboard-stats-grid" style={{ marginTop: '1.5rem' }}>
+              <div className="stat-card">
+                <div className="stat-card-header">
+                  <span className="stat-label">AVAILABLE BALANCE</span>
+                  <div className="stat-icon-wrapper"><Wallet size={18} /></div>
+                </div>
+                <div className="stat-value">₦ {availableNaira.toLocaleString()}</div>
+                <div className="stat-meta text-emerald"><span>Ready for immediate payout</span></div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-card-header">
+                  <span className="stat-label">PENDING BALANCE</span>
+                  <div className="stat-icon-wrapper"><Clock size={18} /></div>
+                </div>
+                <div className="stat-value">₦ {pendingNaira.toLocaleString()}</div>
+                <div className="stat-meta text-muted"><span>72h Customer Protection Hold</span></div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-card-header">
+                  <span className="stat-label">RESERVED IN PAYOUT</span>
+                  <div className="stat-icon-wrapper"><Landmark size={18} /></div>
+                </div>
+                <div className="stat-value">₦ {reservedNaira.toLocaleString()}</div>
+                <div className="stat-meta text-muted"><span>Bank processing in progress</span></div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-card-header">
+                  <span className="stat-label">LIFETIME WITHDRAWN</span>
+                  <div className="stat-icon-wrapper"><History size={18} /></div>
+                </div>
+                <div className="stat-value">₦ {withdrawnNaira.toLocaleString()}</div>
+                <div className="stat-meta text-emerald"><span>Successfully settled to bank</span></div>
+              </div>
+            </div>
+
+            {/* LEDGER ENTRIES & PAYOUT REQUESTS SECTION */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
+              {/* Financial Ledger Log */}
+              <div className="dashboard-card" style={{ padding: '1.5rem' }}>
+                <div className="card-header-flex">
+                  <h3 className="card-heading">Financial Ledger Breakdown</h3>
+                  <span style={{ fontSize: '0.75rem', color: '#6B7280', fontFamily: 'monospace' }}>DOUBLE-ENTRY LEDGER</span>
+                </div>
+                {financeLoading ? (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#6B7280' }}><Loader size={20} className="cart-spinner" /></div>
+                ) : ledgerEntries.length === 0 ? (
+                  <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: '1.5rem 0' }}>No ledger transactions recorded yet.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                    {ledgerEntries.slice(0, 6).map((entry) => (
+                      <div key={entry.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: '#F9FAFB', borderRadius: '6px' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#111827' }}>{entry.description || entry.entry_type.replace(/_/g, ' ')}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>{new Date(entry.created_at).toLocaleString()}</div>
+                        </div>
+                        <div style={{ fontFamily: 'monospace', fontWeight: 700, color: entry.amount_naira >= 0 ? '#065F46' : '#991B1B' }}>
+                          {entry.amount_naira >= 0 ? '+' : ''}₦ {entry.amount_naira.toLocaleString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Payout Withdrawal History */}
+              <div className="dashboard-card" style={{ padding: '1.5rem' }}>
+                <div className="card-header-flex">
+                  <h3 className="card-heading">Withdrawal Requests</h3>
+                </div>
+                {financeLoading ? (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#6B7280' }}><Loader size={20} className="cart-spinner" /></div>
+                ) : payoutRequests.length === 0 ? (
+                  <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: '1.5rem 0' }}>No payout requests found.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                    {payoutRequests.slice(0, 6).map((req) => (
+                      <div key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: '#F9FAFB', borderRadius: '6px' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#111827' }}>
+                            {req.bank_name_snapshot || 'Bank Account'} {req.account_number_snapshot ? `(••••${req.account_number_snapshot.slice(-4)})` : ''}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>Ref: {req.reference} • {new Date(req.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontFamily: 'monospace', fontWeight: 700 }}>₦ {req.amount_naira.toLocaleString()}</div>
+                          <span className={`status-pill status-${req.status.toLowerCase()}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>
+                            {req.status.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* KYC & BANK ACCOUNT CONFIGURATION */}
+            <div className="dashboard-grid-main" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
               {/* CARD 1: Identity & Verification (KYC) */}
               <div className="payout-setup-card">
                 <div className="card-header-row">
@@ -458,11 +664,11 @@ export const VendorDashboardPage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">ACCOUNT NUMBER</label>
+                    <label className="form-label">10-DIGIT NUBAN ACCOUNT NUMBER</label>
                     <input
                       type="text"
                       className="input-field"
-                      placeholder="10-digit account number"
+                      placeholder="e.g. 0123456789"
                       maxLength={10}
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
@@ -472,29 +678,115 @@ export const VendorDashboardPage: React.FC = () => {
 
                   <div className="form-actions-right">
                     <button type="submit" className="btn-primary btn-save-details" disabled={loading}>
-                      {loading ? 'Saving...' : 'Save Bank Details'}
+                      {loading ? 'Saving...' : 'Save Payout Details'}
                     </button>
                   </div>
                 </form>
               </div>
             </div>
-          </div>
-        )}
 
-        {activeTab === 'profile' && (
-          <div className="profile-tab-view">
-            <div className="approved-banner" style={{ marginTop: '1rem' }}>
-              <div className="approved-badge-row">
-                <CheckCircle2 size={24} className="icon-success" />
-                <div>
-                  <h2>{vp?.store_name || 'Your Fashion House'} — Storefront Profile</h2>
-                  <p>Manage public bio, workshop address, and social links.</p>
+            {/* WITHDRAW MODAL IN EARNINGS TAB */}
+            {showWithdrawModal && (
+              <div className="designer-modal-overlay">
+                <div className="designer-modal-box" style={{ maxWidth: '440px' }}>
+                  <div className="modal-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Landmark size={20} color="#D4AF37" />
+                      <h3 style={{ margin: 0, fontSize: '1.2rem', fontFamily: 'Cinzel, Georgia, serif' }}>Withdraw Earnings</h3>
+                    </div>
+                    <button 
+                      onClick={() => setShowWithdrawModal(false)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280' }}
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div style={{ backgroundColor: '#F9FAFB', padding: '1rem', borderRadius: '8px', marginBottom: '1.25rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Available for Settlement</span>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#064E3B', fontFamily: 'monospace', marginTop: '0.2rem' }}>
+                      ₦ {availableNaira.toLocaleString()}
+                    </div>
+                    {bankAccount ? (
+                      <div style={{ fontSize: '0.8rem', color: '#4B5563', marginTop: '0.5rem' }}>
+                        To: <strong>{bankAccount.bank_name}</strong> • {bankAccount.account_number} ({bankAccount.account_name})
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.8rem', color: '#DC2626', marginTop: '0.5rem' }}>
+                        Please save a valid payout bank account below first.
+                      </div>
+                    )}
+                  </div>
+
+                  {withdrawModalError && (
+                    <div className="auth-error-alert" style={{ marginBottom: '1rem' }}>
+                      <AlertCircle size={16} />
+                      <span>{withdrawModalError}</span>
+                    </div>
+                  )}
+
+                  {withdrawModalSuccess && (
+                    <div className="alert-success-msg" style={{ marginBottom: '1rem' }}>
+                      <CheckCircle2 size={16} />
+                      <span>{withdrawModalSuccess}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleWithdrawalFromEarnings}>
+                    <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                      <label className="form-label">WITHDRAWAL AMOUNT (₦)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="100"
+                        max={availableNaira}
+                        className="input-field"
+                        placeholder="e.g. 25000"
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setWithdrawAmount(availableNaira.toString())}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#065F46',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          marginTop: '0.4rem',
+                          padding: 0
+                        }}
+                      >
+                        Withdraw All (₦{availableNaira.toLocaleString()})
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => setShowWithdrawModal(false)}
+                        disabled={withdrawSubmitting}
+                        style={{ padding: '0.6rem 1.2rem', borderRadius: '6px', cursor: 'pointer', border: '1px solid #D1D5DB', background: '#FFF' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn-primary"
+                        disabled={withdrawSubmitting || availableNaira <= 0}
+                        style={{ padding: '0.6rem 1.4rem', borderRadius: '6px', cursor: 'pointer', backgroundColor: '#064E3B', color: '#FFF', border: 'none' }}
+                      >
+                        {withdrawSubmitting ? 'Processing...' : 'Submit Withdrawal'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
-              <a href={`/store/${vp?.slug || 'lagos-couture'}`} className="btn-secondary-light">
-                View Public Storefront
-              </a>
-            </div>
+            )}
           </div>
         )}
       </div>
