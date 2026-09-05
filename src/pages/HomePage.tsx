@@ -1,5 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ArrowRight, Star, Sparkles, Store, ShieldCheck, Scissors, Clock } from 'lucide-react';
+import { 
+  ArrowRight, 
+  Star, 
+  Sparkles, 
+  Store, 
+  ShieldCheck, 
+  CreditCard,
+  ShoppingBag,
+  CheckCircle2,
+  Clock,
+  Compass,
+  Truck
+} from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { categoryApi, productApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -103,7 +115,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
 
   return (
     <div className="stitch-homepage">
-      {/* ── 1. Editorial Hero Section ── */}
+      
+      {/* ─── 1. HERO SECTION (Broad + Premium Positioning) ─── */}
       <section className="editorial-hero">
         <div className="editorial-hero-bg">
           <div className="editorial-hero-overlay"></div>
@@ -112,16 +125,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
         <div className="editorial-hero-content">
           <div className="hero-eyebrow">
             <Sparkles size={14} className="text-gold" />
-            <span>NIGERIAN LUXURY & BESPOKE CRAFTSMANSHIP</span>
+            <span>AUTHENTIC NIGERIAN FASHION MARKETPLACE</span>
           </div>
 
           <h1 className="editorial-hero-headline">
-            Authentic Nigerian <br />
-            <span>Craftsmanship.</span>
+            Authentic Nigerian Fashion. <br />
+            <span>Made by People Who Know Their Craft.</span>
           </h1>
 
           <p className="editorial-hero-subtitle">
-            A curated digital marketplace connecting discerning patrons with verified master tailors and bespoke fashion houses across Nigeria.
+            Shop ready-to-wear, traditional pieces, bespoke designs, and statement looks from verified independent Nigerian designers.
           </p>
 
           <div className="editorial-hero-actions">
@@ -131,30 +144,28 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
               }}
               className="btn-editorial-primary"
             >
-              <span>Explore The Edit</span>
+              <span>Explore The Marketplace</span>
               <ArrowRight size={16} />
             </button>
 
-            <button
-              onClick={() => {
-                document.getElementById('ateliers')?.scrollIntoView({ behavior: 'smooth' });
-              }}
+            <Link
+              to="/designers"
               className="btn-editorial-secondary"
             >
-              <span>Featured Ateliers</span>
-            </button>
+              <span>Explore Designers</span>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── 2. The Curated Edit (Catalog Showcase) ── */}
+      {/* ─── 2. THE CURATED MARKETPLACE (Live Products) ─── */}
       <section id="curated-edit" className="curated-edit-section">
         <div className="editorial-container">
           <div className="section-header-row">
             <div className="section-title-wrap">
-              <span className="section-eyebrow">SPRING / SUMMER CURATION</span>
+              <span className="section-eyebrow">MARKETPLACE CURATION</span>
               <h2 className="section-main-title">
-                {searchQuery ? `Search Results for "${searchQuery}"` : selectedCategory ? `${selectedCategory.toUpperCase()} COLLECTION` : 'The Curated Edit'}
+                {searchQuery ? `Search Results for "${searchQuery}"` : selectedCategory ? `${selectedCategory.toUpperCase()} COLLECTION` : 'Explore The Collection'}
               </h2>
             </div>
 
@@ -168,7 +179,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
             )}
           </div>
 
-          {/* Minimal Category Tabs */}
+          {/* Category Tabs */}
           <div className="editorial-category-tabs">
             <button
               onClick={() => handleCategorySelect(null)}
@@ -201,57 +212,71 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
             </div>
           ) : (
             <div className="editorial-products-grid">
-              {safeProducts.map((prod) => (
-                <Link key={prod.id} to={`/products/${prod.slug}`} className="luxury-product-card">
-                  <div className="card-image-box">
-                    <div
-                      className="card-image"
-                      style={{ backgroundImage: `url(${prod.primary_image_url || (prod.media && prod.media[0]?.url) || '/traditional-men-1.png'})` }}
-                    />
-                    {prod.average_rating && (
-                      <div className="card-rating-badge">
-                        <Star size={11} fill="#D4AF37" color="#D4AF37" />
-                        <span>{Number(prod.average_rating).toFixed(1)}</span>
-                      </div>
-                    )}
-                  </div>
+              {safeProducts.map((prod) => {
+                const prepDays = prod.preparation_time_days || 3;
+                const priceNaira = prod.base_price_naira ?? (prod.base_price_kobo ? Math.round(prod.base_price_kobo / 100) : 0);
+                const ratingNum = prod.average_rating ? Number(prod.average_rating) : 0;
+                const reviewCount = prod.review_count || 0;
 
-                  <div className="card-details">
-                    <div className="card-meta-top">
-                      <span className="card-atelier-name">{prod.vendor?.store_name || 'Bespoke Atelier'}</span>
-                      {prod.preparation_time_days && (
-                        <span className="card-prep-time">
-                          <Clock size={11} /> {prod.preparation_time_days}d bespoke
-                        </span>
+                return (
+                  <Link key={prod.id} to={`/products/${prod.slug || prod.id}`} className="luxury-product-card">
+                    <div className="card-image-box">
+                      <div
+                        className="card-image"
+                        style={{ backgroundImage: `url(${prod.primary_image_url || (prod.media && prod.media[0]?.url) || '/traditional-men-1.png'})` }}
+                      />
+                      
+                      {/* Fixed Rating Badge: Only show real rating, never show 0.0 */}
+                      {ratingNum > 0 ? (
+                        <div className="card-rating-badge">
+                          <Star size={11} fill="#D4AF37" color="#D4AF37" />
+                          <span>{ratingNum.toFixed(1)} {reviewCount > 0 && `(${reviewCount})`}</span>
+                        </div>
+                      ) : (
+                        <div className="card-rating-badge new-badge">
+                          <span>New Arrival</span>
+                        </div>
                       )}
+
+                      {/* Commercial Delivery / Lead Time Badge */}
+                      <div className="card-leadtime-badge">
+                        {prepDays <= 2 ? 'Ready to Ship' : `Made to Order (${prepDays}d)`}
+                      </div>
                     </div>
 
-                    <h3 className="card-product-title">{prod.title}</h3>
+                    <div className="card-details">
+                      <div className="card-meta-top">
+                        <span className="card-atelier-name">{prod.vendor?.store_name || 'Verified Designer'}</span>
+                        <span className="card-verified-dot" title="Verified Designer">✓ Verified</span>
+                      </div>
 
-                    <div className="card-price-row">
-                      <span className="card-price-naira">
-                        ₦{(prod.base_price_naira ?? (prod.base_price_kobo ? Math.round(prod.base_price_kobo / 100) : 0)).toLocaleString()}
-                      </span>
-                      <span className="card-view-link">
-                        View Piece <ArrowRight size={13} />
-                      </span>
+                      <h3 className="card-product-title">{prod.title}</h3>
+
+                      <div className="card-price-row">
+                        <span className="card-price-naira">
+                          ₦{priceNaira.toLocaleString()}
+                        </span>
+                        <span className="card-view-link">
+                          View Piece <ArrowRight size={13} />
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>
       </section>
 
-      {/* ── 3. Master Ateliers & Boutiques Spotlight ── */}
-      <section id="ateliers" className="ateliers-spotlight-section">
+      {/* ─── 4. FEATURED DESIGNERS SPOTLIGHT ─── */}
+      <section id="designers" className="ateliers-spotlight-section">
         <div className="editorial-container">
           <div className="section-header-center">
-            <span className="section-eyebrow">VERIFIED HOUSES</span>
-            <h2 className="section-main-title">Master Ateliers</h2>
+            <span className="section-eyebrow">VERIFIED TALENT</span>
+            <h2 className="section-main-title">Featured Designers</h2>
             <p className="section-sub-desc">
-              Direct access to Nigeria’s premier independent fashion houses and master tailors.
+              Direct access to verified Nigerian fashion houses, independent design hubs, and master tailors nationwide.
             </p>
           </div>
 
@@ -276,10 +301,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
                       </p>
                     </div>
                     <p className="atelier-bio">
-                      {v.description || 'Premier bespoke Nigerian fashion atelier.'}
+                      {v.description || 'Verified Nigerian bespoke fashion designer.'}
                     </p>
                     <div className="atelier-link">
-                      <span>Visit Boutique</span>
+                      <span>Visit Designer Storefront</span>
                       <ArrowRight size={14} />
                     </div>
                   </div>
@@ -287,7 +312,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
               ))
             ) : (
               <>
-                {/* Fallback Atelier 1 */}
+                {/* Fallback Designer 1 */}
                 <Link to="/store/lagos-couture" className="atelier-card">
                   <div className="atelier-banner" style={{ backgroundImage: "url('/hero-bg.png')" }}>
                     <div className="atelier-avatar" style={{ backgroundImage: "url('/traditional-men-1.png')" }} />
@@ -298,50 +323,50 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
                       <p className="atelier-location">Victoria Island, Lagos • 4.9 ★ (38)</p>
                     </div>
                     <p className="atelier-bio">
-                      Premier Nigerian bespoke house crafting royal Agbadas & Senator kaftans with heritage Italian wools.
+                      Premier Nigerian house crafting modern Agbadas, Senator suits &amp; bespoke ceremonial menswear.
                     </p>
                     <div className="atelier-link">
-                      <span>Visit Boutique</span>
+                      <span>Visit Designer Storefront</span>
                       <ArrowRight size={14} />
                     </div>
                   </div>
                 </Link>
 
-                {/* Fallback Atelier 2 */}
+                {/* Fallback Designer 2 */}
                 <Link to="/store/heritage-cuts" className="atelier-card">
                   <div className="atelier-banner" style={{ backgroundImage: "url('/traditional-men-2.png')" }}>
                     <div className="atelier-avatar" style={{ backgroundImage: "url('/traditional-men-3.png')" }} />
                   </div>
                   <div className="atelier-content">
                     <div className="atelier-header-info">
-                      <h3 className="atelier-name">Heritage Cuts & Threads</h3>
+                      <h3 className="atelier-name">Heritage Cuts &amp; Threads</h3>
                       <p className="atelier-location">Maitama, Abuja • 4.8 ★ (24)</p>
                     </div>
                     <p className="atelier-bio">
-                      Bespoke African menswear and structured ceremonial suiting handcrafted by master tailors.
+                      Structured African menswear, Senator sets, and contemporary traditional tailoring.
                     </p>
                     <div className="atelier-link">
-                      <span>Visit Boutique</span>
+                      <span>Visit Designer Storefront</span>
                       <ArrowRight size={14} />
                     </div>
                   </div>
                 </Link>
 
-                {/* Fallback Atelier 3 */}
+                {/* Fallback Designer 3 */}
                 <Link to="/store/adire-house" className="atelier-card">
                   <div className="atelier-banner" style={{ backgroundImage: "url('/adire-1.png')" }}>
                     <div className="atelier-avatar" style={{ backgroundImage: "url('/adire-2.png')" }} />
                   </div>
                   <div className="atelier-content">
                     <div className="atelier-header-info">
-                      <h3 className="atelier-name">Adire Mastercraft Atelier</h3>
+                      <h3 className="atelier-name">Adire Craft Collective</h3>
                       <p className="atelier-location">Ibadan, Oyo State • 5.0 ★ (52)</p>
                     </div>
                     <p className="atelier-bio">
-                      Contemporary indigo dyed textiles, modern Adire dresses, and luxury silk-blend creations.
+                      Contemporary indigo dyed textiles, modern Adire dresses, and vibrant silk-blend creations.
                     </p>
                     <div className="atelier-link">
-                      <span>Visit Boutique</span>
+                      <span>Visit Designer Storefront</span>
                       <ArrowRight size={14} />
                     </div>
                   </div>
@@ -352,74 +377,137 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
         </div>
       </section>
 
-      {/* ── 4. The Aso Standard (Quiet Luxury Value Pillars) ── */}
-      <section className="aso-standard-section">
+      {/* ─── 5. HOW ASO WORKS (New Clear 4-Step Marketplace Walkthrough) ─── */}
+      <section className="how-aso-works-section">
         <div className="editorial-container">
-          <div className="standard-grid">
-            <div className="standard-pillar">
-              <div className="pillar-icon-box">
-                <Scissors size={20} />
-              </div>
-              <h3 className="pillar-title">Bespoke Precision</h3>
-              <p className="pillar-text">
-                Every piece is individually handcrafted to exact measurements by verified master tailors.
+          <div className="section-header-center">
+            <span className="section-eyebrow">SIMPLE &amp; RELIABLE</span>
+            <h2 className="section-main-title">How Aso Works</h2>
+            <p className="section-sub-desc">
+              Discover, order, and receive authentic Nigerian fashion with complete peace of mind.
+            </p>
+          </div>
+
+          <div className="how-steps-grid">
+            <div className="how-step-card">
+              <div className="step-num-badge">01</div>
+              <div className="step-icon-box"><Compass size={22} color="#00322D" /></div>
+              <h3 className="step-title">Discover</h3>
+              <p className="step-desc">
+                Explore pieces from verified independent designers across Nigeria, all in one marketplace.
               </p>
             </div>
 
-            <div className="standard-pillar">
-              <div className="pillar-icon-box">
-                <ShieldCheck size={20} />
-              </div>
-              <h3 className="pillar-title">72h Protection Escrow</h3>
-              <p className="pillar-text">
-                Your payment is securely reserved in escrow until your garment arrives and matches specifications.
+            <div className="how-step-card">
+              <div className="step-num-badge">02</div>
+              <div className="step-icon-box"><ShoppingBag size={22} color="#00322D" /></div>
+              <h3 className="step-title">Order</h3>
+              <p className="step-desc">
+                Choose your piece, select your ready-to-wear size or submit custom measurements, and securely pay online.
               </p>
             </div>
 
-            <div className="standard-pillar">
-              <div className="pillar-icon-box">
-                <Store size={20} />
-              </div>
-              <h3 className="pillar-title">Direct Atelier Access</h3>
-              <p className="pillar-text">
-                Direct transparent access to independent Nigerian design studios without intermediary markup.
+            <div className="how-step-card">
+              <div className="step-num-badge">03</div>
+              <div className="step-icon-box"><Clock size={22} color="#00322D" /></div>
+              <h3 className="step-title">We Coordinate</h3>
+              <p className="step-desc">
+                The designer accepts and prepares your piece while Aso tracks fulfillment and logistics milestones.
+              </p>
+            </div>
+
+            <div className="how-step-card">
+              <div className="step-num-badge">04</div>
+              <div className="step-icon-box"><Truck size={22} color="#00322D" /></div>
+              <h3 className="step-title">Receive</h3>
+              <p className="step-desc">
+                Your order is safely dispatched and delivered directly to your doorstep with tracking updates.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 5. Atelier Invitation (Subtle & Elegant) ── */}
+      {/* ─── 6. WHY SHOP ON ASO (Marketplace Trust Pillars) ─── */}
+      <section className="aso-standard-section">
+        <div className="editorial-container">
+          <div className="section-header-center" style={{ marginBottom: '2.5rem' }}>
+            <span className="section-eyebrow">BUY WITH CONFIDENCE</span>
+            <h2 className="section-main-title">Why Shop on Aso</h2>
+          </div>
+
+          <div className="standard-grid">
+            <div className="standard-pillar">
+              <div className="pillar-icon-box">
+                <CheckCircle2 size={22} color="#00322D" />
+              </div>
+              <h3 className="pillar-title">Verified Designers</h3>
+              <p className="pillar-text">
+                Every designer on Aso goes through a verification process before they can sell on the marketplace.
+              </p>
+            </div>
+
+            <div className="standard-pillar">
+              <div className="pillar-icon-box">
+                <CreditCard size={22} color="#00322D" />
+              </div>
+              <h3 className="pillar-title">Secure Online Payments</h3>
+              <p className="pillar-text">
+                Pay safely with your debit card or bank transfer without having to send money directly to strangers on social media.
+              </p>
+            </div>
+
+            <div className="standard-pillar">
+              <div className="pillar-icon-box">
+                <ShieldCheck size={22} color="#00322D" />
+              </div>
+              <h3 className="pillar-title">72h Buyer Protection</h3>
+              <p className="pillar-text">
+                Your payment remains securely protected while your order is being fulfilled, giving you time to inspect your delivery.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 7. DESIGNER ONBOARDING CTA (Commercial & WhatsApp/IG Focused) ─── */}
       <section className="atelier-invite-section">
         <div className="editorial-container">
           <div className="invite-box">
             <span className="invite-eyebrow">
-              {isDesigner ? 'STUDIO MANAGEMENT' : 'PARTNER WITH ASO'}
+              {isDesigner ? 'STUDIO MANAGEMENT' : 'SELL ON ASO'}
             </span>
             <h2 className="invite-title">
-              {isDesigner ? 'Your Bespoke Fashion Studio is Live' : 'Are You a Fashion Designer in Nigeria?'}
+              {isDesigner 
+                ? 'Your Fashion Studio is Live on Aso' 
+                : 'Turn Your Instagram & WhatsApp Customers Into Orders.'}
             </h2>
             <p className="invite-text">
               {isDesigner
-                ? 'Manage your catalogue, track 48h SLA customer orders, monitor double-entry ledger balances, and request payout withdrawals.'
-                : 'Join Nigeria’s premier digital luxury marketplace. Showcase bespoke collections to patrons worldwide with guaranteed digital payments.'}
+                ? 'Manage your live product catalogue, process client orders, track delivery dispatches, and withdraw settlements directly to your Nigerian bank account.'
+                : 'Create your own digital storefront on Aso, upload your designs, accept verified online payments, and manage all your customer orders from one place.'}
             </p>
 
-            {isDesigner ? (
-              <button onClick={() => navigate('/vendor/dashboard')} className="btn-invite-action">
-                <Store size={16} />
-                <span>Go to Studio Dashboard</span>
-                <ArrowRight size={16} />
-              </button>
-            ) : (
-              <button onClick={onOpenVendorRegister} className="btn-invite-action">
-                <span>Onboard Your Atelier</span>
-                <ArrowRight size={16} />
-              </button>
-            )}
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+              {isDesigner ? (
+                <button onClick={() => navigate('/vendor/dashboard')} className="btn-invite-action">
+                  <Store size={16} />
+                  <span>Go to Studio Dashboard</span>
+                  <ArrowRight size={16} />
+                </button>
+              ) : (
+                <button onClick={onOpenVendorRegister} className="btn-invite-action">
+                  <span>Start Selling on Aso</span>
+                  <ArrowRight size={16} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </section>
+
     </div>
   );
 };
+
+export default HomePage;

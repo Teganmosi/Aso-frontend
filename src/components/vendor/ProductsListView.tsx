@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   Plus, 
   Package, 
-  CheckCircle2, 
-  AlertCircle, 
   Search, 
   Edit3, 
   Trash2,
-  Clock
+  Clock,
+  Layers
 } from 'lucide-react';
 import { categoryApi, productApi } from '../../api/client';
 import type { Category, ProductItem } from '../../types';
@@ -23,10 +22,11 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [selectedStatus, setSelectedStatus] = useState('All Statuses');
+  const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'ACTIVE' | 'PENDING' | 'DRAFT' | 'OUT_OF_STOCK'>('ALL');
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<ProductItem[]>([]);
-  const [_loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
   const loadVendorProducts = async () => {
     setLoading(true);
@@ -60,40 +60,17 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
             image_url: p.primary_image_url || '/traditional-men-1.png',
             created_at: new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
             description: p.description,
-            preparation_time: `${p.preparation_time_days} Days`,
+            preparation_time: `${p.preparation_time_days || 3} Days`,
             raw_product: p,
           };
         });
         setProducts(mapped);
       } else {
-        // Fallback default sample data if vendor hasn't created any products yet
-        setProducts([
-          {
-            id: 'p1',
-            name: 'Indigo Adire Agbada',
-            sku: 'ASO-0921-A',
-            category: "Men's Traditional",
-            price: 145000,
-            stock_quantity: 15,
-            status: 'Active',
-            image_url: '/traditional-men-1.png',
-            created_at: 'Oct 12, 2023',
-          },
-          {
-            id: 'p2',
-            name: 'Gold Aso-Oke Gele',
-            sku: 'ASO-1044-G',
-            category: "Women's Accessories",
-            price: 32500,
-            stock_quantity: 2,
-            status: 'Active',
-            image_url: '/adire-1.png',
-            created_at: 'Nov 05, 2023',
-          },
-        ]);
+        setProducts([]);
       }
     } catch (err) {
       console.error('Error fetching vendor products:', err);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -103,212 +80,268 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
     loadVendorProducts();
   }, []);
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this product listing?')) return;
+  const handleDeleteProduct = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to remove "${name}" from your atelier catalog?`)) {
+      return;
+    }
     try {
       await productApi.deleteVendorProduct(id);
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+      setProducts(products.filter((p) => p.id !== id));
     } catch (err) {
-      console.error('Failed to delete product', err);
-      alert('Failed to delete product.');
+      setProducts(products.filter((p) => p.id !== id));
     }
   };
 
-  const filteredProducts = products.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All Categories' || item.category === selectedCategory;
-    const matchesStatus = selectedStatus === 'All Statuses' || item.status === selectedStatus;
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  const filteredProducts = useMemo(() => {
+    return products.filter((item) => {
+      const matchesSearch =
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.sku.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory =
+        selectedCategory === 'All Categories' || item.category === selectedCategory;
 
-  const totalProducts = products.length;
-  const activeListings = products.filter((p) => p.status === 'Active').length;
-  const pendingApproval = products.filter((p) => p.status === 'Pending Approval').length;
-  const outOfStock = products.filter((p) => p.stock_quantity === 0).length;
+      let matchesStatus = true;
+      if (selectedStatus === 'ACTIVE') matchesStatus = item.status === 'Active';
+      else if (selectedStatus === 'PENDING') matchesStatus = item.status === 'Pending Approval';
+      else if (selectedStatus === 'DRAFT') matchesStatus = item.status === 'Draft';
+      else if (selectedStatus === 'OUT_OF_STOCK') matchesStatus = item.status === 'Out of Stock';
+
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+  }, [products, searchQuery, selectedCategory, selectedStatus]);
+
+  const activeCount = products.filter((p) => p.status === 'Active').length;
+  const pendingCount = products.filter((p) => p.status === 'Pending Approval').length;
+  const draftCount = products.filter((p) => p.status === 'Draft').length;
 
   return (
-    <div className="designer-products-list-view">
+    <div className="products-list-view">
       {/* Top Header */}
-      <div className="products-list-header">
+      <div className="dashboard-welcome-header">
         <div>
-          <h1 className="dashboard-serif-title">Vendor Dashboard</h1>
-          <p className="dashboard-subtitle">Manage your inventory, track status, and update listings.</p>
+          <h1 className="dashboard-serif-title">Garment Catalogue & Inventory</h1>
+          <p className="dashboard-subtitle">
+            Manage your bespoke creations, update live pricing, sizes, and publish new luxury pieces.
+          </p>
         </div>
-        <button className="btn-primary-emerald" onClick={onAddNewProduct}>
-          <Plus size={18} />
-          <span>Add New Product</span>
+        <button className="btn-action-primary" onClick={onAddNewProduct}>
+          <Plus size={16} />
+          <span>Upload New Garment</span>
         </button>
       </div>
 
-      {/* 4 Metric Cards */}
-      <div className="dashboard-stats-grid">
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-label">TOTAL PRODUCTS</span>
-            <div className="stat-icon-wrapper">
-              <Package size={18} />
-            </div>
-          </div>
-          <div className="stat-value">{totalProducts}</div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-label">ACTIVE LISTINGS</span>
-            <div className="stat-icon-wrapper icon-teal">
-              <CheckCircle2 size={18} />
-            </div>
-          </div>
-          <div className="stat-value">{activeListings}</div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-label">PENDING APPROVAL</span>
-            <div className="stat-icon-wrapper icon-warning">
-              <Clock size={18} />
-            </div>
-          </div>
-          <div className="stat-value text-amber">{pendingApproval}</div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-label">OUT OF STOCK</span>
-            <div className="stat-icon-wrapper icon-red">
-              <AlertCircle size={18} />
-            </div>
-          </div>
-          <div className="stat-value text-red">{outOfStock}</div>
-        </div>
+      {/* Status Filter Tabs */}
+      <div className="product-status-tabs-row">
+        <button
+          className={`status-filter-tab ${selectedStatus === 'ALL' ? 'active' : ''}`}
+          onClick={() => setSelectedStatus('ALL')}
+        >
+          <span>All Garments</span>
+          <span className="count-pill">{products.length}</span>
+        </button>
+        <button
+          className={`status-filter-tab ${selectedStatus === 'ACTIVE' ? 'active' : ''}`}
+          onClick={() => setSelectedStatus('ACTIVE')}
+        >
+          <span>Published & Live</span>
+          <span className="count-pill count-active">{activeCount}</span>
+        </button>
+        <button
+          className={`status-filter-tab ${selectedStatus === 'PENDING' ? 'active' : ''}`}
+          onClick={() => setSelectedStatus('PENDING')}
+        >
+          <span>Pending Moderation</span>
+          <span className="count-pill count-pending">{pendingCount}</span>
+        </button>
+        <button
+          className={`status-filter-tab ${selectedStatus === 'DRAFT' ? 'active' : ''}`}
+          onClick={() => setSelectedStatus('DRAFT')}
+        >
+          <span>Drafts</span>
+          <span className="count-pill">{draftCount}</span>
+        </button>
       </div>
 
-      {/* Filter & Search Bar Row */}
-      <div className="products-filter-bar">
-        <div className="search-input-wrapper">
+      {/* Search & Filter Bar */}
+      <div className="products-controls-bar">
+        <div className="search-box-wrapper">
           <Search size={16} className="search-icon" />
           <input
             type="text"
-            className="filter-search-input"
-            placeholder="Search products..."
+            placeholder="Search by garment title, SKU or fabric..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          {searchQuery && (
+            <button className="clear-btn" onClick={() => setSearchQuery('')}>×</button>
+          )}
         </div>
 
-        <select
-          className="filter-select"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          <option value="All Categories">All Categories</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.name}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
+        <div className="category-select-wrapper">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="styled-select"
+          >
+            <option value="All Categories">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>{c.name}</option>
+            ))}
+          </select>
+        </div>
 
-        <select
-          className="filter-select"
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-        >
-          <option value="All Statuses">All Statuses</option>
-          <option value="Active">Active</option>
-          <option value="Pending Approval">Pending Approval</option>
-          <option value="Out of Stock">Out of Stock</option>
-          <option value="Draft">Draft</option>
-        </select>
+        <div className="view-mode-toggle">
+          <button
+            className={`mode-btn ${viewMode === 'table' ? 'active' : ''}`}
+            onClick={() => setViewMode('table')}
+            title="Table View"
+          >
+            <Layers size={16} />
+          </button>
+          <button
+            className={`mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            onClick={() => setViewMode('grid')}
+            title="Grid View"
+          >
+            <Package size={16} />
+          </button>
+        </div>
       </div>
 
-      {/* Products Table Card */}
-      <div className="dashboard-card table-card">
-        <div className="table-responsive">
-          <table className="designer-table">
+      {/* Main Content Area */}
+      {loading ? (
+        <div className="loading-state-card">
+          <div className="storefront-spinner" />
+          <p>Syncing atelier inventory...</p>
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="empty-products-card">
+          <Package size={48} color="#9CA3AF" />
+          <h3>No garments found</h3>
+          <p>Try refining your search terms or upload a new garment to your collection.</p>
+          <button className="btn-action-primary" onClick={onAddNewProduct}>
+            <Plus size={16} />
+            <span>Upload New Garment</span>
+          </button>
+        </div>
+      ) : viewMode === 'table' ? (
+        /* TABLE VIEW */
+        <div className="products-table-card">
+          <table className="styled-inventory-table">
             <thead>
               <tr>
-                <th>PRODUCT</th>
-                <th>CATEGORY</th>
-                <th>PRICE (₦)</th>
-                <th>PREPARATION</th>
-                <th>STATUS</th>
-                <th>CREATED</th>
-                <th style={{ textAlign: 'right' }}>ACTIONS</th>
+                <th>Garment</th>
+                <th>Category</th>
+                <th>Price (₦)</th>
+                <th>Turnaround</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((product) => (
-                <tr key={product.id}>
-                  <td>
-                    <div className="table-product-cell">
-                      <img 
-                        src={product.image_url} 
-                        alt={product.name} 
-                        className="table-product-thumb" 
-                      />
-                      <div>
-                        <div className="product-title-bold">{product.name}</div>
-                        <div className="product-sku-sub">SKU: {product.sku}</div>
+              {filteredProducts.map((p) => {
+                const statusClass =
+                  p.status === 'Active'
+                    ? 'pill-active'
+                    : p.status === 'Pending Approval'
+                    ? 'pill-pending'
+                    : 'pill-draft';
+
+                return (
+                  <tr key={p.id}>
+                    <td>
+                      <div className="product-table-identity">
+                        <img
+                          src={p.image_url}
+                          alt={p.name}
+                          className="table-product-thumb"
+                        />
+                        <div>
+                          <strong className="table-product-title">{p.name}</strong>
+                          <span className="table-sku">SKU: {p.sku}</span>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="text-secondary">{product.category}</td>
-                  <td className="font-mono font-bold">
-                    ₦ {product.price.toLocaleString()}
-                  </td>
-                  <td className="text-secondary">
-                    {product.preparation_time || '3 Days'}
-                  </td>
-                  <td>
-                    <span className={`status-badge badge-${product.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                      {product.status}
-                    </span>
-                  </td>
-                  <td className="text-secondary">{product.created_at}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div className="table-actions-group">
-                      {onEditProduct && (
-                        <button 
-                          className="icon-action-btn" 
-                          title="Edit product"
-                          onClick={() => onEditProduct(product)}
+                    </td>
+                    <td>
+                      <span className="table-category-tag">{p.category}</span>
+                    </td>
+                    <td>
+                      <strong className="table-price">₦ {p.price.toLocaleString()}</strong>
+                    </td>
+                    <td>
+                      <div className="prep-time-badge">
+                        <Clock size={12} />
+                        <span>{p.preparation_time || '3 Days'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`inventory-status-pill ${statusClass}`}>
+                        {p.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="table-row-actions">
+                        <button
+                          className="btn-icon-action"
+                          onClick={() => onEditProduct && onEditProduct(p)}
+                          title="Edit Garment"
                         >
-                          <Edit3 size={16} />
+                          <Edit3 size={15} />
                         </button>
-                      )}
-                      <button 
-                        className="icon-action-btn text-red" 
-                        title="Delete product"
-                        onClick={() => handleDeleteProduct(product.id)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        <button
+                          className="btn-icon-action danger"
+                          onClick={() => handleDeleteProduct(p.id, p.name)}
+                          title="Delete Garment"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
-
-        {/* Pagination Footer */}
-        <div className="table-pagination-footer">
-          <div className="pagination-info">
-            Showing 1 to {filteredProducts.length} of 124 entries
-          </div>
-          <div className="pagination-buttons">
-            <button className="page-btn">Previous</button>
-            <button className="page-btn active">1</button>
-            <button className="page-btn">2</button>
-            <button className="page-btn">3</button>
-            <span className="page-ellipsis">...</span>
-            <button className="page-btn">12</button>
-            <button className="page-btn">Next</button>
-          </div>
+      ) : (
+        /* GRID VIEW */
+        <div className="products-grid-view-layout">
+          {filteredProducts.map((p) => (
+            <div key={p.id} className="grid-product-card">
+              <div className="grid-card-img-wrap">
+                <img src={p.image_url} alt={p.name} />
+                <span className={`grid-status-badge ${p.status === 'Active' ? 'active' : 'pending'}`}>
+                  {p.status}
+                </span>
+              </div>
+              <div className="grid-card-content">
+                <span className="grid-cat">{p.category}</span>
+                <h4 className="grid-title">{p.name}</h4>
+                <div className="grid-bottom-row">
+                  <strong className="grid-price">₦ {p.price.toLocaleString()}</strong>
+                  <div className="grid-actions">
+                    <button
+                      className="btn-icon-action"
+                      onClick={() => onEditProduct && onEditProduct(p)}
+                    >
+                      <Edit3 size={14} />
+                    </button>
+                    <button
+                      className="btn-icon-action danger"
+                      onClick={() => handleDeleteProduct(p.id, p.name)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 };
+
+export default ProductsListView;

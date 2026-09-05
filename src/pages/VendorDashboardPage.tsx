@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { vendorApi, payoutApi } from '../api/client';
 import type { BankAccount, VendorBalance, PayoutRequest, LedgerEntry } from '../types';
@@ -11,7 +12,6 @@ import {
   FileText, 
   MapPin, 
   Bell, 
-  Plus, 
   Sparkles, 
   ShoppingBag, 
   ArrowRight,
@@ -19,20 +19,53 @@ import {
   Clock,
   History,
   X,
-  Loader
+  Loader,
+  LogOut,
+  Home,
+  User as UserIcon,
+  ExternalLink
 } from 'lucide-react';
+import { Logo } from '../components/layout/Logo';
 import { DashboardOverviewView } from '../components/vendor/DashboardOverviewView';
 import { ProductsListView } from '../components/vendor/ProductsListView';
 import { AddProductView } from '../components/vendor/AddProductView';
 import { OrdersManagementView } from '../components/vendor/OrdersManagementView';
+import { DesignerProfileView } from '../components/vendor/DesignerProfileView';
 import './VendorDashboardPage.css';
 
 export type DesignerPortalTab = 'dashboard' | 'products' | 'add-product' | 'orders' | 'earnings' | 'profile';
 
 export const VendorDashboardPage: React.FC = () => {
-  const { user, refreshMe, openAuthModal } = useAuth();
+  const { user, refreshMe, openAuthModal, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<DesignerPortalTab>('dashboard');
   const [previewDemo, setPreviewDemo] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Logout failed', err);
+    } finally {
+      navigate('/');
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setShowProfileDropdown(false);
+      }
+    };
+    if (showProfileDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileDropdown]);
 
   // Financial Ledger & Payout States
   const [balance, setBalance] = useState<VendorBalance | null>(null);
@@ -220,6 +253,10 @@ export const VendorDashboardPage: React.FC = () => {
     return (
       <div className="designer-portal-gate-wrapper">
         <div className="designer-gate-card">
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+            <Logo option={2} variant="dark" showTagline={true} />
+          </div>
+
           <div className="gate-badge">
             <Sparkles size={15} color="#D4AF37" />
             <span>DESIGNER PORTAL ACCESS</span>
@@ -275,12 +312,30 @@ export const VendorDashboardPage: React.FC = () => {
               <span>Preview Demo Portal</span>
             </button>
           </div>
+
+          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <Link
+              to="/"
+              style={{
+                fontSize: '0.875rem',
+                color: '#4B5563',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontWeight: 500
+              }}
+            >
+              <Home size={15} />
+              <span>← Back to Aso Customer Marketplace</span>
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  const storeSlug = user?.vendor_profile?.slug || 'lagos-couture';
+  const storeSlug = user?.vendor_profile?.slug || (user?.first_name ? user.first_name.toLowerCase().replace(/\s+/g, '-') : '');
   const availableNaira = balance?.available_balance_naira ?? 0;
   const pendingNaira = balance?.pending_balance_naira ?? 0;
   const reservedNaira = balance?.reserved_balance_naira ?? 0;
@@ -288,81 +343,177 @@ export const VendorDashboardPage: React.FC = () => {
 
   return (
     <div className="designer-portal-layout">
-      {/* Top Designer Header Bar */}
-      <div className="designer-top-bar">
-        <div className="designer-top-bar-inner">
-          <div className="designer-navbar-left">
-            <div className="designer-brand-badge">
-              <Sparkles size={16} color="#D4AF37" />
-              <span className="designer-brand-title">
-                {user?.vendor_profile?.store_name || 'STUDIO ATELIER'}
-              </span>
-              {user?.vendor_profile?.is_verified && (
-                <span className="badge-verified-designer">
-                  <CheckCircle2 size={12} />
-                  <span>VERIFIED</span>
-                </span>
-              )}
-            </div>
-
-            {/* Navigation Tabs */}
-            <div className="designer-nav-tabs">
-              <button
-                className={`designer-tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={() => setActiveTab('dashboard')}
-              >
-                Overview
-              </button>
-              <button
-                className={`designer-tab-btn ${activeTab === 'products' ? 'active' : ''}`}
-                onClick={() => setActiveTab('products')}
-              >
-                Products
-              </button>
-              <button
-                className={`designer-tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-                onClick={() => setActiveTab('orders')}
-              >
-                Orders & Fulfillment
-              </button>
-              <button
-                className={`designer-tab-btn ${activeTab === 'earnings' ? 'active' : ''}`}
-                onClick={() => setActiveTab('earnings')}
-              >
-                Earnings & Payouts
-              </button>
-              <a
-                href={`/store/${storeSlug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="designer-tab-btn tab-link-external"
-              >
-                <span>View Public Store</span>
-                <ArrowRight size={13} />
-              </a>
-            </div>
+      {/* Top Aso Studio Header Bar */}
+      <header className="heritage-dashboard-header">
+        <div className="heritage-header-inner">
+          {/* Brand Logo */}
+          <div className="heritage-header-left">
+            <Link
+              to="/vendor/dashboard"
+              className="heritage-brand-logo-link"
+              style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+              title="Aso Marketplace Designer Studio"
+            >
+              <Logo option={2} variant="dark" showTagline={true} />
+            </Link>
           </div>
 
-          <div className="designer-navbar-right">
-            {previewDemo && (
-              <span className="demo-mode-pill">DEMO MODE ACTIVE</span>
-            )}
+          {/* Navigation Tabs (Desktop) */}
+          <nav className="heritage-nav-links">
             <button
-              className="btn-add-product-shortcut"
-              onClick={() => setActiveTab('add-product')}
+              className={`heritage-nav-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dashboard')}
             >
-              <Plus size={15} />
-              <span>Add Product</span>
+              Dashboard
             </button>
-            <button className="designer-icon-btn" title="Notifications">
+            <button
+              className={`heritage-nav-btn ${activeTab === 'products' ? 'active' : ''}`}
+              onClick={() => setActiveTab('products')}
+            >
+              Products
+            </button>
+            <button
+              className={`heritage-nav-btn ${activeTab === 'orders' ? 'active' : ''}`}
+              onClick={() => setActiveTab('orders')}
+            >
+              Orders
+            </button>
+            <button
+              className={`heritage-nav-btn ${activeTab === 'earnings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('earnings')}
+            >
+              Earnings
+            </button>
+            <button
+              className={`heritage-nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+              onClick={() => setActiveTab('profile')}
+            >
+              Profile
+            </button>
+          </nav>
+
+          {/* Right Icons & Store Shortcut */}
+          <div className="heritage-header-right">
+            {/* Quick Switch to Customer Marketplace */}
+            <Link
+              to="/"
+              className="btn-heritage-marketplace"
+              title="Switch to Customer Marketplace"
+            >
+              <Home size={15} />
+              <span>Marketplace</span>
+            </Link>
+
+            {/* Public Storefront Link */}
+            <a
+              href={`/store/${storeSlug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-heritage-view-store"
+              title="View Public Storefront in New Tab"
+            >
+              <span>Public Store</span>
+              <ExternalLink size={13} />
+            </a>
+
+            {previewDemo && (
+              <span className="demo-mode-pill">DEMO MODE</span>
+            )}
+
+            {/* Notifications Button */}
+            <button className="heritage-round-icon-btn" title="Notifications">
               <Bell size={18} />
             </button>
-            <div className="designer-avatar-small" title={user?.first_name || 'Designer'}>
-              {user?.first_name?.[0]?.toUpperCase() || 'D'}
+
+            {/* Header Direct Sign Out Button */}
+            <button
+              onClick={handleLogout}
+              className="btn-heritage-logout"
+              title="Sign Out of Designer Studio"
+            >
+              <LogOut size={15} />
+              <span>Log Out</span>
+            </button>
+
+            {/* Avatar with Popover Profile Menu */}
+            <div className="heritage-avatar-menu-container" ref={profileDropdownRef} style={{ position: 'relative' }}>
+              <button
+                className="heritage-round-icon-btn avatar-trigger-btn"
+                title={user?.first_name ? `${user.first_name} (${user.vendor_profile?.store_name || 'Studio'})` : 'Designer Account'}
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                aria-expanded={showProfileDropdown}
+                aria-haspopup="true"
+              >
+                <div className="avatar-letter-circle">
+                  {user?.first_name?.[0]?.toUpperCase() || user?.vendor_profile?.store_name?.[0]?.toUpperCase() || 'D'}
+                </div>
+              </button>
+
+              {showProfileDropdown && (
+                <div className="vendor-avatar-dropdown-menu">
+                  <div className="dropdown-user-header">
+                    <p className="dropdown-user-name">
+                      {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Designer Account'}
+                    </p>
+                    <p className="dropdown-store-name">
+                      {user?.vendor_profile?.store_name || 'Aso Artisan Studio'}
+                    </p>
+                    <span className="dropdown-role-badge">Verified Designer</span>
+                  </div>
+
+                  <div className="dropdown-divider" />
+
+                  <button
+                    type="button"
+                    className="dropdown-menu-item"
+                    onClick={() => {
+                      setActiveTab('profile');
+                      setShowProfileDropdown(false);
+                    }}
+                  >
+                    <UserIcon size={15} />
+                    <span>Store &amp; Artisan Profile</span>
+                  </button>
+
+                  <a
+                    href={`/store/${storeSlug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="dropdown-menu-item"
+                    onClick={() => setShowProfileDropdown(false)}
+                  >
+                    <ExternalLink size={15} />
+                    <span>View Public Store</span>
+                  </a>
+
+                  <Link
+                    to="/"
+                    className="dropdown-menu-item"
+                    onClick={() => setShowProfileDropdown(false)}
+                  >
+                    <Home size={15} />
+                    <span>Switch to Marketplace</span>
+                  </Link>
+
+                  <div className="dropdown-divider" />
+
+                  <button
+                    type="button"
+                    className="dropdown-menu-item text-danger"
+                    onClick={() => {
+                      setShowProfileDropdown(false);
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut size={15} />
+                    <span>Sign Out / Log Out</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Main Designer Portal Content Area */}
       <div className="vendor-dashboard-container page-padded">
@@ -371,6 +522,8 @@ export const VendorDashboardPage: React.FC = () => {
           <DashboardOverviewView
             onNavigateToProducts={() => setActiveTab('products')}
             onNavigateToOrders={() => setActiveTab('orders')}
+            onNavigateToAddProduct={() => setActiveTab('add-product')}
+            onNavigateToEarnings={() => setActiveTab('earnings')}
           />
         )}
 
@@ -788,6 +941,10 @@ export const VendorDashboardPage: React.FC = () => {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === 'profile' && (
+          <DesignerProfileView onNavigateToEarnings={() => setActiveTab('earnings')} />
         )}
       </div>
     </div>

@@ -1,0 +1,967 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   THE MODERN WOMAN — WOMEN'S LUXURY EDIT STYLING
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.womens-collection-page {
+  background-color: #fcf9f8;
+  color: #1c1b1b;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  min-height: 100vh;
+  padding-bottom: 5rem;
+}
+
+.womens-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .womens-container {
+    padding: 0 2rem;
+  }
+}
+
+/* ─── Breadcrumbs ─── */
+.womens-breadcrumb-bar {
+  padding: 1.25rem 0 0.5rem 0;
+}
+
+.womens-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #707977;
+}
+
+.breadcrumb-item {
+  color: #707977;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.breadcrumb-item:hover {
+  color: #00322d;
+}
+
+.breadcrumb-item.active {
+  color: #00322d;
+  font-weight: 600;
+}
+
+.breadcrumb-separator {
+  color: #bfc9c6;
+}
+
+/* ─── 1. Hero Banner with Floating Editorial Card ─── */
+.womens-hero-banner {
+  position: relative;
+  min-height: 480px;
+  background-image: url('/adire-2.png');
+  background-size: cover;
+  background-position: center 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.womens-hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 46, 36, 0.25) 0%, rgba(17, 24, 39, 0.45) 100%);
+}
+
+.womens-hero-inner {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.womens-floating-card {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  padding: 2.75rem 2.5rem;
+  border-radius: 4px;
+  text-align: center;
+  max-width: 620px;
+  box-shadow: 0 20px 45px rgba(0, 50, 45, 0.15);
+  border: 1px solid rgba(229, 226, 225, 0.8);
+}
+
+.womens-card-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #8b500a;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.womens-floating-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #00322d;
+  line-height: 1.15;
+  margin: 0 0 0.85rem 0;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 768px) {
+  .womens-floating-title {
+    font-size: 3.25rem;
+  }
+}
+
+.womens-floating-subtitle {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #3f4947;
+  margin: 0;
+}
+
+/* ─── Controls Bar ─── */
+.womens-controls-bar {
+  padding: 1rem 0;
+  border-bottom: 1px solid #e5e2e1;
+  background: #fcf9f8;
+  position: sticky;
+  top: 72px;
+  z-index: 20;
+  backdrop-filter: blur(8px);
+}
+
+.womens-controls-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.results-count-text {
+  font-size: 0.875rem;
+  color: #3f4947;
+}
+
+.btn-clear-filters-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  color: #ba1a1a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  margin-left: 0.75rem;
+}
+
+.btn-clear-filters-inline:hover {
+  background: #fee2e2;
+}
+
+.controls-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-mobile-filter-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #00322d;
+  cursor: pointer;
+}
+
+@media (min-width: 992px) {
+  .btn-mobile-filter-trigger {
+    display: none;
+  }
+}
+
+.sort-dropdown-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sort-label {
+  font-size: 0.825rem;
+  color: #707977;
+  font-weight: 500;
+  display: none;
+}
+
+@media (min-width: 576px) {
+  .sort-label {
+    display: inline-block;
+  }
+}
+
+.sort-select {
+  padding: 0.5rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #00322d;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ─── Main Content Layout ─── */
+.womens-main-layout {
+  display: flex;
+  gap: 2.5rem;
+  margin-top: 2rem;
+}
+
+/* ─── Filter Sidebar ─── */
+.womens-sidebar-filters {
+  width: 250px;
+  flex-shrink: 0;
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .womens-sidebar-filters {
+    display: block;
+  }
+}
+
+.sidebar-sticky-wrapper {
+  position: sticky;
+  top: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.sidebar-header-desktop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #00322d;
+  padding-bottom: 0.5rem;
+}
+
+.sidebar-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #00322d;
+  margin: 0;
+}
+
+.btn-clear-sidebar {
+  background: none;
+  border: none;
+  color: #8b500a;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Filter Groups */
+.filter-group {
+  border-bottom: 1px solid #e5e2e1;
+  padding-bottom: 1.25rem;
+}
+
+.filter-group:last-child {
+  border-bottom: none;
+}
+
+.filter-group-heading {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1c1b1b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.85rem 0;
+}
+
+.filter-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Custom Search Box */
+.filter-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 6px;
+  padding: 0.45rem 0.75rem;
+}
+
+.filter-search-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.825rem;
+  color: #1c1b1b;
+}
+
+/* Custom Radio & Checkbox */
+.filter-checkbox-label,
+.filter-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s ease;
+}
+
+.filter-checkbox-label:hover,
+.filter-radio-label:hover {
+  opacity: 0.85;
+}
+
+.filter-checkbox-input,
+.filter-radio-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkbox-custom {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #707977;
+  border-radius: 3px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.filter-checkbox-input:checked ~ .checkbox-custom,
+.filter-radio-input:checked ~ .checkbox-custom {
+  background-color: #00322d;
+  border-color: #00322d;
+}
+
+.radio-custom {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #707977;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.filter-radio-input:checked ~ .radio-custom {
+  border-color: #00322d;
+}
+
+.radio-dot {
+  width: 9px;
+  height: 9px;
+  background: #00322d;
+  border-radius: 50%;
+}
+
+.filter-label-text {
+  font-size: 0.85rem;
+  color: #3f4947;
+}
+
+/* Mobile Drawer Elements */
+.mobile-drawer-header,
+.mobile-drawer-footer {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  .womens-sidebar-filters.mobile-drawer-open {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 100vh;
+    background: #ffffff;
+    z-index: 1000;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.2);
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+
+  .sidebar-header-desktop {
+    display: none;
+  }
+
+  .mobile-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e5e2e1;
+    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .btn-close-mobile-drawer {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #3f4947;
+    padding: 0.25rem;
+  }
+
+  .mobile-drawer-footer {
+    display: block;
+    padding-top: 1.5rem;
+  }
+
+  .btn-apply-mobile-filters {
+    width: 100%;
+    background: #00322d;
+    color: #ffffff;
+    border: none;
+    padding: 0.85rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .mobile-drawer-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+}
+
+/* ─── Main Product Grid Area ─── */
+.womens-grid-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.womens-products-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem 1.5rem;
+}
+
+@media (min-width: 576px) {
+  .womens-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 992px) {
+  .womens-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ─── Product Card ─── */
+.womens-product-card {
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.womens-product-card:hover {
+  transform: translateY(-4px);
+  border-color: #bfc9c6;
+  box-shadow: 0 20px 40px -15px rgba(0, 50, 45, 0.12);
+}
+
+.product-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.product-image-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background-color: #f6f3f2;
+  overflow: hidden;
+}
+
+.product-main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.womens-product-card:hover .product-main-img {
+  transform: scale(1.05);
+}
+
+/* Badges Overlay */
+.product-badges-overlay {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  z-index: 5;
+}
+
+.badge-verified-designer {
+  background: #c87643;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.badge-lead-time {
+  background: rgba(0, 50, 45, 0.85);
+  backdrop-filter: blur(4px);
+  color: #b1eee4;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+}
+
+.badge-lead-time.neutral {
+  background: rgba(44, 44, 41, 0.85);
+  color: #ffffff;
+}
+
+/* Product Info Box */
+.product-info-box {
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+  background: #ffffff;
+}
+
+.product-title-text {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #00322d;
+  line-height: 1.35;
+  margin: 0 0 0.35rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-vendor-name {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #707977;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.75rem 0;
+}
+
+.product-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #f0eded;
+  padding-top: 0.75rem;
+  margin-top: auto;
+}
+
+.product-price-naira {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1c1b1b;
+}
+
+.product-bag-action {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6f3f2;
+  transition: all 0.2s ease;
+}
+
+.womens-product-card:hover .product-bag-action {
+  background: #00322d;
+  color: #ffffff;
+}
+
+.womens-product-card:hover .product-bag-action svg {
+  stroke: #ffffff;
+}
+
+/* ─── Pagination Bar ─── */
+.womens-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 3.5rem;
+}
+
+.pagination-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3f4947;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: #00322d;
+  color: #00322d;
+  background: #f6f3f2;
+}
+
+.pagination-btn.active {
+  background: #00322d;
+  color: #ffffff;
+  border-color: #00322d;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── 3. Designer of the Month Section ─── */
+.designer-month-section {
+  margin-top: 5rem;
+  padding-top: 4.5rem;
+  border-top: 1px solid #e5e2e1;
+}
+
+.designer-month-header {
+  margin-bottom: 2.5rem;
+}
+
+.designer-month-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #00322d;
+  margin: 0 0 0.5rem 0;
+}
+
+.designer-month-subtitle {
+  font-size: 1rem;
+  color: #3f4947;
+  margin: 0;
+}
+
+.designer-month-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 860px) {
+  .designer-month-grid {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+/* Left Profile Card */
+.designer-profile-card {
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  padding: 2.25rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.designer-portrait-wrap {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #e5e2e1;
+  margin-bottom: 1.25rem;
+}
+
+.designer-portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.designer-studio-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #00322d;
+  margin: 0 0 0.5rem 0;
+}
+
+.designer-verified-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #c87643;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 1rem;
+}
+
+.designer-editorial-bio {
+  font-size: 0.85rem;
+  color: #3f4947;
+  line-height: 1.6;
+  margin: 0 0 1.75rem 0;
+}
+
+.btn-explore-designer-collection {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #00322d;
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-explore-designer-collection:hover {
+  background-color: #004d40;
+}
+
+/* Right Signature Card */
+.designer-signature-card {
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  min-height: 360px;
+  border: 1px solid #e5e2e1;
+}
+
+.signature-visual-bg {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.signature-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(0, 50, 45, 0.85) 0%, rgba(0, 50, 45, 0.2) 60%, transparent 100%);
+}
+
+.signature-content-overlay {
+  position: relative;
+  z-index: 10;
+  padding: 2.5rem 2rem;
+  color: #ffffff;
+}
+
+.signature-piece-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.85rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
+}
+
+.signature-shop-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #b1eee4;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: gap 0.2s ease;
+}
+
+.signature-shop-link:hover {
+  gap: 0.7rem;
+  color: #ffffff;
+}
+
+/* Empty / Skeleton States */
+.womens-empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 540px;
+  margin: 2rem auto;
+}
+
+.empty-icon-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #f0eded;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.womens-empty-state h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.4rem;
+  color: #00322d;
+  margin: 0 0 0.5rem 0;
+}
+
+.womens-empty-state p {
+  color: #707977;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 1.5rem 0;
+}
+
+.btn-empty-reset {
+  background: #00322d;
+  color: #ffffff;
+  border: none;
+  padding: 0.65rem 1.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.product-card-skeleton {
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: #eae7e7;
+  animation: skeletonPulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-details {
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.skeleton-line {
+  height: 14px;
+  background: #eae7e7;
+  border-radius: 3px;
+  animation: skeletonPulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-line.short {
+  width: 40%;
+}
+
+.skeleton-line.long {
+  width: 90%;
+  height: 18px;
+}
+
+.skeleton-line.medium {
+  width: 60%;
+}
+
+@keyframes skeletonPulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}

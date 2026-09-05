@@ -1,0 +1,1016 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   LAGOS STREETWEAR & ALTÉ COLLECTIVE — EDITORIAL STYLING
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.streetwear-page-wrapper {
+  background-color: #fcf9f8;
+  color: #1c1b1b;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  min-height: 100vh;
+  padding-bottom: 6rem;
+}
+
+.streetwear-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .streetwear-container {
+    padding: 0 2rem;
+  }
+}
+
+/* ─── 1. High-Energy Editorial Hero Banner ─── */
+.streetwear-hero-banner {
+  position: relative;
+  background-color: #0d1715;
+  background-image: radial-gradient(rgba(177, 238, 228, 0.1) 1px, transparent 1px),
+                    linear-gradient(180deg, #071311 0%, #0d1e1b 100%);
+  background-size: 24px 24px, 100% 100%;
+  color: #ffffff;
+  padding: 4.5rem 1rem 4rem 1rem;
+  text-align: center;
+  overflow: hidden;
+  border-bottom: 2px solid #00322d;
+}
+
+.streetwear-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(0, 75, 68, 0.4) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.streetwear-hero-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.streetwear-drop-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 50, 45, 0.85);
+  border: 1px solid rgba(177, 238, 228, 0.35);
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #b1eee4;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  backdrop-filter: blur(8px);
+}
+
+.live-pulse {
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulse-ring 1.8s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.streetwear-hero-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.1;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 768px) {
+  .streetwear-hero-title {
+    font-size: 4rem;
+  }
+}
+
+.title-highlight {
+  background: linear-gradient(135deg, #b1eee4 0%, #ffb876 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-style: italic;
+}
+
+.streetwear-hero-subtitle {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #bfc9c6;
+  max-width: 620px;
+  margin: 0 auto 2rem auto;
+}
+
+.streetwear-ticker-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #95d2c8;
+}
+
+.ticker-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 184, 118, 0.15);
+  border: 1px solid rgba(255, 184, 118, 0.4);
+  color: #ffb876;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+
+.ticker-dot {
+  color: #707977;
+}
+
+.ticker-text {
+  color: #bfc9c6;
+}
+
+/* ─── 2. Main Layout ─── */
+.streetwear-main-section {
+  padding-top: 2.5rem;
+}
+
+.streetwear-layout-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+@media (min-width: 900px) {
+  .streetwear-layout-grid {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+/* ─── Filters Sidebar ─── */
+.streetwear-filters-sidebar {
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .streetwear-filters-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+  }
+}
+
+.streetwear-sidebar-sticky {
+  position: static;
+}
+
+@media (min-width: 900px) {
+  .streetwear-sidebar-sticky {
+    position: sticky;
+    top: 90px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+  }
+}
+
+.filters-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+}
+
+.filters-heading {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #00322d;
+  margin: 0;
+}
+
+.btn-clear-all {
+  background: none;
+  border: none;
+  color: #8b500a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-clear-all:hover {
+  text-decoration: underline;
+}
+
+/* Filter Blocks */
+.filter-block {
+  border-top: 1px solid #e5e2e1;
+  padding-top: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.filter-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1c1b1b;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Search Box */
+.filter-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #ffffff;
+  border: 1px solid #bfc9c6;
+  border-radius: 4px;
+  padding: 0.45rem 0.65rem;
+}
+
+.filter-search-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.825rem;
+  color: #1c1b1b;
+}
+
+.btn-clear-search {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Checkboxes & Radios */
+.filter-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.streetwear-checkbox-item,
+.streetwear-radio-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.85rem;
+  color: #3f4947;
+  transition: color 0.15s ease;
+}
+
+.streetwear-checkbox-item:hover,
+.streetwear-radio-item:hover {
+  color: #00322d;
+}
+
+.streetwear-hidden-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.streetwear-custom-box {
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid #707977;
+  border-radius: 3px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.streetwear-hidden-checkbox:checked ~ .streetwear-custom-box {
+  background-color: #00322d;
+  border-color: #00322d;
+}
+
+.streetwear-custom-radio {
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid #707977;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.streetwear-hidden-checkbox:checked ~ .streetwear-custom-radio {
+  border-color: #00322d;
+}
+
+.radio-inner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #00322d;
+}
+
+.checkbox-text {
+  font-size: 0.85rem;
+}
+
+/* Size Pills */
+.size-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.size-pill {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #bfc9c6;
+  border-radius: 3px;
+  background: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #3f4947;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.size-pill:hover {
+  border-color: #00322d;
+  color: #00322d;
+}
+
+.size-pill.active {
+  background: #00322d;
+  border-color: #00322d;
+  color: #ffffff;
+}
+
+/* Mobile Drawer Elements */
+.mobile-drawer-header,
+.mobile-drawer-footer {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .streetwear-filters-sidebar {
+    display: none;
+  }
+
+  .streetwear-filters-sidebar.mobile-drawer-open {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 100vh;
+    background: #ffffff;
+    z-index: 1000;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.2);
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+
+  .mobile-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e5e2e1;
+    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .btn-close-mobile-drawer {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #3f4947;
+    padding: 0.25rem;
+  }
+
+  .mobile-drawer-footer {
+    display: block;
+    padding-top: 1.5rem;
+  }
+
+  .btn-apply-filters-mobile {
+    width: 100%;
+    background: #00322d;
+    color: #ffffff;
+    border: none;
+    padding: 0.85rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .streetwear-drawer-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+}
+
+/* ─── Right Content Area ─── */
+.streetwear-content-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.streetwear-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.results-count-text {
+  font-size: 0.875rem;
+  color: #3f4947;
+  margin: 0;
+}
+
+.btn-reset-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: 1px solid #ba1a1a;
+  color: #ba1a1a;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.65rem;
+}
+
+.btn-reset-pill:hover {
+  background: #fee2e2;
+}
+
+.controls-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-mobile-filter-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid #bfc9c6;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #00322d;
+  cursor: pointer;
+}
+
+@media (min-width: 900px) {
+  .btn-mobile-filter-open {
+    display: none;
+  }
+}
+
+.sort-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sort-label-text {
+  font-size: 0.85rem;
+  color: #3f4947;
+}
+
+.streetwear-sort-select {
+  background: transparent;
+  border: none;
+  color: #00322d;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+/* ─── 3. Streetwear Products Grid ─── */
+.streetwear-products-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.75rem 1.5rem;
+}
+
+@media (min-width: 560px) {
+  .streetwear-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 960px) {
+  .streetwear-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.streetwear-product-card {
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.streetwear-product-card:hover {
+  transform: translateY(-4px);
+  border-color: #00322d;
+  box-shadow: 0 16px 32px rgba(0, 50, 45, 0.1);
+}
+
+.product-link-wrap {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.product-media-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background-color: #f0eded;
+  overflow: hidden;
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.streetwear-product-card:hover .product-img {
+  transform: scale(1.06);
+}
+
+/* Badges */
+.product-badges-corner {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  z-index: 2;
+}
+
+.badge-street-verified {
+  background: #00322d;
+  color: #b1eee4;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.badge-fast-dispatch {
+  background: #ffb876;
+  color: #2d1600;
+  padding: 0.2rem 0.45rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-drop-number {
+  background: rgba(28, 27, 27, 0.85);
+  color: #ffffff;
+  padding: 0.2rem 0.45rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  backdrop-filter: blur(4px);
+}
+
+/* Details Box */
+.product-details-container {
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.product-collective-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #707977;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.3rem 0;
+}
+
+.product-item-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #00322d;
+  line-height: 1.3;
+  margin: 0 0 0.75rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.15s ease;
+}
+
+.streetwear-product-card:hover .product-item-title {
+  color: #8b500a;
+}
+
+.details-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #f0eded;
+  padding-top: 0.75rem;
+  margin-top: auto;
+}
+
+.product-item-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1c1b1b;
+  margin: 0;
+}
+
+.btn-quick-bag {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f6f3f2;
+  color: #00322d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.streetwear-product-card:hover .btn-quick-bag {
+  background: #00322d;
+  color: #ffffff;
+}
+
+/* ─── 4. Pagination ─── */
+.streetwear-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 3.5rem;
+}
+
+.pagination-btn-arrow,
+.pagination-num-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #bfc9c6;
+  border-radius: 3px;
+  background: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3f4947;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn-arrow:hover:not(:disabled),
+.pagination-num-btn:hover:not(.active) {
+  border-color: #00322d;
+  color: #00322d;
+}
+
+.pagination-num-btn.active {
+  background: #00322d;
+  border-color: #00322d;
+  color: #ffffff;
+}
+
+.pagination-btn-arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── 5. Underground Collective Spotlight ─── */
+.streetwear-collective-section {
+  margin-top: 5rem;
+  padding-top: 4.5rem;
+  border-top: 1px solid #e5e2e1;
+}
+
+.collective-header {
+  margin-bottom: 2.5rem;
+}
+
+.collective-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #00322d;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.collective-main-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #00322d;
+  margin: 0 0 0.5rem 0;
+}
+
+.collective-subtitle {
+  font-size: 1rem;
+  color: #3f4947;
+  margin: 0;
+}
+
+.collective-showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 860px) {
+  .collective-showcase-grid {
+    grid-template-columns: 340px 1fr;
+  }
+}
+
+.collective-bio-card {
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  padding: 2.25rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.collective-avatar-ring {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #00322d;
+  margin-bottom: 1.25rem;
+}
+
+.collective-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.collective-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #00322d;
+  margin: 0 0 0.5rem 0;
+}
+
+.collective-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #00322d;
+  color: #b1eee4;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 1rem;
+}
+
+.collective-bio-text {
+  font-size: 0.85rem;
+  color: #3f4947;
+  line-height: 1.6;
+  margin: 0 0 1.75rem 0;
+}
+
+.btn-explore-collective {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #00322d;
+  color: #ffffff;
+  padding: 0.8rem 1rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-explore-collective:hover {
+  background-color: #004b44;
+  transform: translateY(-1px);
+}
+
+.collective-signature-card {
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 380px;
+  position: relative;
+}
+
+.signature-visual-wrap {
+  width: 100%;
+  height: 100%;
+  min-height: 380px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.signature-scrim-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(6, 46, 36, 0.85) 100%);
+}
+
+.signature-content-box {
+  position: relative;
+  z-index: 2;
+  padding: 2.5rem;
+  color: #ffffff;
+}
+
+.signature-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #b1eee4;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.signature-drop-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 1.25rem 0;
+  line-height: 1.2;
+}
+
+.signature-order-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.5rem 0;
+  border-bottom: 2px solid #b1eee4;
+  transition: gap 0.2s ease, color 0.2s ease;
+}
+
+.signature-order-link:hover {
+  gap: 0.75rem;
+  color: #b1eee4;
+}
+
+/* ─── Skeletons & Empty Box ─── */
+.streetwear-card-skeleton {
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.skeleton-media {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: linear-gradient(90deg, #f0eded 25%, #e5e2e1 50%, #f0eded 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 3px;
+  background: #e5e2e1;
+}
+
+.skeleton-line.short { width: 40%; }
+.skeleton-line.long { width: 85%; }
+.skeleton-line.medium { width: 55%; }
+
+.streetwear-empty-box {
+  text-align: center;
+  padding: 4rem 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e5e2e1;
+  border-radius: 4px;
+}
+
+.streetwear-empty-box h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  color: #00322d;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.streetwear-empty-box p {
+  color: #707977;
+  max-width: 440px;
+  margin: 0 auto 1.5rem auto;
+  font-size: 0.9rem;
+}
+
+.btn-retry {
+  background: #00322d;
+  color: #ffffff;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}

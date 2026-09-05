@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import './Footer.css';
 import { Logo, type LogoOption } from './Logo';
 
@@ -32,7 +33,7 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
               Bridging traditional Nigerian craftsmanship with contemporary global commerce.
             </p>
             <p className="footer-copyright">
-              © 2024 Aso Marketplace. Authentically Nigerian.
+              © 2026 Aso Marketplace. Authentically Nigerian.
             </p>
           </div>
 
@@ -40,16 +41,16 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
           <div className="footer-col">
             <h4 className="footer-col-header">DISCOVER</h4>
             <ul className="footer-links-list">
-              <li><a href="#mission">Mission</a></li>
-              <li><a href="/store/lagos-couture">Designers</a></li>
-              <li><a href="#collections">Collections</a></li>
+              <li><Link to="/men">Men's Collection</Link></li>
+              <li><a href="/#designers">Featured Designers</a></li>
+              <li><a href="/#curated-edit">Latest Releases</a></li>
               {onOpenVendorRegister && (
                 <li>
                   <button 
                     onClick={onOpenVendorRegister} 
                     style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', fontFamily: 'inherit' }}
                   >
-                    Register as a Designer
+                    Start Selling on Aso
                   </button>
                 </li>
               )}
@@ -60,9 +61,9 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
           <div className="footer-col">
             <h4 className="footer-col-header">SUPPORT</h4>
             <ul className="footer-links-list">
-              <li><a href="#help">Help & FAQs</a></li>
-              <li><a href="#shipping">Worldwide Shipping</a></li>
-              <li><a href="#returns">Returns Policy</a></li>
+              <li><a href="#help">Help Center &amp; FAQs</a></li>
+              <li><a href="#delivery">Delivery &amp; Fulfillment</a></li>
+              <li><a href="#buyer-protection">72h Buyer Protection</a></li>
             </ul>
           </div>
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Search, ShoppingBag, User as UserIcon, LogOut, ChevronDown, Menu, X, MapPin, Sparkles, Store } from 'lucide-react';
+import { Search, ShoppingBag, User as UserIcon, LogOut, ChevronDown, Menu, X, MapPin, Sparkles, Store, Clock } from 'lucide-react';
 import './Navbar.css';
 
 import { Logo, type LogoOption } from './Logo';
@@ -30,7 +30,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
     }
   };
 
-  const isDesigner = user?.is_vendor || !!user?.vendor_profile;
+  const isApprovedVendor = Boolean(user?.is_vendor || user?.vendor_profile?.status === 'APPROVED');
+  const isPendingVendor = Boolean(!isApprovedVendor && user?.vendor_profile?.status === 'PENDING');
 
   return (
     <header className="stitch-navbar-header">
@@ -56,17 +57,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
 
         {/* Desktop Nav Links */}
         <nav className="stitch-nav-links">
-          <Link to="/?category=men" className="stitch-nav-link">Men</Link>
-          <Link to="/?category=women" className="stitch-nav-link">Women</Link>
-          <Link to="/?category=traditional" className="stitch-nav-link">Traditional</Link>
-          <Link to="/?category=streetwear" className="stitch-nav-link">Streetwear</Link>
-          <a href="/#designers" className="stitch-nav-link stitch-nav-highlight">Fashion Houses</a>
+          <Link to="/men" className="stitch-nav-link">Men</Link>
+          <Link to="/women" className="stitch-nav-link">Women</Link>
+          <Link to="/traditional" className="stitch-nav-link">Traditional</Link>
+          <Link to="/streetwear" className="stitch-nav-link">Streetwear</Link>
+          <Link to="/designers" className="stitch-nav-link stitch-nav-highlight">Designers</Link>
         </nav>
 
         {/* Action Icons & Status */}
         <div className="stitch-navbar-actions">
           {/* Quick Vendor Action Button */}
-          {isDesigner ? (
+          {isApprovedVendor ? (
             <Link
               to="/vendor/dashboard"
               className="navbar-designer-pill"
@@ -85,7 +86,28 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
               }}
             >
               <Store size={14} color="#D4AF37" />
-              <span>Studio Dashboard</span>
+              <span>Seller Dashboard</span>
+            </Link>
+          ) : isPendingVendor ? (
+            <Link
+              to="/vendor/dashboard"
+              className="navbar-designer-pill"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                backgroundColor: '#D97706',
+                color: '#FFF',
+                padding: '0.45rem 0.9rem',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(217, 119, 6, 0.2)'
+              }}
+            >
+              <Clock size={14} color="#FFF" />
+              <span>Application Pending</span>
             </Link>
           ) : (
             <button
@@ -147,14 +169,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
                     <ShoppingBag size={15} />
                     <span>My Cart {cartCount > 0 && `(${cartCount})`}</span>
                   </Link>
-                  {isDesigner ? (
-                    <>
-                      <hr className="dropdown-divider" />
-                      <Link to="/vendor/dashboard" className="dropdown-item">
-                        <Store size={15} color="#064E3B" />
-                        <span>Vendor Dashboard</span>
-                      </Link>
-                    </>
+                  <hr className="dropdown-divider" />
+                  {isApprovedVendor ? (
+                    <Link to="/vendor/dashboard" className="dropdown-item">
+                      <Store size={15} color="#064E3B" />
+                      <span>Seller Dashboard</span>
+                    </Link>
+                  ) : isPendingVendor ? (
+                    <Link to="/vendor/dashboard" className="dropdown-item" style={{ color: '#D97706' }}>
+                      <Clock size={15} color="#D97706" />
+                      <span>Application Status (Pending)</span>
+                    </Link>
                   ) : (
                     <button
                       className="dropdown-item dropdown-item-sell"
@@ -205,11 +230,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
           </form>
 
           <nav className="mobile-nav-links" onClick={() => setMobileMenuOpen(false)}>
-            <Link to="/?category=men" className="mobile-nav-link">Men Collection</Link>
-            <Link to="/?category=women" className="mobile-nav-link">Women Collection</Link>
-            <Link to="/?category=traditional" className="mobile-nav-link">Traditional Bespoke</Link>
-            <Link to="/?category=streetwear" className="mobile-nav-link">Lagos Streetwear</Link>
-            <a href="/#designers" className="mobile-nav-link">Fashion Houses</a>
+            <Link to="/men" className="mobile-nav-link">Men Collection</Link>
+            <Link to="/women" className="mobile-nav-link">Women Collection</Link>
+            <Link to="/traditional" className="mobile-nav-link">Traditional Bespoke</Link>
+            <Link to="/streetwear" className="mobile-nav-link">Lagos Streetwear</Link>
+            <Link to="/designers" className="mobile-nav-link">Master Designers &amp; Ateliers</Link>
             <Link to="/cart" className="mobile-nav-link">
               Cart {cartCount > 0 && <span className="mobile-cart-count">({cartCount})</span>}
             </Link>
@@ -219,13 +244,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
             {user ? (
               <>
                 <Link to="/profile" className="mobile-nav-link">My Profile & Orders</Link>
-                {isDesigner ? (
+                {isApprovedVendor ? (
                   <Link to="/vendor/dashboard" className="mobile-nav-link" style={{ fontWeight: 700, color: '#064E3B' }}>
-                    Vendor Studio Dashboard
+                    Seller Dashboard
+                  </Link>
+                ) : isPendingVendor ? (
+                  <Link to="/vendor/dashboard" className="mobile-nav-link" style={{ fontWeight: 600, color: '#D97706' }}>
+                    Application Status (Pending)
                   </Link>
                 ) : (
                   <button className="mobile-designer-btn" onClick={onOpenVendorRegister}>
-                    Register as a Designer
+                    Become a Designer
                   </button>
                 )}
                 <button className="mobile-nav-link" onClick={logout} style={{ color: '#DC2626', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
@@ -234,7 +263,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
               </>
             ) : (
               <button className="mobile-designer-btn" onClick={onOpenVendorRegister}>
-                Register as a Designer
+                Become a Designer
               </button>
             )}
           </nav>

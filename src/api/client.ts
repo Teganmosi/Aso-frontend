@@ -155,6 +155,15 @@ export const addressApi = {
 // ─── Vendor API ──────────────────────────────────────────────────────────────
 
 export const vendorApi = {
+  getVendors: async (): Promise<PublicVendorProfile[]> => {
+    try {
+      const res = await apiClient.get('/vendors/');
+      return normalizeArray<PublicVendorProfile>(res.data);
+    } catch {
+      return [];
+    }
+  },
+
   registerVendor: async (payload: RegisterVendorPayload) => {
     await fetchCsrfToken();
     const res = await apiClient.post('/vendors/register/', payload);
@@ -175,6 +184,12 @@ export const vendorApi = {
     await fetchCsrfToken();
     const res = await apiClient.post('/vendors/bank-account/', payload);
     return res.data.bank_account || res.data.data || res.data;
+  },
+
+  verifyKyc: async (payload: { nin?: string; cac_number?: string; workshop_address?: string; landmark?: string }): Promise<any> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post('/vendors/verify-kyc/', payload);
+    return res.data;
   },
 };
 

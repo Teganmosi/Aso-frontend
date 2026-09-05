@@ -6,6 +6,11 @@ export interface VendorProfileBrief {
   is_verified: boolean;
   city?: string;
   state?: string;
+  description?: string;
+  workshop_address?: string;
+  landmark?: string;
+  instagram_handle?: string;
+  kyc_tier?: string;
 }
 
 export interface BankAccount {
