@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Search, ShoppingBag, User as UserIcon, LogOut, ChevronDown, Menu, X, MapPin, Sparkles, Store, Clock } from 'lucide-react';
+import { Search, ShoppingBag, User as UserIcon, LogOut, ChevronDown, Menu, X, MapPin, Sparkles, Store, ShieldCheck } from 'lucide-react';
 import './Navbar.css';
 
 import { Logo, type LogoOption } from './Logo';
@@ -30,8 +30,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
     }
   };
 
-  const isApprovedVendor = Boolean(user?.is_vendor || user?.vendor_profile?.status === 'APPROVED');
-  const isPendingVendor = Boolean(!isApprovedVendor && user?.vendor_profile?.status === 'PENDING');
+  const isVendor = Boolean(user?.is_vendor || user?.vendor_profile);
+  const isVerified = Boolean(user?.vendor_profile?.is_verified);
 
   return (
     <header className="stitch-navbar-header">
@@ -66,8 +66,32 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
 
         {/* Action Icons & Status */}
         <div className="stitch-navbar-actions">
+          {/* Quick Staff Admin Portal Pill */}
+          {user?.is_staff && (
+            <Link
+              to="/admin"
+              className="navbar-admin-pill"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                backgroundColor: '#7F1D1D',
+                color: '#FFF',
+                padding: '0.45rem 0.9rem',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(127, 29, 29, 0.25)'
+              }}
+            >
+              <ShieldCheck size={14} color="#FCA5A5" />
+              <span>Admin Desk</span>
+            </Link>
+          )}
+
           {/* Quick Vendor Action Button */}
-          {isApprovedVendor ? (
+          {isVendor ? (
             <Link
               to="/vendor/dashboard"
               className="navbar-designer-pill"
@@ -86,30 +110,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
               }}
             >
               <Store size={14} color="#D4AF37" />
-              <span>Seller Dashboard</span>
+              <span>{isVerified ? 'Verified Studio' : 'Seller Dashboard'}</span>
             </Link>
-          ) : isPendingVendor ? (
-            <Link
-              to="/vendor/dashboard"
-              className="navbar-designer-pill"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                backgroundColor: '#D97706',
-                color: '#FFF',
-                padding: '0.45rem 0.9rem',
-                borderRadius: '20px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 2px 6px rgba(217, 119, 6, 0.2)'
-              }}
-            >
-              <Clock size={14} color="#FFF" />
-              <span>Application Pending</span>
-            </Link>
-          ) : (
+          ) : !user?.is_staff ? (
             <button
               onClick={onOpenVendorRegister}
               className="navbar-sell-btn"
@@ -130,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
               <Sparkles size={13} color="#D4AF37" />
               <span>Sell on Aso</span>
             </button>
-          )}
+          ) : null}
 
           {/* Cart Icon with Badge */}
           <Link to="/cart" className="stitch-icon-btn stitch-cart-btn" title="Shopping Cart">
@@ -159,8 +162,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
                   <div className="dropdown-user-header">
                     <p className="dropdown-user-name">{user.first_name} {user.last_name}</p>
                     <p className="dropdown-user-email">{user.email}</p>
+                    {user.is_staff && (
+                      <span style={{ display: 'inline-block', marginTop: '0.25rem', background: '#FEF2F2', color: '#991B1B', fontSize: '0.65rem', fontWeight: 800, padding: '2px 8px', borderRadius: '10px', textTransform: 'uppercase' }}>
+                        Staff Administrator
+                      </span>
+                    )}
                   </div>
                   <hr className="dropdown-divider" />
+                  {user.is_staff && (
+                    <>
+                      <Link to="/admin" className="dropdown-item" style={{ color: '#991B1B', fontWeight: 600 }}>
+                        <ShieldCheck size={15} color="#991B1B" />
+                        <span>Platform Admin Desk</span>
+                      </Link>
+                      <hr className="dropdown-divider" />
+                    </>
+                  )}
                   <Link to="/profile" className="dropdown-item">
                     <MapPin size={15} />
                     <span>My Profile & Orders</span>
@@ -170,15 +187,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
                     <span>My Cart {cartCount > 0 && `(${cartCount})`}</span>
                   </Link>
                   <hr className="dropdown-divider" />
-                  {isApprovedVendor ? (
+                  {isVendor ? (
                     <Link to="/vendor/dashboard" className="dropdown-item">
                       <Store size={15} color="#064E3B" />
-                      <span>Seller Dashboard</span>
-                    </Link>
-                  ) : isPendingVendor ? (
-                    <Link to="/vendor/dashboard" className="dropdown-item" style={{ color: '#D97706' }}>
-                      <Clock size={15} color="#D97706" />
-                      <span>Application Status (Pending)</span>
+                      <span>Seller Dashboard {isVerified && '★'}</span>
                     </Link>
                   ) : (
                     <button
@@ -243,14 +255,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
 
             {user ? (
               <>
-                <Link to="/profile" className="mobile-nav-link">My Profile & Orders</Link>
-                {isApprovedVendor ? (
-                  <Link to="/vendor/dashboard" className="mobile-nav-link" style={{ fontWeight: 700, color: '#064E3B' }}>
-                    Seller Dashboard
+                {user.is_staff && (
+                  <Link to="/admin" className="mobile-nav-link" style={{ fontWeight: 700, color: '#991B1B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ShieldCheck size={16} color="#991B1B" />
+                    <span>Platform Admin Desk</span>
                   </Link>
-                ) : isPendingVendor ? (
-                  <Link to="/vendor/dashboard" className="mobile-nav-link" style={{ fontWeight: 600, color: '#D97706' }}>
-                    Application Status (Pending)
+                )}
+                <Link to="/profile" className="mobile-nav-link">My Profile & Orders</Link>
+                {isVendor ? (
+                  <Link to="/vendor/dashboard" className="mobile-nav-link" style={{ fontWeight: 700, color: '#064E3B' }}>
+                    Seller Dashboard {isVerified && '(Verified)'}
                   </Link>
                 ) : (
                   <button className="mobile-designer-btn" onClick={onOpenVendorRegister}>

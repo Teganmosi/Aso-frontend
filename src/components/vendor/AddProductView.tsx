@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState, useRef } from 'react';
 import { 
   ArrowLeft, 
   Sparkles, 
@@ -9,9 +9,11 @@ import {
   Scissors,
   Eye,
   ShieldCheck,
-  Loader
+  Loader,
+  UploadCloud,
+  Image as ImageIcon
 } from 'lucide-react';
-import { categoryApi, productApi } from '../../api/client';
+import { categoryApi, productApi, mediaApi } from '../../api/client';
 import type { Category, ProductItem } from '../../types';
 
 interface AddProductViewProps {
@@ -42,11 +44,10 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     { name: 'Emerald Forest', hex: '#064E3B' },
   ]);
 
-  // Media Thumbnails
+  // Media Thumbnails - starts empty so vendors can add their own images
   const [imageUrlInput, setImageUrlInput] = useState('');
-  const [images, setImages] = useState<string[]>([
-    '/traditional-men-1.png',
-  ]);
+  const [images, setImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [saving, setSaving] = useState(false);
 
@@ -86,15 +87,32 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
   const handleAddImage = () => {
     if (imageUrlInput.trim()) {
-      setImages([...images, imageUrlInput.trim()]);
+      setImages((prev) => [...prev, imageUrlInput.trim()]);
       setImageUrlInput('');
     }
   };
 
-  const handleRemoveImage = (index: number) => {
-    if (images.length > 1) {
-      setImages(images.filter((_, i) => i !== index));
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result && typeof event.target.result === 'string') {
+          setImages((prev) => [...prev, event.target!.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (e.target) {
+      e.target.value = '';
     }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handlePublish = async (status: 'Active' | 'Draft') => {
@@ -131,6 +149,24 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         preparation_time_days: parseInt(prepDays) || 3,
         status: status === 'Active' ? 'PUBLISHED' : 'DRAFT',
       });
+
+      // Attach any uploaded/provided images to the product
+      if (images.length > 0 && createdProduct?.id) {
+        try {
+          await Promise.allSettled(
+            images.map((img, idx) =>
+              mediaApi.attachMedia(createdProduct.id, {
+                media_type: 'IMAGE',
+                url: img,
+                is_primary: idx === 0,
+                display_order: idx,
+              })
+            )
+          );
+        } catch (mediaErr) {
+          console.warn('Could not attach all media items to backend:', mediaErr);
+        }
+      }
 
       if (onSaveProduct) {
         onSaveProduct({
@@ -192,27 +228,27 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             Save Draft
           </button>
           <button
-            className="btn-publish-live"
+            className="btn-publish-emerald"
             onClick={() => handlePublish('Active')}
             disabled={saving}
           >
             {saving ? (
               <>
-                <Loader size={16} className="spin-loader" />
+                <Loader size={16} className="spin-icon" />
                 <span>Publishing...</span>
               </>
             ) : (
               <>
                 <Sparkles size={16} />
-                <span>Publish Garment</span>
+                <span>Publish to Atelier</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      <div className="studio-layout-grid">
-        {/* Left Form: Creation Controls */}
+      <div className="studio-grid-layout">
+        {/* Left Column: Garment Details Forms */}
         <div className="studio-form-column">
           {/* Section 1: Basic Information */}
           <div className="studio-card">
@@ -223,7 +259,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
               <label>Garment Title *</label>
               <input
                 type="text"
-                placeholder="e.g. Royal Indigo Adire Agbada (3-Piece Set)"
+                placeholder="e.g. Royal Indigo Embroidered Agbada"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
                 required
@@ -232,14 +268,16 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
             <div className="form-row-2">
               <div className="form-group">
-                <label>Category *</label>
+                <label>Category</label>
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
                   className="styled-select"
                 >
                   {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -251,10 +289,11 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                   onChange={(e) => setPrepDays(e.target.value)}
                   className="styled-select"
                 >
-                  <option value="2">2 Days (Ready-to-Wear)</option>
+                  <option value="1">1 Day (Ready to ship)</option>
+                  <option value="2">2 Days</option>
                   <option value="3">3 Days (Standard Bespoke)</option>
-                  <option value="5">5 Days (Intricate Embroidery)</option>
-                  <option value="7">7 Days (Ceremonial Bridal/Agbada)</option>
+                  <option value="5">5 Days</option>
+                  <option value="7">7 Days (Elaborate Couture)</option>
                 </select>
               </div>
             </div>
@@ -348,7 +387,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                   <span key={idx} className="color-tag-pill">
                     <span className="color-swatch-dot" style={{ background: c.hex }} />
                     <span>{c.name}</span>
-                    <button type="button" onClick={() => handleRemoveColor(idx)}>×</button>
+                    <button type="button" onClick={() => handleRemoveColor(idx)}>✕</button>
                   </span>
                 ))}
               </div>
@@ -370,33 +409,75 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
           {/* Section 4: High-Res Garment Media */}
           <div className="studio-card">
             <h3 className="section-title">4. Garment Photography & Media</h3>
-            <p className="section-desc">Showcase high-resolution photos and model previews.</p>
+            <p className="section-desc">Showcase high-resolution photos, fabric swatches, and model previews.</p>
 
-            <div className="media-preview-thumbnails">
-              {images.map((img, i) => (
-                <div key={i} className="thumb-box">
-                  <img src={img} alt={`Upload ${i}`} />
-                  <button
-                    type="button"
-                    className="thumb-remove"
-                    onClick={() => handleRemoveImage(i)}
-                  >
-                    <X size={12} />
-                  </button>
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              multiple
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
+            />
+
+            {/* Upload Action Zone */}
+            <div className="media-upload-action-box">
+              <button
+                type="button"
+                className="btn-upload-dropzone"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <UploadCloud size={28} color="#064E3B" />
+                <div className="dropzone-text">
+                  <span className="dropzone-main-text">Upload Photos from Device</span>
+                  <span className="dropzone-sub-text">PNG, JPG, WEBP up to 10MB (Click to browse)</span>
                 </div>
-              ))}
+              </button>
             </div>
 
+            {/* Image Thumbnails & Previews */}
+            {images.length > 0 ? (
+              <div className="media-preview-thumbnails">
+                {images.map((img, i) => (
+                  <div key={i} className="thumb-box">
+                    <img src={img} alt={`Upload ${i + 1}`} />
+                    {i === 0 && <span className="thumb-primary-tag">Primary</span>}
+                    <button
+                      type="button"
+                      className="thumb-remove"
+                      title="Remove image"
+                      onClick={() => handleRemoveImage(i)}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="no-images-placeholder">
+                <ImageIcon size={24} color="#9CA3AF" />
+                <span>No images added yet. Upload files from your device or paste an image URL below.</span>
+              </div>
+            )}
+
+            {/* Paste URL option */}
             <div className="add-image-url-row">
               <input
                 type="text"
-                placeholder="Paste image URL (or /traditional-men-1.png)"
+                placeholder="Or paste image URL (e.g. https://... or /traditional-men-1.png)"
                 value={imageUrlInput}
                 onChange={(e) => setImageUrlInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddImage();
+                  }
+                }}
               />
               <button type="button" className="btn-add-img" onClick={handleAddImage}>
                 <Plus size={14} />
-                <span>Add Image</span>
+                <span>Add URL</span>
               </button>
             </div>
           </div>
@@ -415,10 +496,17 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
             <div className="live-preview-card">
               <div className="preview-img-wrap">
-                <img
-                  src={images[0] || '/traditional-men-1.png'}
-                  alt="Preview"
-                />
+                {images.length > 0 ? (
+                  <img
+                    src={images[0]}
+                    alt="Preview"
+                  />
+                ) : (
+                  <div className="preview-empty-image-placeholder">
+                    <ImageIcon size={40} color="#9CA3AF" />
+                    <span>Garment Photo Preview</span>
+                  </div>
+                )}
                 <div className="preview-prep-badge">
                   <Clock size={12} />
                   <span>{prepDays}d tailoring</span>
@@ -428,7 +516,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
               <div className="preview-content">
                 <span className="preview-cat-chip">{currentCategoryName}</span>
                 <h4 className="preview-product-title">
-                  {productName || 'Royal Indigo Adire Agbada (3-Piece Set)'}
+                  {productName || 'Garment Title Preview'}
                 </h4>
 
                 <div className="preview-sizes-row">
@@ -458,7 +546,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 <strong>Photography Pro-Tip</strong>
               </div>
               <p>
-                Natural daylight highlights intricate embroidery textures and textile sheen. Products with 3+ images convert 2.4x higher on Nigerian mobile devices.
+                Natural daylight highlights intricate embroidery textures and textile sheen. Adding high-quality product images increases shopper inquiries and purchases.
               </p>
             </div>
           </div>

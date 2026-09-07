@@ -362,6 +362,7 @@ export interface PaymentRequest {
 
 export type PayoutStatus =
   | 'PAYOUT_RESERVED'
+  | 'PENDING'
   | 'PROCESSING'
   | 'COMPLETED'
   | 'FAILED'
@@ -425,5 +426,28 @@ export interface CreateReviewPayload {
   order_item_id: string;
   rating: number;
   comment: string;
+}
+
+// ─── Admin Types ─────────────────────────────────────────────────────────────
+
+export interface AdminStats {
+  total_vendors: number;
+  pending_vendors: number;
+  approved_vendors: number;
+  total_products: number;
+  total_orders: number;
+  escrow_orders: number;
+  total_gmv_naira: number;
+  pending_payouts_count: number;
+}
+
+export interface AdminVendorApplication extends PublicVendorProfile {
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+  user_email?: string;
+  user_name?: string;
+  user_phone?: string;
+  nin_number?: string;
+  cac_number?: string;
+  bank_account?: BankAccount | null;
 }
 

@@ -384,7 +384,7 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                   className={`pillar-chip ${selectedPillar === 'all' ? 'active' : ''}`}
                   onClick={() => { setSelectedPillar('all'); setCurrentPage(1); }}
                 >
-                  All Artisans
+                  All Designers
                 </button>
                 <button
                   className={`pillar-chip ${selectedPillar === 'handloom' ? 'active' : ''}`}
@@ -408,12 +408,12 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                   className={`pillar-chip ${selectedPillar === 'certified' ? 'active' : ''}`}
                   onClick={() => { setSelectedPillar('certified'); setCurrentPage(1); }}
                 >
-                  Guild Certified
+                  Verified Only
                 </button>
               </div>
 
               <div className="directory-count-text">
-                Showing <strong>{filteredDesigners.length}</strong> Certified Nigerian Ateliers
+                Showing <strong>{filteredDesigners.length}</strong> Independent Designers &amp; Ateliers
               </div>
             </div>
 
@@ -421,15 +421,15 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
         </div>
       </section>
 
-      {/* ─── 2. CURATOR'S GUILD SPOTLIGHT ─── */}
+      {/* ─── 2. CURATOR'S SPOTLIGHT ─── */}
       {spotlightDesigner && (
         <section className="designers-container spotlight-section">
           <div className="spotlight-header-row">
             <div className="spotlight-badge-left">
               <span className="spotlight-dot" />
-              <h2 className="spotlight-title-eyebrow">Curator's Guild Spotlight</h2>
+              <h2 className="spotlight-title-eyebrow">Featured Designer Spotlight</h2>
             </div>
-            <span className="spotlight-issue-tag">Issue No. 42 • West African Haute Couture</span>
+            <span className="spotlight-issue-tag">Contemporary Nigerian Fashion</span>
           </div>
 
           <div className="spotlight-hero-card">
@@ -449,7 +449,7 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                 <div className="spotlight-media-overlay">
                   <div className="spotlight-verified-pill">
                     <ShieldCheck size={14} />
-                    <span>Verified Master Artisan</span>
+                    <span>Verified Designer</span>
                   </div>
                   <h3 className="spotlight-atelier-name">{spotlightDesigner.profile.store_name}</h3>
                   <span className="spotlight-atelier-location">
@@ -486,12 +486,12 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                   {/* Credential Strip */}
                   <div className="spotlight-credentials-strip">
                     <div className="credential-col">
-                      <span className="credential-val">{spotlightDesigner.runwaysCount || 12}</span>
-                      <span className="credential-lbl">Archived Runways</span>
+                      <span className="credential-val">{spotlightDesigner.products.length}</span>
+                      <span className="credential-lbl">Pieces Listed</span>
                     </div>
                     <div className="credential-col">
-                      <span className="credential-val">{spotlightDesigner.weaversCount || '35+'}</span>
-                      <span className="credential-lbl">Guild Weavers</span>
+                      <span className="credential-val">{spotlightDesigner.profile.city}</span>
+                      <span className="credential-lbl">Workshop City</span>
                     </div>
                     <div className="credential-col">
                       <span className="credential-val accent">Bespoke</span>
@@ -565,20 +565,20 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
         </section>
       )}
 
-      {/* ─── 3. MASTER GUILD ROSTER (3-Column Luxury Cards Grid) ─── */}
+      {/* ─── 3. DESIGNERS ROSTER (3-Column Luxury Cards Grid) ─── */}
       <section className="designers-container roster-section" id="roster">
         {/* Roster Header */}
         <div className="roster-header-row">
           <div>
-            <span className="roster-eyebrow">Index • Curated Ateliers</span>
-            <h2 className="roster-main-title">Master Guild Roster</h2>
+            <span className="roster-eyebrow">Index • Verified Ateliers</span>
+            <h2 className="roster-main-title">Designer &amp; Atelier Directory</h2>
           </div>
           <div className="roster-guarantees-row">
-            <span>Verified Guild Credentials</span>
+            <span>Verified Designer Onboarding</span>
             <span className="guarantee-dot" />
             <span>Secured Escrow Fulfillment</span>
             <span className="guarantee-dot" />
-            <span>Worldwide DHL Express</span>
+            <span>Nationwide &amp; Global Delivery</span>
           </div>
         </div>
 
@@ -608,7 +608,7 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
         ) : paginatedDesigners.length === 0 ? (
           <div className="designers-empty-state">
             <Package size={44} color="#00322d" />
-            <h3>No Master Ateliers Matching Your Filters</h3>
+            <h3>No Designers Matching Your Filters</h3>
             <p>Try clearing your region or craft specialty filters to view more designers.</p>
             <button 
               onClick={() => {
@@ -706,7 +706,7 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
             {totalPages > 1 && (
               <div className="designers-pagination-bar">
                 <div className="pagination-info">
-                  Showing 1–{paginatedDesigners.length} of {filteredDesigners.length} verified ateliers
+                  Showing 1–{paginatedDesigners.length} of {filteredDesigners.length} designers &amp; ateliers
                 </div>
                 <div className="pagination-controls">
                   <button
@@ -762,7 +762,7 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                     <MapPin size={20} color="#8b500a" />
                   </div>
                   <div>
-                    <strong className="landmark-heading">Oshogbo &amp; Iseyin Guilds</strong>
+                    <strong className="landmark-heading">Oshogbo &amp; Iseyin Weaving</strong>
                     <span className="landmark-sub">Traditional narrow-strip upright wooden loom weaving of Aso-Oke.</span>
                   </div>
                 </div>
@@ -773,7 +773,7 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                   </div>
                   <div>
                     <strong className="landmark-heading">Itoku &amp; Kemta, Abeokuta</strong>
-                    <span className="landmark-sub">Centuries-old Adire indigo dye pits managed by matriarchal guild elders.</span>
+                    <span className="landmark-sub">Centuries-old Adire indigo dye pits managed by heritage artisan elders.</span>
                   </div>
                 </div>
 
@@ -783,13 +783,13 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                   </div>
                   <div>
                     <strong className="landmark-heading">Kano Ancient Tannery District</strong>
-                    <span className="landmark-sub">World-renowned vegetable tanning of Moroccan red goat and camel hide.</span>
+                    <span className="landmark-sub">World-renowned vegetable tanning of Moroccan red goat and leather crafts.</span>
                   </div>
                 </div>
               </div>
 
               <a href="#roster" className="provenance-link">
-                <span>Read Provenance Whitepaper</span>
+                <span>Explore Artisan Locations</span>
                 <ArrowRight size={16} />
               </a>
             </div>
@@ -804,7 +804,7 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                   <div className="map-passport-pill">
                     <div>
                       <span className="passport-eyebrow">Artisan Verification</span>
-                      <strong className="passport-title">100% Traceable Textile Passports</strong>
+                      <strong className="passport-title">Authentic Nigerian Fashion &amp; 72h Buyer Protection</strong>
                     </div>
                     <CheckCircle2 size={28} color="#00322d" />
                   </div>
@@ -826,11 +826,11 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
             <div className="onboarding-text-col">
               <div className="onboarding-badge-pill">
                 <Sparkles size={14} />
-                <span>Guild Invitations Open</span>
+                <span>Designer Onboarding Open</span>
               </div>
               <h2 className="onboarding-title">Are You an Artisan or Fashion Designer?</h2>
               <p className="onboarding-desc">
-                Join Nigeria's premier curated marketplace. Showcase your craftsmanship to discerning private clients, couture collectors, and luxury retailers worldwide with zero cross-border logistics friction.
+                Join Nigeria's premier curated marketplace. Showcase your craftsmanship to discerning private clients, couture collectors, and fashion lovers worldwide with zero cross-border logistics friction.
               </p>
             </div>
 
@@ -846,7 +846,7 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                 className="btn-sla-standards"
               >
                 <ShieldCheck size={16} />
-                <span>Review Guild Standards • SLA</span>
+                <span>Seller Verification &amp; SLA Terms</span>
               </button>
             </div>
           </div>

@@ -238,11 +238,18 @@ export const VendorDashboardPage: React.FC = () => {
 
     setKycLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await vendorApi.verifyKyc({
+        nin,
+        landmark,
+        cac_number: cacNumber,
+      });
       setKycSubmitted(true);
-      setKycSuccessMessage('Verification details submitted successfully! Our compliance team will audit your NIN & workshop landmark.');
-    } catch (err) {
-      setKycErrorMessage('Failed to submit verification details. Please try again.');
+      setKycSuccessMessage('Verification details submitted successfully! Your NIN and workshop landmark have been recorded for the Verified Atelier badge review.');
+      refreshMe();
+    } catch (err: any) {
+      console.error('KYC submission error', err);
+      const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to submit verification details. Please try again.';
+      setKycErrorMessage(msg);
     } finally {
       setKycLoading(false);
     }
@@ -335,7 +342,7 @@ export const VendorDashboardPage: React.FC = () => {
     );
   }
 
-  const storeSlug = user?.vendor_profile?.slug || (user?.first_name ? user.first_name.toLowerCase().replace(/\s+/g, '-') : '');
+  const storeSlug = user?.vendor_profile?.slug || (user?.first_name ? user.first_name.toLowerCase().replace(/\s+/g, '-') : 'orji-master-tailoring-house');
   const availableNaira = balance?.available_balance_naira ?? 0;
   const pendingNaira = balance?.pending_balance_naira ?? 0;
   const reservedNaira = balance?.reserved_balance_naira ?? 0;

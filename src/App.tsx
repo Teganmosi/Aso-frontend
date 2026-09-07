@@ -16,6 +16,7 @@ import { VendorStorefrontPage } from './pages/VendorStorefrontPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { CartPage } from './pages/CartPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { AdminPortalPage } from './pages/AdminPortalPage';
 import './styles/global.css';
 
 import { useLocation } from 'react-router-dom';
@@ -23,12 +24,13 @@ import { useLocation } from 'react-router-dom';
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isVendorRoute = location.pathname.startsWith('/vendor');
+  const isAdminRoute = location.pathname.startsWith('/admin');
   const { openAuthModal } = useAuth();
   const handleOpenDesignerRegister = () => openAuthModal('register', 'designer');
 
   return (
     <div className="app-main-layout">
-      {!isVendorRoute && (
+      {!isVendorRoute && !isAdminRoute && (
         <Navbar
           onOpenVendorRegister={handleOpenDesignerRegister}
           logoOption={2}
@@ -83,10 +85,14 @@ const AppContent: React.FC = () => {
           <Route path="/vendor/orders" element={<VendorDashboardPage />} />
           <Route path="/vendor/earnings" element={<VendorDashboardPage />} />
           <Route path="/vendor/settings" element={<VendorDashboardPage />} />
+
+          {/* Platform Staff & Admin Desk */}
+          <Route path="/admin" element={<AdminPortalPage />} />
+          <Route path="/admin-portal" element={<AdminPortalPage />} />
         </Routes>
       </main>
 
-      {!isVendorRoute && (
+      {!isVendorRoute && !isAdminRoute && (
         <Footer logoOption={2} onOpenVendorRegister={handleOpenDesignerRegister} />
       )}
 

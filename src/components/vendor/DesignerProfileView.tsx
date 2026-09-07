@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { vendorApi, reviewApi, productApi, orderApi } from '../../api/client';
-import type { BankAccount, PublicVendorProfile } from '../../types';
+import { apiClient, vendorApi, reviewApi, productApi, orderApi } from '../../api/client';
+import type { BankAccount } from '../../types';
 import {
   Store,
   MapPin,
@@ -133,34 +133,42 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
     const fetchLiveProfileData = async () => {
       setLoading(true);
       try {
-        const targetSlug = user?.vendor_profile?.slug;
-
-        // 1. Fetch live public vendor profile from DB only if user has a slug
-        if (targetSlug) {
-          const profile: PublicVendorProfile = await vendorApi.getPublicProfile(targetSlug).catch(() => null as any);
-
-          if (profile) {
-            if (profile.store_name) setStoreName(profile.store_name);
-            if (profile.slug) setSlug(profile.slug);
-            if (profile.description) setBiography(profile.description);
-            if (profile.banner_url) setCoverBannerUrl(profile.banner_url);
-            if (profile.logo_url) setLogoUrl(profile.logo_url);
-            if (profile.workshop_address) setWorkshopAddress(profile.workshop_address);
-            if (profile.city || profile.state) {
-              setCityState(`${profile.city || ''}${profile.city && profile.state ? ', ' : ''}${profile.state || ''}`);
-            }
-            if (profile.instagram_handle) setInstagram(profile.instagram_handle.replace('@', ''));
-            if (profile.is_verified !== undefined) setIsVerified(profile.is_verified);
-            if (profile.kyc_tier) setTierStatus(profile.kyc_tier.replace(/_/g, ' '));
-            if (profile.average_rating) setAverageRating(parseFloat(profile.average_rating).toFixed(1));
-            if (profile.review_count !== undefined) setReviewCount(profile.review_count);
+        // 1. Fetch live authenticated vendor profile directly from DB
+        let profile: any = null;
+        try {
+          const res = await apiClient.get('/vendors/me/');
+          if (res.data?.vendor) {
+            profile = res.data.vendor;
           }
+        } catch {
+          const targetSlug = user?.vendor_profile?.slug;
+          if (targetSlug) {
+            profile = await vendorApi.getPublicProfile(targetSlug).catch(() => null);
+          }
+        }
 
+        if (profile) {
+          if (profile.store_name) setStoreName(profile.store_name);
+          if (profile.slug) setSlug(profile.slug);
+          if (profile.description) setBiography(profile.description);
+          if (profile.banner_url) setCoverBannerUrl(profile.banner_url);
+          if (profile.logo_url) setLogoUrl(profile.logo_url);
+          if (profile.workshop_address) setWorkshopAddress(profile.workshop_address);
+          if (profile.city || profile.state) {
+            setCityState(`${profile.city || ''}${profile.city && profile.state ? ', ' : ''}${profile.state || ''}`);
+          }
+          if (profile.instagram_handle) setInstagram(profile.instagram_handle.replace('@', ''));
+          if (profile.is_verified !== undefined) setIsVerified(profile.is_verified);
+          if (profile.kyc_tier) setTierStatus(profile.kyc_tier.replace(/_/g, ' '));
+          if (profile.average_rating) setAverageRating(parseFloat(profile.average_rating).toFixed(1));
+          if (profile.review_count !== undefined) setReviewCount(profile.review_count);
+
+          const querySlug = profile.slug || profile.id;
           // 2. Fetch live reviews & sold count from DB
           const [reviews, orders, products] = await Promise.allSettled([
-            reviewApi.getVendorReviews(targetSlug),
+            reviewApi.getVendorReviews(querySlug),
             orderApi.vendorGetOrders(),
-            productApi.getPublicProducts({ vendor: profile?.id }),
+            productApi.getPublicProducts({ vendor: querySlug }),
           ]);
 
           if (reviews.status === 'fulfilled' && Array.isArray(reviews.value)) {
@@ -190,7 +198,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           if (user.first_name || user.last_name) {
             setLeadDesigner(`${user.first_name || ''} ${user.last_name || ''}`.trim());
           }
-          if (user.phone_number) {
+          if (user.phone_number && !whatsapp) {
             setWhatsapp(user.phone_number);
           }
           if (user.vendor_profile?.store_name && !storeName) {
@@ -245,7 +253,39 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
     setSaveError('');
 
     try {
-      // 1. Persist bank account to DB
+      // Parse city & state from input
+      const parts = cityState.split(',').map((s) => s.trim()).filter(Boolean);
+      const city = parts[0] || 'Lagos';
+      const state = parts[1] || parts[0] || 'Lagos State';
+
+      // Parse first & last name from lead designer
+      const nameParts = leadDesigner.trim().split(/\s+/);
+      const first_name = nameParts[0] || '';
+      const last_name = nameParts.slice(1).join(' ') || '';
+
+      // 1. Update Core Vendor Storefront Profile in DB
+      const updatedProfile = await vendorApi.updateProfile({
+        store_name: storeName.trim(),
+        description: biography.trim(),
+        city,
+        state,
+        workshop_address: workshopAddress.trim(),
+        landmark: cityState.trim(),
+        instagram_handle: instagram.trim() ? (instagram.startsWith('@') ? instagram.trim() : ('@' + instagram.trim())) : '',
+        logo_url: logoUrl || undefined,
+        banner_url: coverBannerUrl || undefined,
+        nin_number: nin.trim(),
+        cac_number: cacNumber.trim(),
+        first_name,
+        last_name,
+        phone_number: whatsapp.trim(),
+      });
+
+      if (updatedProfile?.slug) {
+        setSlug(updatedProfile.slug);
+      }
+
+      // 2. Persist payout bank account to DB if provided
       if (accountNumber && bankName && accountName) {
         await vendorApi.saveBankAccount({
           account_name: accountName,
@@ -255,18 +295,21 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
         });
       }
 
-      // 2. Persist KYC & Workshop location to DB
-      await vendorApi.verifyKyc({
-        nin,
-        cac_number: cacNumber,
-        workshop_address: workshopAddress,
-        landmark: cityState,
-      }).catch(() => {});
+      // 3. Persist KYC verification details if provided
+      if (nin || cacNumber) {
+        await vendorApi.verifyKyc({
+          nin,
+          cac_number: cacNumber,
+          workshop_address: workshopAddress,
+          landmark: cityState,
+        }).catch(() => {});
+      }
 
       await refreshMe();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: any) {
+      console.error('Save profile error', err);
       const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to save changes to the database.';
       setSaveError(msg);
     } finally {
@@ -317,7 +360,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           {/* Action Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <a
-              href={`/store/${slug}`}
+              href={`/store/${slug || user?.vendor_profile?.slug || "orji-master-tailoring-house"}`}
               target="_blank"
               rel="noreferrer"
               style={{

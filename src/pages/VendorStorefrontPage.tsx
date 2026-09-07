@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { vendorApi, productApi, reviewApi } from '../api/client';
 import type { PublicVendorProfile, Product, Review } from '../types';
-import { SAMPLE_PRODUCTS, SAMPLE_REVIEWS } from '../data/sampleData';
 import { 
   MapPin, 
   CheckCircle2, 
@@ -23,63 +22,6 @@ import {
   Scissors
 } from 'lucide-react';
 import './VendorStorefrontPage.css';
-
-const SAMPLE_PROFILES: Record<string, PublicVendorProfile> = {
-  'lagos-couture': {
-    id: '1',
-    store_name: 'Lagos Couture House',
-    slug: 'lagos-couture',
-    description: 'Premier Nigerian bespoke tailoring house crafting royal Agbadas, Senator kaftans, and luxury ceremonial wear with imported Swiss voile and premium cashmere wool.',
-    city: 'Lagos',
-    state: 'Lagos State',
-    kyc_tier: 'TIER_2',
-    workshop_address: '14 Victoria Island Way, Lagos',
-    landmark: 'Near Eko Hotel & Suites',
-    is_verified: true,
-    average_rating: '4.9',
-    review_count: 38,
-    instagram_handle: '@lagos_couture_ng',
-    banner_url: '/hero-bg.png',
-    logo_url: '/traditional-men-1.png',
-    created_at: '2024-01-15T00:00:00Z',
-  },
-  'heritage-cuts': {
-    id: '2',
-    store_name: 'Heritage Cuts & Threads',
-    slug: 'heritage-cuts',
-    description: 'Authentic traditional African menswear, modern safari sets, and custom bespoke suits handcrafted by master Nigerian tailors with generational expertise.',
-    city: 'Abuja',
-    state: 'FCT',
-    kyc_tier: 'TIER_2',
-    workshop_address: '8 Maitama Crescent, Abuja',
-    landmark: 'Central Business District',
-    is_verified: true,
-    average_rating: '4.8',
-    review_count: 24,
-    instagram_handle: '@heritagecuts_abj',
-    banner_url: '/traditional-men-2.png',
-    logo_url: '/traditional-men-3.png',
-    created_at: '2024-02-10T00:00:00Z',
-  },
-  'adire-house': {
-    id: '3',
-    store_name: 'Adire Mastercraft Atelier',
-    slug: 'adire-house',
-    description: 'Contemporary indigo dyed textiles, modern Adire dresses, handcrafted silk-blend kaftans and bespoke Nigerian women’s luxury fashion.',
-    city: 'Ibadan',
-    state: 'Oyo State',
-    kyc_tier: 'TIER_2',
-    workshop_address: '5 Ring Road, Ibadan',
-    landmark: 'Dugbe Commercial Center',
-    is_verified: true,
-    average_rating: '5.0',
-    review_count: 52,
-    instagram_handle: '@adire_mastercraft',
-    banner_url: '/adire-1.png',
-    logo_url: '/adire-2.png',
-    created_at: '2024-03-01T00:00:00Z',
-  },
-};
 
 export const VendorStorefrontPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -108,62 +50,51 @@ export const VendorStorefrontPage: React.FC = () => {
   const loadProfile = async (storeSlug: string) => {
     setLoading(true);
     try {
-      const data = await vendorApi.getPublicProfile(storeSlug);
-      setProfile(data);
-      loadVendorProducts(data.id, storeSlug);
-      loadVendorReviews(storeSlug);
-    } catch (err: any) {
-      if (SAMPLE_PROFILES[storeSlug]) {
-        const p = SAMPLE_PROFILES[storeSlug];
-        setProfile(p);
-        loadVendorProducts(p.id, storeSlug);
-        loadVendorReviews(storeSlug);
-      } else {
-        const formattedTitle = storeSlug
-          .split('-')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-
-        setProfile({
-          id: '99',
-          store_name: formattedTitle || 'Bespoke Designer Atelier',
-          slug: storeSlug,
-          description: 'Nigerian bespoke fashion house creating premium traditional and contemporary apparel.',
-          city: 'Lagos',
-          state: 'Lagos State',
-          kyc_tier: 'TIER_1',
-          workshop_address: 'Bespoke District, Lagos',
-          landmark: 'City Center',
-          is_verified: true,
-          average_rating: '4.9',
-          review_count: 18,
-          instagram_handle: `@${storeSlug.replace(/-/g, '_')}`,
-          banner_url: '/hero-bg.png',
-          logo_url: '/traditional-men-1.png',
-          created_at: new Date().toISOString(),
-        });
-        loadVendorProducts('99', storeSlug);
-        loadVendorReviews(storeSlug);
+      const cleanSlug = decodeURIComponent(storeSlug || '').trim();
+      if (!cleanSlug) {
+        setProfile(null);
+        return;
       }
+      let data = await vendorApi.getPublicProfile(cleanSlug).catch(() => null);
+
+      // Fallback: if not found directly by exact slug, check all vendors list
+      if (!data || !data.store_name) {
+        const allVendors = await vendorApi.getVendors().catch(() => []);
+        const matched = allVendors.find(
+          (v) =>
+            v.slug?.toLowerCase() === cleanSlug.toLowerCase() ||
+            v.id === cleanSlug ||
+            v.store_name?.toLowerCase().includes(cleanSlug.toLowerCase()) ||
+            cleanSlug.toLowerCase().includes((v.slug || '').toLowerCase())
+        );
+        if (matched) {
+          data = matched;
+        }
+      }
+
+      if (data && data.store_name) {
+        setProfile(data);
+        const vendorQueryKey = data.slug || cleanSlug || data.id;
+        loadVendorProducts(vendorQueryKey);
+        loadVendorReviews(data.slug || cleanSlug);
+      } else {
+        setProfile(null);
+      }
+    } catch (err) {
+      console.error('Failed to load designer storefront profile for', storeSlug, err);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadVendorProducts = async (vendorId: string, storeSlug: string) => {
+  const loadVendorProducts = async (vendorQueryKey: string) => {
     setProductsLoading(true);
     try {
-      const data = await productApi.getPublicProducts({ vendor: vendorId });
-      if (Array.isArray(data)) {
-        setProducts(data);
-      } else {
-        setProducts([]);
-      }
+      const data = await productApi.getPublicProducts({ vendor: vendorQueryKey });
+      setProducts(Array.isArray(data) ? data : []);
     } catch {
-      const sampleMatches = SAMPLE_PRODUCTS.filter(
-        p => p.vendor?.id === vendorId || p.vendor?.slug === storeSlug
-      );
-      setProducts(sampleMatches.length > 0 ? sampleMatches : []);
+      setProducts([]);
     } finally {
       setProductsLoading(false);
     }
@@ -173,15 +104,9 @@ export const VendorStorefrontPage: React.FC = () => {
     setReviewsLoading(true);
     try {
       const data = await reviewApi.getVendorReviews(vendorSlug);
-      if (Array.isArray(data) && data.length > 0) {
-        setReviews(data);
-      } else {
-        const fallback = Object.values(SAMPLE_REVIEWS).flat();
-        setReviews(fallback);
-      }
+      setReviews(Array.isArray(data) ? data : []);
     } catch {
-      const fallback = Object.values(SAMPLE_REVIEWS).flat();
-      setReviews(fallback);
+      setReviews([]);
     } finally {
       setReviewsLoading(false);
     }

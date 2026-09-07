@@ -178,75 +178,25 @@ export const CartPage: React.FC = () => {
     }
   };
 
-  // Web Crypto Signature Helper
-  const signPayload = async (payloadStr: string, secret: string): Promise<string> => {
-    const enc = new TextEncoder();
-    const key = await window.crypto.subtle.importKey(
-      "raw",
-      enc.encode(secret),
-      { name: "HMAC", hash: { name: "SHA-512" } },
-      false,
-      ["sign"]
-    );
-    const signature = await window.crypto.subtle.sign(
-      "HMAC",
-      key,
-      enc.encode(payloadStr)
-    );
-    return Array.from(new Uint8Array(signature))
-      .map(b => b.toString(16).padStart(2, "0"))
-      .join("");
-  };
-
-  // Simulate Payment Webhook Success
-  const handleSimulatePayment = async () => {
+  // Real Backend Payment Status Check
+  const handleRefreshOrderStatus = async () => {
     if (!paymentRequest) return;
     setSimulationLoading(true);
     setSimulationMessage('');
-    setSimulationSuccess(null);
     try {
-      const payload = {
-        event: "charge.success",
-        data: {
-          id: Math.floor(Math.random() * 1000000),
-          domain: "test",
-          status: "success",
-          reference: paymentRequest.reference,
-          amount: paymentRequest.amount_kobo,
-          message: "Approved",
-          gateway_response: "Successful",
-          currency: "NGN",
-          channel: "card",
-          ip_address: "127.0.0.1",
-          customer: {
-            id: Math.floor(Math.random() * 100000),
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email
-          }
-        }
-      };
-
-      const payloadStr = JSON.stringify(payload);
-      // Hardcoded local testing mock secret key matching the Django backend .env
-      const secret = "sk_test_mock_paystack_secret_key";
-      const signature = await signPayload(payloadStr, secret);
-
-      const res = await paymentApi.simulateWebhook(payload, signature);
-      if (res.success) {
+      const updatedOrder = await orderApi.getOrderDetail(paymentRequest.order);
+      setCreatedOrder(updatedOrder);
+      if (updatedOrder.order_status === 'PAID' || updatedOrder.order_status !== 'PENDING_PAYMENT') {
         setSimulationSuccess(true);
-        setSimulationMessage('Webhook simulated successfully! Order marked as PAID.');
-        // Refresh createdOrder details
-        const updatedOrder = await orderApi.getOrderDetail(paymentRequest.order);
-        setCreatedOrder(updatedOrder);
+        setSimulationMessage('Payment confirmed by server! Order is being processed.');
       } else {
         setSimulationSuccess(false);
-        setSimulationMessage(res.detail || 'Webhook simulation returned failure.');
+        setSimulationMessage('Payment is still pending backend webhook confirmation.');
       }
     } catch (err: any) {
       console.error(err);
       setSimulationSuccess(false);
-      setSimulationMessage(err.response?.data?.detail || 'Failed to simulate payment webhook.');
+      setSimulationMessage('Unable to refresh order status from server.');
     } finally {
       setSimulationLoading(false);
     }
@@ -337,26 +287,37 @@ export const CartPage: React.FC = () => {
                 <div className="conf-card-action">
                   <h3>Complete Your Order</h3>
                   <p>Use Paystack gateway to make a test payment.</p>
-                  <a
-                    href={paymentRequest.authorization_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const payReq = await paymentApi.initializePayment(createdOrder.id);
+                        setPaymentRequest(payReq);
+                        if (payReq.authorization_url) {
+                          window.open(payReq.authorization_url, '_blank');
+                        }
+                      } catch {
+                        if (paymentRequest.authorization_url) {
+                          window.open(paymentRequest.authorization_url, '_blank');
+                        }
+                      }
+                    }}
                     className="paystack-redirect-btn"
                   >
                     <CreditCard size={18} />
                     <span>Pay with Paystack</span>
-                  </a>
+                  </button>
                 </div>
               )}
 
-              {/* Developer Webhook Simulator */}
+              {/* Real Server Payment Verification */}
               {!isPaid && (
                 <div className="conf-card-action simulation-panel">
                   <div className="simulation-header">
                     <ShieldCheck size={18} className="sim-shield-icon" />
-                    <h4>Developer Webhook Simulator</h4>
+                    <h4>Payment Verification</h4>
                   </div>
-                  <p>Verify end-to-end status mutations locally by mimicking Paystack's <code>charge.success</code> webhook transaction event with HMAC validation.</p>
+                  <p>Once you complete payment in the Paystack checkout window, click below to verify your confirmed order status directly with the server.</p>
                   
                   {simulationMessage && (
                     <div className={`sim-alert-message ${simulationSuccess ? 'sim-success' : 'sim-fail'}`}>
@@ -366,16 +327,16 @@ export const CartPage: React.FC = () => {
 
                   <button
                     className="btn-simulate-webhook"
-                    onClick={handleSimulatePayment}
+                    onClick={handleRefreshOrderStatus}
                     disabled={simulationLoading}
                   >
                     {simulationLoading ? (
                       <>
                         <Loader size={15} className="cart-spinner-sm" />
-                        <span>Simulating webhook...</span>
+                        <span>Checking server status...</span>
                       </>
                     ) : (
-                      <span>Simulate Webhook Success</span>
+                      <span>I Have Completed Payment</span>
                     )}
                   </button>
                 </div>

@@ -5,7 +5,7 @@ import { addressApi, orderApi, paymentApi, deliveryApi, reviewApi } from '../api
 import type { Address, Order, Delivery, OrderItem } from '../types';
 import {
   User as UserIcon, MapPin, Plus, Trash2, CheckCircle, Star,
-  Phone, Mail, AlertCircle, Loader, ShoppingBag, Calendar, ChevronRight, ArrowLeft, ShieldCheck, Truck, X
+  Phone, Mail, AlertCircle, Loader, ShoppingBag, Calendar, ChevronRight, ArrowLeft, Truck, X, CreditCard
 } from 'lucide-react';
 import './ProfilePage.css';
 
@@ -137,73 +137,35 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // Helper for Web Crypto HMAC
-  const signPayload = async (payloadStr: string, secret: string): Promise<string> => {
-    const enc = new TextEncoder();
-    const key = await window.crypto.subtle.importKey(
-      "raw",
-      enc.encode(secret),
-      { name: "HMAC", hash: { name: "SHA-512" } },
-      false,
-      ["sign"]
-    );
-    const signature = await window.crypto.subtle.sign(
-      "HMAC",
-      key,
-      enc.encode(payloadStr)
-    );
-    return Array.from(new Uint8Array(signature))
-      .map(b => b.toString(16).padStart(2, "0"))
-      .join("");
-  };
-
-  // Simulate Payment Webhook Success In Profile
-  const handleSimulatePaymentInProfile = async (order: Order) => {
+  // Pay for Pending Order via Paystack
+  const handlePayPendingOrder = async (order: Order) => {
     setWebhookSimLoading(true);
     try {
       const payReq = await paymentApi.initializePayment(order.id);
-      
-      const payload = {
-        event: "charge.success",
-        data: {
-          id: Math.floor(Math.random() * 1000000),
-          domain: "test",
-          status: "success",
-          reference: payReq.reference,
-          amount: payReq.amount_kobo,
-          message: "Approved",
-          gateway_response: "Successful",
-          currency: "NGN",
-          channel: "card",
-          ip_address: "127.0.0.1",
-          customer: {
-            id: Math.floor(Math.random() * 100000),
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email
-          }
-        }
-      };
-
-      const payloadStr = JSON.stringify(payload);
-      const secret = "sk_test_mock_paystack_secret_key";
-      const signature = await signPayload(payloadStr, secret);
-
-      const res = await paymentApi.simulateWebhook(payload, signature);
-      if (res.success) {
-        alert('Webhook simulated successfully! Order marked as PAID.');
-        // Reload order details
-        const updated = await orderApi.getOrderDetail(order.id);
-        setSelectedOrder(updated);
-        // Reload orders list
-        const list = await orderApi.getOrders();
-        setOrders(list);
+      if (payReq.authorization_url) {
+        window.open(payReq.authorization_url, '_blank');
       } else {
-        alert(res.detail || 'Webhook simulation returned failure.');
+        alert('Payment initialization did not return an authorization URL.');
       }
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.detail || 'Failed to simulate payment webhook.');
+      alert(err.response?.data?.detail || 'Failed to initialize payment.');
+    } finally {
+      setWebhookSimLoading(false);
+    }
+  };
+
+  // Refresh Order Details from Server
+  const handleRefreshOrderDetails = async (orderId: string) => {
+    setWebhookSimLoading(true);
+    try {
+      const updated = await orderApi.getOrderDetail(orderId);
+      setSelectedOrder(updated);
+      const list = await orderApi.getOrders();
+      setOrders(list);
+    } catch (err: any) {
+      console.error(err);
+      alert('Unable to refresh order details.');
     } finally {
       setWebhookSimLoading(false);
     }
@@ -635,21 +597,32 @@ export const ProfilePage: React.FC = () => {
                         </div>
                       ) : null}
 
-                      {/* Developer Hook simulator block */}
+                      {/* Complete Pending Payment Card */}
                       {selectedOrder.order_status === 'PENDING_PAYMENT' && (
                         <div className="side-card sim-card">
                           <div className="sim-header">
-                            <ShieldCheck size={18} className="sim-shield" />
-                            <h4>Developer Payment Simulator</h4>
+                            <CreditCard size={18} className="sim-shield" />
+                            <h4>Complete Payment</h4>
                           </div>
-                          <p>Submit a mock payment webhook locally to instantly change order state to PAID.</p>
-                          <button
-                            className="btn-sim-pay"
-                            onClick={() => handleSimulatePaymentInProfile(selectedOrder)}
-                            disabled={webhookSimLoading}
-                          >
-                            {webhookSimLoading ? 'Simulating...' : 'Simulate Payment Success'}
-                          </button>
+                          <p>This order is waiting for payment. Click below to launch the Paystack secure checkout window.</p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.8rem' }}>
+                            <button
+                              className="btn-sim-pay"
+                              style={{ backgroundColor: '#064E3B', color: '#FFF' }}
+                              onClick={() => handlePayPendingOrder(selectedOrder)}
+                              disabled={webhookSimLoading}
+                            >
+                              Pay with Paystack
+                            </button>
+                            <button
+                              className="btn-sim-pay"
+                              style={{ backgroundColor: '#F3F4F6', color: '#374151', border: '1px solid #D1D5DB' }}
+                              onClick={() => handleRefreshOrderDetails(selectedOrder.id)}
+                              disabled={webhookSimLoading}
+                            >
+                              Refresh Payment Status
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>

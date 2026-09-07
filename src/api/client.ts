@@ -24,6 +24,7 @@ import type {
   LedgerEntry,
   Review,
   CreateReviewPayload,
+  AdminVendorApplication,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -190,6 +191,27 @@ export const vendorApi = {
     await fetchCsrfToken();
     const res = await apiClient.post('/vendors/verify-kyc/', payload);
     return res.data;
+  },
+
+  updateProfile: async (payload: {
+    store_name?: string;
+    description?: string;
+    city?: string;
+    state?: string;
+    workshop_address?: string;
+    landmark?: string;
+    instagram_handle?: string;
+    logo_url?: string | null;
+    banner_url?: string | null;
+    nin_number?: string;
+    cac_number?: string;
+    first_name?: string;
+    last_name?: string;
+    phone_number?: string;
+  }): Promise<any> => {
+    await fetchCsrfToken();
+    const res = await apiClient.patch('/vendors/profile/', payload);
+    return res.data.vendor || res.data.data || res.data;
   },
 };
 
@@ -397,16 +419,6 @@ export const paymentApi = {
     const res = await apiClient.post('/payments/initialize/', { order_id: orderId });
     return res.data.data || res.data;
   },
-
-  simulateWebhook: async (payload: any, signature: string): Promise<any> => {
-    const res = await apiClient.post('/payments/webhook/paystack/', payload, {
-      headers: {
-        'X-Paystack-Signature': signature,
-        'Content-Type': 'application/json',
-      },
-    });
-    return res.data;
-  },
 };
 
 // ─── Delivery API ────────────────────────────────────────────────────────────
@@ -471,3 +483,80 @@ export const reviewApi = {
     return normalizeArray<Review>(res.data);
   },
 };
+
+// ─── Admin API ────────────────────────────────────────────────────────────────
+
+export const adminApi = {
+  getVendors: async (params?: { status?: string; search?: string }): Promise<AdminVendorApplication[]> => {
+    try {
+      const res = await apiClient.get('/admin/vendors/', { params });
+      return normalizeArray<AdminVendorApplication>(res.data);
+    } catch {
+      try {
+        const res = await apiClient.get('/vendors/', { params });
+        return normalizeArray<AdminVendorApplication>(res.data);
+      } catch {
+        return [];
+      }
+    }
+  },
+
+  updateVendorStatus: async (
+    vendorId: string,
+    payload: { status: 'APPROVED' | 'REJECTED' | 'SUSPENDED'; is_verified?: boolean; kyc_tier?: string }
+  ) => {
+    await fetchCsrfToken();
+    try {
+      const res = await apiClient.patch(`/admin/vendors/${vendorId}/`, payload);
+      return res.data;
+    } catch {
+      const res = await apiClient.post(`/admin/vendors/${vendorId}/status/`, payload);
+      return res.data;
+    }
+  },
+
+  getProducts: async (params?: any): Promise<Product[]> => {
+    try {
+      const res = await apiClient.get('/admin/products/', { params });
+      return normalizeArray<Product>(res.data);
+    } catch {
+      return productApi.getPublicProducts(params);
+    }
+  },
+
+  moderateProduct: async (productId: string, payload: { approval_status: 'APPROVED' | 'REJECTED' }) => {
+    await fetchCsrfToken();
+    try {
+      const res = await apiClient.patch(`/admin/products/${productId}/`, payload);
+      return res.data;
+    } catch {
+      const res = await apiClient.post(`/admin/products/${productId}/approve/`, payload);
+      return res.data;
+    }
+  },
+
+  getOrders: async (): Promise<Order[]> => {
+    try {
+      const res = await apiClient.get('/admin/orders/');
+      return normalizeArray<Order>(res.data);
+    } catch {
+      return orderApi.getOrders();
+    }
+  },
+
+  getPayoutRequests: async (): Promise<PayoutRequest[]> => {
+    try {
+      const res = await apiClient.get('/admin/payouts/');
+      return normalizeArray<PayoutRequest>(res.data);
+    } catch {
+      return payoutApi.getPayoutRequests();
+    }
+  },
+
+  processPayout: async (payoutId: string, action: 'APPROVE' | 'REJECT') => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/admin/payouts/${payoutId}/process/`, { action });
+    return res.data;
+  },
+};
+
