@@ -528,7 +528,7 @@ export const TraditionalCollectionPage: React.FC = () => {
                 <div className="traditional-products-grid">
                   {paginatedProducts.map((product, idx) => {
                     const priceNaira = product.base_price_naira || (product.base_price_kobo ? product.base_price_kobo / 100 : 0);
-                    const isVerified = product.vendor?.is_verified ?? true;
+                    const isVerified = Boolean(product.vendor?.is_verified);
                     const storeName = product.vendor?.store_name || 'House of Aso';
                     const prepDays = product.preparation_time_days || 3;
                     const imageUrl = getTraditionalProductImage(product, idx);

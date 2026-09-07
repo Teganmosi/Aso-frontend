@@ -21,7 +21,7 @@ const BLANK_ADDRESS: Omit<Address, 'id' | 'created_at'> = {
 };
 
 export const CartPage: React.FC = () => {
-  const { user, openAuthModal, addresses, fetchAddresses } = useAuth();
+  const { user, isLoading: authLoading, openAuthModal, addresses, fetchAddresses } = useAuth();
   const { cart, cartLoading, updateItem, removeItem, clearCart, refreshCart } = useCart();
   const navigate = useNavigate();
 
@@ -54,7 +54,16 @@ export const CartPage: React.FC = () => {
     }
   }, [addresses, selectedAddressId]);
 
-  // Gate: must be logged in
+  if (authLoading || cartLoading) {
+    return (
+      <div className="cart-page-loading">
+        <Loader size={32} className="cart-spinner" />
+        <p>Loading your cart...</p>
+      </div>
+    );
+  }
+
+  // Gate: must be logged in (only after auth verification completes)
   if (!user) {
     return (
       <div className="cart-page-gate">
@@ -64,15 +73,6 @@ export const CartPage: React.FC = () => {
         <button className="cart-signin-btn" onClick={() => openAuthModal('login')}>
           Sign In
         </button>
-      </div>
-    );
-  }
-
-  if (cartLoading) {
-    return (
-      <div className="cart-page-loading">
-        <Loader size={32} className="cart-spinner" />
-        <p>Loading your cart...</p>
       </div>
     );
   }

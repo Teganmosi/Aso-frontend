@@ -465,7 +465,7 @@ export const VendorDashboardPage: React.FC = () => {
                     <p className="dropdown-store-name">
                       {user?.vendor_profile?.store_name || 'Aso Artisan Studio'}
                     </p>
-                    <span className="dropdown-role-badge">Verified Designer</span>
+                    <span className="dropdown-role-badge">{user?.vendor_profile?.is_verified ? "Verified Designer" : "Registered Designer"}</span>
                   </div>
 
                   <div className="dropdown-divider" />

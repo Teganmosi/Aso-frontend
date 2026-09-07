@@ -228,7 +228,7 @@ export const ProfilePage: React.FC = () => {
             <h2 className="profile-user-name">{user.first_name} {user.last_name}</h2>
             {user.vendor_profile && (
               <span className="profile-vendor-badge">
-                <Star size={13} /> Verified Designer
+                <Star size={13} /> {user.vendor_profile.is_verified ? "Verified Designer" : "Registered Designer"}
               </span>
             )}
           </div>

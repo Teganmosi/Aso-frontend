@@ -246,8 +246,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
 
                     <div className="card-details">
                       <div className="card-meta-top">
-                        <span className="card-atelier-name">{prod.vendor?.store_name || 'Verified Designer'}</span>
-                        <span className="card-verified-dot" title="Verified Designer">✓ Verified</span>
+                        <span className="card-atelier-name">{prod.vendor?.store_name || 'Artisan Designer'}</span>
+                        {Boolean(prod.vendor?.is_verified) && (
+                          <span className="card-verified-dot" title="Verified Designer">✓ Verified</span>
+                        )}
                       </div>
 
                       <h3 className="card-product-title">{prod.title}</h3>

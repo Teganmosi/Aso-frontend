@@ -207,7 +207,7 @@ export const StreetwearCollectionPage: React.FC = () => {
         return selectedDropTypes.some((d) => {
           if (d === 'ready-to-ship') return prep <= 2;
           if (d === 'limited-drop') return prep > 2;
-          if (d === 'collab') return p.vendor?.is_verified ?? true;
+          if (d === 'collab') return Boolean(p.vendor?.is_verified);
           return true;
         });
       });
@@ -569,7 +569,7 @@ export const StreetwearCollectionPage: React.FC = () => {
                 <div className="streetwear-products-grid">
                   {paginatedProducts.map((product, idx) => {
                     const priceNaira = product.base_price_naira || (product.base_price_kobo ? product.base_price_kobo / 100 : 0);
-                    const isVerified = product.vendor?.is_verified ?? true;
+                    const isVerified = Boolean(product.vendor?.is_verified);
                     const storeName = product.vendor?.store_name || 'Subculture Lagos';
                     const prepDays = product.preparation_time_days || 3;
                     const imageUrl = getStreetwearProductImage(product, idx);

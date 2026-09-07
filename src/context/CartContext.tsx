@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { Cart } from '../types';
 import { cartApi } from '../api/client';
 import { useAuth } from './AuthContext';
@@ -15,60 +15,119 @@ interface CartContextType {
   clearCart: () => Promise<void>;
 }
 
+const CART_CACHE_KEY = 'aso_marketplace_cart_cache';
+
+const getCachedCart = (): Cart | null => {
+  try {
+    const raw = localStorage.getItem(CART_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const setCachedCart = (cart: Cart | null) => {
+  try {
+    if (cart && cart.items && cart.items.length > 0) {
+      localStorage.setItem(CART_CACHE_KEY, JSON.stringify(cart));
+    } else {
+      localStorage.removeItem(CART_CACHE_KEY);
+    }
+  } catch (e) {
+    console.warn('Failed to persist cart to localStorage', e);
+  }
+};
+
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  const [cart, setCart] = useState<Cart | null>(null);
+  const { user, isLoading: authLoading } = useAuth();
+  const [cart, setCart] = useState<Cart | null>(() => getCachedCart());
   const [cartLoading, setCartLoading] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
+  const prevUserRef = useRef(user);
 
   const cartCount = cart?.item_count ?? 0;
 
   const refreshCart = useCallback(async () => {
-    if (!user) {
-      setCart(null);
+    // If auth state is still resolving, do not wipe the cached cart
+    if (authLoading) {
       return;
     }
+
+    // If there is no authenticated user
+    if (!user) {
+      const cached = getCachedCart();
+      if (cached) {
+        setCart(cached);
+      } else {
+        setCart(null);
+      }
+      return;
+    }
+
     setCartLoading(true);
     setCartError(null);
     try {
       const data = await cartApi.getCart();
       setCart(data);
-    } catch (err) {
-      console.error('Failed to fetch cart', err);
-      setCartError('Failed to load cart.');
+      setCachedCart(data);
+    } catch (err: any) {
+      console.warn('Failed to fetch backend cart, keeping cached version:', err);
+      const fallback = getCachedCart();
+      if (fallback) {
+        setCart(fallback);
+      } else {
+        setCartError('Failed to load cart.');
+      }
     } finally {
       setCartLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
+  // Sync cart whenever auth state finishes loading or changes
   useEffect(() => {
-    refreshCart();
-  }, [refreshCart]);
+    if (!authLoading) {
+      refreshCart();
+    }
+  }, [user, authLoading, refreshCart]);
+
+  // If user explicitly logs out (transitions from logged in to null)
+  useEffect(() => {
+    if (prevUserRef.current && !user && !authLoading) {
+      setCart(null);
+      setCachedCart(null);
+    }
+    prevUserRef.current = user;
+  }, [user, authLoading]);
 
   const addToCart = async (variant_id: string, quantity: number = 1) => {
     setCartError(null);
     const data = await cartApi.addItem(variant_id, quantity);
     setCart(data);
+    setCachedCart(data);
   };
 
   const updateItem = async (item_id: string, quantity: number) => {
     setCartError(null);
     const data = await cartApi.updateItem(item_id, quantity);
     setCart(data);
+    setCachedCart(data);
   };
 
   const removeItem = async (item_id: string) => {
     setCartError(null);
     const data = await cartApi.removeItem(item_id);
     setCart(data);
+    setCachedCart(data);
   };
 
   const clearCart = async () => {
     setCartError(null);
     const data = await cartApi.clearCart();
     setCart(data);
+    setCachedCart(null);
   };
 
   return (

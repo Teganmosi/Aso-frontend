@@ -447,10 +447,12 @@ export const DesignersPage: React.FC<DesignersPageProps> = ({ onOpenVendorRegist
                   }}
                 />
                 <div className="spotlight-media-overlay">
-                  <div className="spotlight-verified-pill">
-                    <ShieldCheck size={14} />
-                    <span>Verified Designer</span>
-                  </div>
+                  {Boolean(spotlightDesigner.profile.is_verified) && (
+                    <div className="spotlight-verified-pill">
+                      <ShieldCheck size={14} />
+                      <span>Verified Designer</span>
+                    </div>
+                  )}
                   <h3 className="spotlight-atelier-name">{spotlightDesigner.profile.store_name}</h3>
                   <span className="spotlight-atelier-location">
                     {spotlightDesigner.profile.workshop_address || `${spotlightDesigner.profile.city}, ${spotlightDesigner.profile.state}`}

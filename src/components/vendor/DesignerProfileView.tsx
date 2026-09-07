@@ -1188,7 +1188,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                 {user?.email || 'designer@asomarketplace.ng'}
               </p>
               <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#065F46', fontWeight: 600 }}>
-                Role: Verified Designer / Artisan
+                Role: {user?.vendor_profile?.is_verified ? "Verified Designer / Artisan" : "Registered Designer / Artisan"}
               </p>
             </div>
 
