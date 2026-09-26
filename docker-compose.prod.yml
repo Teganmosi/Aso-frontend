@@ -17,5 +17,5 @@ services:
 
 networks:
   aso-network:
-    name: aso-core-infra_default
+    name: aso_internal_network
     external: true
