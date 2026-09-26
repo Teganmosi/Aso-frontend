@@ -1,7 +1,11 @@
-﻿# Multi-stage build for React/Vite SPA
+# Multi-stage build for React/Vite SPA
 FROM node:20-alpine AS builder
 
 WORKDIR /app
+
+# Build-time environment variable for Vite
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
 COPY package*.json ./
 RUN npm ci
@@ -22,4 +26,4 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
-CMD [nginx, -g, daemon off;]
+CMD ["nginx", "-g", "daemon off;"]
