@@ -169,6 +169,12 @@ export const CartPage: React.FC = () => {
       
       // 3. Clear/Refresh local cart context
       await refreshCart();
+
+      // 4. If authorization URL is available, redirect directly to Paystack payment gateway
+      if (payReq.authorization_url) {
+        window.location.href = payReq.authorization_url;
+        return;
+      }
     } catch (err: any) {
       console.error('Failed to checkout', err);
       const detail = err.response?.data?.detail || 'An error occurred during checkout. Please try again.';
@@ -184,19 +190,30 @@ export const CartPage: React.FC = () => {
     setSimulationLoading(true);
     setSimulationMessage('');
     try {
+      // Actively verify with Paystack first via reference or order_id
+      try {
+        await paymentApi.verifyPayment(paymentRequest.reference);
+      } catch {
+        try {
+          await paymentApi.verifyByOrderId(paymentRequest.order);
+        } catch {
+          // continue
+        }
+      }
+
       const updatedOrder = await orderApi.getOrderDetail(paymentRequest.order);
       setCreatedOrder(updatedOrder);
       if (updatedOrder.order_status === 'PAID' || updatedOrder.order_status !== 'PENDING_PAYMENT') {
         setSimulationSuccess(true);
-        setSimulationMessage('Payment confirmed by server! Order is being processed.');
+        setSimulationMessage('Payment verified successfully! Your order is now confirmed.');
       } else {
         setSimulationSuccess(false);
-        setSimulationMessage('Payment is still pending backend webhook confirmation.');
+        setSimulationMessage('Paystack has not yet confirmed completion of this transaction.');
       }
     } catch (err: any) {
       console.error(err);
       setSimulationSuccess(false);
-      setSimulationMessage('Unable to refresh order status from server.');
+      setSimulationMessage('Unable to verify order status with server.');
     } finally {
       setSimulationLoading(false);
     }

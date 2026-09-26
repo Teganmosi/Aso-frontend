@@ -4,11 +4,13 @@ import { productApi, reviewApi } from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import type { Product, ProductVariant, Review } from '../types';
-import { SAMPLE_PRODUCTS, SAMPLE_REVIEWS } from '../data/sampleData';
+
 import {
   ArrowLeft, ShoppingBag, MapPin, Clock, CheckCircle2, Star,
-  ChevronLeft, ChevronRight, AlertCircle, Loader, Package, MessageSquare, ShieldCheck
+  ChevronLeft, ChevronRight, AlertCircle, Loader, Package, MessageSquare, ShieldCheck,
+  Ruler, Scissors
 } from 'lucide-react';
+import { SizeGuideModal } from '../components/common/SizeGuideModal';
 import './ProductDetailPage.css';
 
 export const ProductDetailPage: React.FC = () => {
@@ -28,6 +30,7 @@ export const ProductDetailPage: React.FC = () => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   useEffect(() => {
     if (identifier) {
@@ -48,17 +51,7 @@ export const ProductDetailPage: React.FC = () => {
       // Load reviews for this product
       loadReviews(data.id);
     } catch {
-      // Check sample products fallback
-      const sample = SAMPLE_PRODUCTS.find(p => p.id === id || p.slug === id);
-      if (sample) {
-        setProduct(sample);
-        if (sample.variants && sample.variants.length > 0) {
-          setSelectedVariant(sample.variants[0]);
-        }
-        setReviews(SAMPLE_REVIEWS[sample.id] || []);
-      } else {
-        setError('Product not found or is no longer available.');
-      }
+      setError('Product not found or is no longer available.');
     } finally {
       setLoading(false);
     }
@@ -110,8 +103,20 @@ export const ProductDetailPage: React.FC = () => {
   const getStockStatus = (variant: ProductVariant | null) => {
     if (!variant) return null;
     if (variant.stock_quantity === 0) return { label: 'Out of Stock', color: '#DC2626' };
-    if (variant.stock_quantity <= 5) return { label: `Low Stock (${variant.stock_quantity} left)`, color: '#D97706' };
-    return { label: 'In Stock', color: '#10B981' };
+    
+    // Made-to-Order fulfillment (high stock flag or preparation time >= 2 days)
+    if (variant.stock_quantity >= 50 || (product?.preparation_time_days && product.preparation_time_days >= 2)) {
+      const days = product?.preparation_time_days || 3;
+      return { 
+        label: `✨ Made to Order · Tailored & Dispatched in ${days} ${days === 1 ? 'day' : 'days'}`, 
+        color: '#004B44' 
+      };
+    }
+    
+    if (variant.stock_quantity <= 5) {
+      return { label: `⚡ Ready to Ship · Low Stock (${variant.stock_quantity} left)`, color: '#D97706' };
+    }
+    return { label: `⚡ Ready to Ship (${variant.stock_quantity} available)`, color: '#10B981' };
   };
 
   const stockStatus = getStockStatus(selectedVariant);
@@ -222,13 +227,13 @@ export const ProductDetailPage: React.FC = () => {
                 <Star
                   key={s}
                   size={15}
-                  fill={s <= Math.round(avgRatingNum) ? '#F59E0B' : 'none'}
-                  color={s <= Math.round(avgRatingNum) ? '#F59E0B' : '#D1D5DB'}
+                  fill={avgRatingNum > 0 && s <= Math.round(avgRatingNum) ? '#F59E0B' : 'none'}
+                  color={avgRatingNum > 0 && s <= Math.round(avgRatingNum) ? '#F59E0B' : '#D1D5DB'}
                 />
               ))}
             </div>
             <span className="pdp-rating-text">
-              {avgRatingNum > 0 ? avgRatingNum.toFixed(1) : 'New'} ({product.review_count} verified review{product.review_count !== 1 ? 's' : ''})
+              {product.review_count > 0 ? `${avgRatingNum.toFixed(1)} (${product.review_count} verified review${product.review_count !== 1 ? 's' : ''})` : 'Newly Listed • No reviews yet'}
             </span>
           </div>
 
@@ -245,39 +250,71 @@ export const ProductDetailPage: React.FC = () => {
             )}
           </div>
 
-          {/* Variant Selector */}
-          {product.variants && product.variants.length > 0 && (
-            <div className="pdp-variants-section">
-              <p className="pdp-variant-label">
-                Size / Colour:
-                {selectedVariant && (
-                  <strong> {selectedVariant.size}{selectedVariant.color ? ` / ${selectedVariant.color}` : ''}</strong>
-                )}
-              </p>
-              <div className="pdp-variant-chips">
-                {product.variants.map((v) => (
-                  <button
-                    key={v.id}
-                    className={`pdp-variant-chip ${selectedVariant?.id === v.id ? 'active' : ''} ${v.stock_quantity === 0 ? 'out-of-stock' : ''}`}
-                    onClick={() => { setSelectedVariant(v); setQuantity(1); }}
-                    title={v.stock_quantity === 0 ? 'Out of stock' : `${v.stock_quantity} in stock`}
-                    disabled={!v.is_active}
-                  >
-                    <span>{v.size}</span>
-                    {v.color && <span className="variant-color-dot" style={{ backgroundColor: v.color.toLowerCase() }} />}
-                    {v.stock_quantity === 0 && <span className="chip-oos-line" />}
-                  </button>
-                ))}
-              </div>
+          {/* Temu-Style Size & Sizing Variant Selector */}
+          {(() => {
+            const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size', 'Bespoke Fit'];
+            const sortedVariants = [...(product.variants || [])].sort((a, b) => {
+              const indexA = sizeOrder.indexOf(a.size);
+              const indexB = sizeOrder.indexOf(b.size);
+              if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+              if (indexA !== -1) return -1;
+              if (indexB !== -1) return 1;
+              return a.size.localeCompare(b.size);
+            });
 
-              {stockStatus && (
-                <div className="pdp-stock-status" style={{ color: stockStatus.color }}>
-                  <Package size={14} />
-                  <span>{stockStatus.label}</span>
+            if (sortedVariants.length === 0) return null;
+
+            return (
+              <div className="pdp-variants-section">
+                <div className="pdp-size-header-row">
+                  <p className="pdp-variant-label" style={{ margin: 0 }}>
+                    Size:
+                    {selectedVariant && (
+                      <strong> {selectedVariant.size}{selectedVariant.color && selectedVariant.color !== 'Standard' ? ` / ${selectedVariant.color}` : ''}</strong>
+                    )}
+                  </p>
+                  <button
+                    className="pdp-size-guide-btn"
+                    onClick={() => setShowSizeGuide(true)}
+                    type="button"
+                  >
+                    <Ruler size={13} color="#0C3B2E" />
+                    <span>Size Guide</span>
+                  </button>
                 </div>
-              )}
-            </div>
-          )}
+
+                <div className="pdp-variant-chips">
+                  {sortedVariants.map((v) => {
+                    const isSelected = selectedVariant?.id === v.id;
+                    const isBespoke = v.size.toLowerCase().includes('bespoke');
+                    return (
+                      <button
+                        key={v.id}
+                        className={`pdp-variant-chip ${isSelected ? 'active' : ''} ${v.stock_quantity === 0 ? 'out-of-stock' : ''}`}
+                        onClick={() => { setSelectedVariant(v); setQuantity(1); }}
+                        title={v.stock_quantity === 0 ? 'Out of stock' : `${v.stock_quantity} in stock`}
+                        disabled={!v.is_active}
+                      >
+                        {isBespoke && <Scissors size={12} className="chip-scissors-icon" />}
+                        <span>{v.size}</span>
+                        {v.color && v.color !== 'Standard' && (
+                          <span className="variant-color-dot" style={{ backgroundColor: v.color.toLowerCase() }} />
+                        )}
+                        {v.stock_quantity === 0 && <span className="chip-oos-line" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {stockStatus && (
+                  <div className="pdp-stock-status" style={{ color: stockStatus.color }}>
+                    <Package size={14} />
+                    <span>{stockStatus.label}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Quantity Stepper */}
           <div className="pdp-quantity-row">
@@ -287,7 +324,7 @@ export const ProductDetailPage: React.FC = () => {
                 className="pdp-qty-btn"
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
                 disabled={quantity <= 1}
-              >−</button>
+              >-</button>
               <span className="pdp-qty-value">{quantity}</span>
               <button
                 className="pdp-qty-btn"
@@ -345,8 +382,8 @@ export const ProductDetailPage: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#F9FAFB', padding: '0.75rem 1.25rem', borderRadius: '8px' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111827', fontFamily: 'Cinzel, Georgia, serif' }}>
-              {avgRatingNum > 0 ? avgRatingNum.toFixed(1) : '5.0'}
+            <div style={{ fontSize: product.review_count > 0 ? '2rem' : '1.25rem', fontWeight: 700, color: '#111827', fontFamily: 'Cinzel, Georgia, serif' }}>
+              {product.review_count > 0 ? avgRatingNum.toFixed(1) : 'No reviews yet'}
             </div>
             <div>
               <div style={{ display: 'flex', gap: '2px' }}>
@@ -354,13 +391,13 @@ export const ProductDetailPage: React.FC = () => {
                   <Star
                     key={s}
                     size={16}
-                    fill={s <= Math.round(avgRatingNum || 5) ? '#F59E0B' : 'none'}
-                    color={s <= Math.round(avgRatingNum || 5) ? '#F59E0B' : '#D1D5DB'}
+                    fill={product.review_count > 0 && s <= Math.round(avgRatingNum) ? '#F59E0B' : 'none'}
+                    color={product.review_count > 0 && s <= Math.round(avgRatingNum) ? '#F59E0B' : '#D1D5DB'}
                   />
                 ))}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.2rem' }}>
-                Based on {product.review_count} review{product.review_count !== 1 ? 's' : ''}
+                {product.review_count > 0 ? `Based on ${product.review_count} verified customer review${product.review_count !== 1 ? 's' : ''}` : 'Be the first client to review this bespoke piece'}
               </div>
             </div>
           </div>
@@ -434,6 +471,27 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Temu-Style Interactive Size Guide Modal */}
+      {product && (
+        <SizeGuideModal
+          isOpen={showSizeGuide}
+          onClose={() => setShowSizeGuide(false)}
+          productTitle={product.title}
+          productImage={activeImage}
+          sizeChart={product.size_chart}
+          selectedSize={selectedVariant?.size}
+          onSelectSize={(sz) => {
+            const found = product.variants?.find((v) => v.size.toUpperCase() === sz.toUpperCase());
+            if (found) {
+              setSelectedVariant(found);
+              setQuantity(1);
+            }
+          }}
+          variants={product.variants}
+        />
+      )}
     </div>
   );
 };
+

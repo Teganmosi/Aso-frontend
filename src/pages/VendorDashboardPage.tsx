@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { vendorApi, payoutApi } from '../api/client';
-import type { BankAccount, VendorBalance, PayoutRequest, LedgerEntry } from '../types';
+import type { BankAccount, VendorBalance, PayoutRequest, LedgerEntry, ProductItem } from '../types';
 import { 
   Landmark, 
   CheckCircle2, 
@@ -39,6 +39,7 @@ export const VendorDashboardPage: React.FC = () => {
   const { user, refreshMe, openAuthModal, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<DesignerPortalTab>('dashboard');
+  const [productToEdit, setProductToEdit] = useState<ProductItem | null>(null);
   const [previewDemo, setPreviewDemo] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -342,7 +343,7 @@ export const VendorDashboardPage: React.FC = () => {
     );
   }
 
-  const storeSlug = user?.vendor_profile?.slug || (user?.first_name ? user.first_name.toLowerCase().replace(/\s+/g, '-') : 'orji-master-tailoring-house');
+  const storeSlug = user?.vendor_profile?.slug || (user?.first_name ? user.first_name.toLowerCase().replace(/\s+/g, '-') : '');
   const availableNaira = balance?.available_balance_naira ?? 0;
   const pendingNaira = balance?.pending_balance_naira ?? 0;
   const reservedNaira = balance?.reserved_balance_naira ?? 0;
@@ -536,15 +537,28 @@ export const VendorDashboardPage: React.FC = () => {
 
         {activeTab === 'products' && (
           <ProductsListView
-            onAddNewProduct={() => setActiveTab('add-product')}
-            onEditProduct={() => setActiveTab('add-product')}
+            onAddNewProduct={() => {
+              setProductToEdit(null);
+              setActiveTab('add-product');
+            }}
+            onEditProduct={(product) => {
+              setProductToEdit(product);
+              setActiveTab('add-product');
+            }}
           />
         )}
 
         {activeTab === 'add-product' && (
           <AddProductView
-            onBack={() => setActiveTab('products')}
-            onSaveProduct={() => setActiveTab('products')}
+            onBack={() => {
+              setProductToEdit(null);
+              setActiveTab('products');
+            }}
+            onSaveProduct={() => {
+              setProductToEdit(null);
+              setActiveTab('products');
+            }}
+            productToEdit={productToEdit}
           />
         )}
 
@@ -957,3 +971,4 @@ export const VendorDashboardPage: React.FC = () => {
     </div>
   );
 };
+

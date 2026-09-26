@@ -211,43 +211,56 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                     className={`vendor-order-card ${isSelected ? 'selected' : ''} ${isPaidUrgent ? 'urgent-border' : ''}`}
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <div className="order-card-header">
-                      <div>
-                        <strong className="order-num-text">#{order.order_number || order.id.slice(0, 8)}</strong>
-                        <span className="order-time-text">
-                          {new Date(order.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                      <span className={`status-badge-mini status-${order.order_status.toLowerCase()}`}>
-                        {order.order_status.replace(/_/g, ' ')}
-                      </span>
-                    </div>
+                    {(() => {
+                      const orderDate = order.created_at ? new Date(order.created_at) : null;
+                      const formattedDate = orderDate && !isNaN(orderDate.getTime())
+                        ? orderDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        : 'Recent Order';
+                      const formattedCity = city ? (city.charAt(0).toUpperCase() + city.slice(1).toLowerCase()) : 'Lagos';
+                      const orderAmount = order.total_amount_naira ?? (order.total_amount_kobo ? order.total_amount_kobo / 100 : 0);
+                      const thumbImg = (firstItem as any)?.product_image || null;
 
-                    <div className="order-card-body">
-                      <img src="/traditional-men-1.png" alt="Product" className="order-card-thumb" />
-                      <div className="order-card-details">
-                        <strong className="order-garment-title">
-                          {firstItem?.product_title_snapshot || 'Custom Garment'}
-                        </strong>
-                        <span className="order-variant-info">
-                          Size: {firstItem?.variant_size_snapshot || 'Standard'} • Color: {firstItem?.variant_color_snapshot || 'Bespoke'}
-                        </span>
-                        <div className="order-card-footer">
-                          <strong className="order-card-amount">
-                            ₦ {order.total_amount_naira?.toLocaleString() || '0'}
-                          </strong>
-                          <span className="order-dest-city">
-                            <MapPin size={12} />
-                            <span>{city}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                      return (
+                        <>
+                          <div className="order-card-header">
+                            <div>
+                              <strong className="order-num-text">#{order.order_number || order.id.slice(0, 8)}</strong>
+                              <span className="order-time-text">{formattedDate}</span>
+                            </div>
+                            <span className={`status-badge-mini status-${order.order_status.toLowerCase()}`}>
+                              {order.order_status.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+
+                          <div className="order-card-body">
+                            {thumbImg ? (
+                              <img src={thumbImg} alt="Garment" className="order-card-thumb" style={{ objectFit: 'cover' }} />
+                            ) : (
+                              <div className="order-card-thumb" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3F4F6' }}>
+                                <Scissors size={18} color="#0C3B2E" />
+                              </div>
+                            )}
+                            <div className="order-card-details">
+                              <strong className="order-garment-title">
+                                {firstItem?.product_title_snapshot || 'Custom Garment'}
+                              </strong>
+                              <span className="order-variant-info">
+                                Size: {firstItem?.variant_size_snapshot || 'Standard'} • Color: {firstItem?.variant_color_snapshot || 'Bespoke'}
+                              </span>
+                              <div className="order-card-footer">
+                                <strong className="order-card-amount">
+                                  ₦ {orderAmount.toLocaleString()}
+                                </strong>
+                                <span className="order-dest-city">
+                                  <MapPin size={12} />
+                                  <span>{formattedCity}</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
 
                     {isPaidUrgent && (
                       <div className="order-card-sla-strip">
@@ -336,24 +349,36 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
               {/* Items in Order */}
               <div className="detail-section">
                 <h4 className="detail-section-heading">Garment Summary</h4>
-                {selectedOrder.items?.map((item) => (
-                  <div key={item.id} className="detail-item-row">
-                    <img
-                      src="/traditional-men-1.png"
-                      alt="Garment"
-                      className="detail-item-img"
-                    />
-                    <div className="detail-item-info">
-                      <strong>{item.product_title_snapshot}</strong>
-                      <p>
-                        Size: {item.variant_size_snapshot || 'Standard'} • Color: {item.variant_color_snapshot || 'Bespoke'} • Qty: {item.quantity}
-                      </p>
-                      <span className="detail-item-price">
-                        ₦ {item.total_price_naira?.toLocaleString() || '0'}
-                      </span>
+                {selectedOrder.items?.map((item) => {
+                  const itemImg = (item as any)?.product_image || null;
+                  const itemAmount = item.total_price_naira ?? (item.total_price_kobo ? item.total_price_kobo / 100 : 0);
+
+                  return (
+                    <div key={item.id} className="detail-item-row">
+                      {itemImg ? (
+                        <img
+                          src={itemImg}
+                          alt="Garment"
+                          className="detail-item-img"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div className="detail-item-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3F4F6' }}>
+                          <Scissors size={20} color="#0C3B2E" />
+                        </div>
+                      )}
+                      <div className="detail-item-info">
+                        <strong>{item.product_title_snapshot}</strong>
+                        <p>
+                          Size: {item.variant_size_snapshot || 'Standard'} • Color: {item.variant_color_snapshot || 'Bespoke'} • Qty: {item.quantity}
+                        </p>
+                        <span className="detail-item-price">
+                          ₦ {itemAmount.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Client & Delivery Info */}

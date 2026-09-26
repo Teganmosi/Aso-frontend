@@ -60,7 +60,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
           <Link to="/men" className="stitch-nav-link">Men</Link>
           <Link to="/women" className="stitch-nav-link">Women</Link>
           <Link to="/traditional" className="stitch-nav-link">Traditional</Link>
-          <Link to="/streetwear" className="stitch-nav-link">Streetwear</Link>
           <Link to="/designers" className="stitch-nav-link stitch-nav-highlight">Designers</Link>
         </nav>
 
@@ -245,7 +244,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
             <Link to="/men" className="mobile-nav-link">Men Collection</Link>
             <Link to="/women" className="mobile-nav-link">Women Collection</Link>
             <Link to="/traditional" className="mobile-nav-link">Traditional Bespoke</Link>
-            <Link to="/streetwear" className="mobile-nav-link">Lagos Streetwear</Link>
             <Link to="/designers" className="mobile-nav-link">Master Designers &amp; Ateliers</Link>
             <Link to="/cart" className="mobile-nav-link">
               Cart {cartCount > 0 && <span className="mobile-cart-count">({cartCount})</span>}

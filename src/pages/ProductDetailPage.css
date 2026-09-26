@@ -536,3 +536,38 @@
     padding: 1.5rem 1rem 3rem;
   }
 }
+
+/* Temu-Style Size Header & Size Guide Button */
+.pdp-size-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.pdp-size-guide-btn {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  color: #0C3B2E;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.pdp-size-guide-btn:hover {
+  background: #DCFCE7;
+  border-color: #0C3B2E;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(12, 59, 46, 0.12);
+}
+
+.chip-scissors-icon {
+  margin-right: 4px;
+  color: #D4AF37;
+}

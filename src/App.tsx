@@ -1,15 +1,16 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
+import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { AuthModal } from './components/auth/AuthModal';
 import { HomePage } from './pages/HomePage';
 import { MensCollectionPage } from './pages/MensCollectionPage';
 import { WomensCollectionPage } from './pages/WomensCollectionPage';
 import { TraditionalCollectionPage } from './pages/TraditionalCollectionPage';
-import { StreetwearCollectionPage } from './pages/StreetwearCollectionPage';
 import { DesignersPage } from './pages/DesignersPage';
 import { VendorDashboardPage } from './pages/VendorDashboardPage';
 import { VendorStorefrontPage } from './pages/VendorStorefrontPage';
@@ -18,8 +19,6 @@ import { CartPage } from './pages/CartPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AdminPortalPage } from './pages/AdminPortalPage';
 import './styles/global.css';
-
-import { useLocation } from 'react-router-dom';
 
 const AppContent: React.FC = () => {
   const location = useLocation();
@@ -50,9 +49,6 @@ const AppContent: React.FC = () => {
           <Route path="/traditional" element={<TraditionalCollectionPage />} />
           <Route path="/categories/traditional" element={<TraditionalCollectionPage />} />
           <Route path="/products/traditional" element={<TraditionalCollectionPage />} />
-          <Route path="/streetwear" element={<StreetwearCollectionPage />} />
-          <Route path="/categories/streetwear" element={<StreetwearCollectionPage />} />
-          <Route path="/products/streetwear" element={<StreetwearCollectionPage />} />
           <Route path="/designers" element={<DesignersPage onOpenVendorRegister={handleOpenDesignerRegister} />} />
           <Route path="/artisans" element={<DesignersPage onOpenVendorRegister={handleOpenDesignerRegister} />} />
           <Route path="/directory" element={<DesignersPage onOpenVendorRegister={handleOpenDesignerRegister} />} />
@@ -95,6 +91,12 @@ const AppContent: React.FC = () => {
       {!isVendorRoute && !isAdminRoute && (
         <Footer logoOption={2} onOpenVendorRegister={handleOpenDesignerRegister} />
       )}
+
+      {/* Mobile Bottom Navigation Bar (Visible on Mobile) */}
+      <MobileBottomNav />
+
+      {/* PWA Smart Install Prompt (Android & iOS) */}
+      <PWAInstallPrompt />
 
       {/* Global Auth Modal (Handles Customer & Designer Login / Registration) */}
       <AuthModal />

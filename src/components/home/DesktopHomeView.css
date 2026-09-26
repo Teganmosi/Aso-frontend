@@ -1,0 +1,577 @@
+.desktop-home-container {
+  background-color: #FFFFFF;
+  color: #111827;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+
+.desktop-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ── 1. Hero Section (Screenshot 5) ── */
+.desktop-hero-section {
+  position: relative;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #FFFFFF;
+  padding: 6rem 2rem 7rem;
+  overflow: hidden;
+}
+
+.desktop-hero-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/hero-bg.png');
+  background-size: cover;
+  background-position: center 25%;
+}
+
+.desktop-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 46, 36, 0.75) 0%, rgba(17, 24, 39, 0.88) 100%);
+}
+
+.desktop-hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+
+.desktop-hero-headline {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: clamp(2.8rem, 5.5vw, 4.2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
+}
+
+.desktop-hero-headline span {
+  font-style: italic;
+  font-weight: 400;
+  color: #F3F4F6;
+}
+
+.desktop-hero-subtitle {
+  font-size: 1.1rem;
+  color: #E5E7EB;
+  line-height: 1.65;
+  max-width: 680px;
+  margin: 0 auto 2.5rem;
+  font-weight: 400;
+}
+
+.desktop-hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.btn-desktop-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #D4AF37;
+  color: #111827;
+  padding: 0.9rem 2rem;
+  font-size: 0.925rem;
+  font-weight: 700;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-desktop-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.45);
+}
+
+.btn-desktop-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  padding: 0.9rem 2rem;
+  font-size: 0.925rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.btn-desktop-secondary:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ── 2. Collection Section (Screenshot 4) ── */
+.desktop-collection-section {
+  padding: 5rem 0 6rem;
+  background-color: #FFFFFF;
+}
+
+.desktop-section-header {
+  margin-bottom: 2rem;
+}
+
+.desktop-section-eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #064E3B;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.desktop-section-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.desktop-category-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow-x: auto;
+  margin-bottom: 3rem;
+  padding-bottom: 0.5rem;
+}
+
+.desktop-cat-pill {
+  flex-shrink: 0;
+  padding: 0.6rem 1.35rem;
+  border-radius: 999px;
+  background-color: #F3F4F6;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.desktop-cat-pill:hover {
+  background-color: #E5E7EB;
+}
+
+.desktop-cat-pill.active {
+  background-color: #064E3B;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(6, 78, 59, 0.25);
+}
+
+.desktop-products-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+@media (min-width: 1200px) {
+  .desktop-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.desktop-product-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.desktop-product-card:hover {
+  transform: translateY(-4px);
+}
+
+.desktop-product-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background-color: #F3F4F6;
+  border-radius: 12px;
+  overflow: hidden;
+  display: block;
+}
+
+.desktop-product-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.desktop-product-card:hover .desktop-product-media img {
+  transform: scale(1.05);
+}
+
+.desktop-card-badge-top-right {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: #064E3B;
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+}
+
+.desktop-card-badge-bottom-left {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background-color: rgba(6, 78, 59, 0.9);
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+
+.desktop-product-details {
+  padding: 1.25rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.desktop-designer-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.desktop-designer-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #374151;
+}
+
+.desktop-verified-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #065F46;
+  background: #ECFDF5;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.desktop-prod-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.desktop-prod-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.desktop-prod-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #064E3B;
+  margin-top: 0.2rem;
+}
+
+/* ── 3. Featured Designers (Screenshot 3) ── */
+.desktop-designers-section {
+  padding: 5rem 0;
+  background-color: #FAFAFA;
+  border-top: 1px solid #F3F4F6;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.desktop-section-header-center {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 3.5rem;
+}
+
+.desktop-section-subtitle {
+  font-size: 1rem;
+  color: #6B7280;
+  margin: 0.5rem 0 0;
+  line-height: 1.6;
+}
+
+.desktop-designers-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem;
+}
+
+.desktop-designer-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.desktop-designer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+}
+
+.desktop-designer-banner {
+  height: 140px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.desktop-designer-avatar {
+  position: absolute;
+  bottom: -24px;
+  left: 1.75rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #064E3B;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.desktop-designer-body {
+  padding: 2.25rem 1.75rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.desktop-store-name {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.desktop-store-location {
+  font-size: 0.825rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+.desktop-store-desc {
+  font-size: 0.9rem;
+  color: #4B5563;
+  line-height: 1.55;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.desktop-store-link {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #064E3B;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+
+/* ── 4. How Aso Works (Screenshot 2) ── */
+.desktop-how-works-section {
+  padding: 5.5rem 0;
+  background-color: #FFFFFF;
+}
+
+.desktop-how-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.75rem;
+}
+
+.desktop-step-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 2.25rem 1.75rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.desktop-step-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(6, 78, 59, 0.08);
+}
+
+.desktop-step-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.desktop-step-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #B1EEE4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.desktop-step-num {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #E5E7EB;
+  line-height: 1;
+}
+
+.desktop-step-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.desktop-step-text {
+  font-size: 0.9rem;
+  color: #4B5563;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── 5. Why Shop on Aso (Screenshot 1) ── */
+.desktop-why-shop-section {
+  padding: 5rem 0;
+  background-color: #FAFAFA;
+  border-top: 1px solid #EFEFEA;
+}
+
+.desktop-why-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+}
+
+.desktop-why-card {
+  text-align: left;
+}
+
+.desktop-why-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #E6F4F1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.desktop-why-card-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.desktop-why-card-text {
+  font-size: 0.925rem;
+  color: #6B7280;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── 6. Studio CTA Section (Screenshot 1 bottom) ── */
+.desktop-studio-cta-section {
+  padding: 4rem 0 6rem;
+  background-color: #FAFAFA;
+}
+
+.desktop-studio-card {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 4rem 3rem;
+  background-color: #062E24;
+  color: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(6, 46, 36, 0.2);
+}
+
+.desktop-studio-tag {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #D4AF37;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.desktop-studio-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 2.15rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+}
+
+.desktop-studio-desc {
+  font-size: 1rem;
+  color: #D1D5DB;
+  line-height: 1.65;
+  margin-bottom: 2rem;
+}
+
+.btn-desktop-studio-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: #D4AF37;
+  color: #111827;
+  padding: 0.95rem 2.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.btn-desktop-studio-action:hover {
+  transform: translateY(-2px);
+}

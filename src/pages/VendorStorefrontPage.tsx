@@ -6,7 +6,6 @@ import {
   MapPin, 
   CheckCircle2, 
   Star, 
-  Globe, 
   ShoppingBag, 
   MessageSquare, 
   ShieldCheck, 
@@ -19,7 +18,7 @@ import {
   Check,
   ChevronRight,
   Info,
-  Scissors
+  ExternalLink
 } from 'lucide-react';
 import './VendorStorefrontPage.css';
 
@@ -129,6 +128,15 @@ export const VendorStorefrontPage: React.FC = () => {
     return Array.from(cats);
   }, [products]);
 
+  // Lead times calculation from real products
+  const leadTimeRange = useMemo(() => {
+    const times = products.map((p) => p.preparation_time_days).filter((t): t is number => typeof t === 'number' && t > 0);
+    if (times.length === 0) return null;
+    const min = Math.min(...times);
+    const max = Math.max(...times);
+    return min === max ? `${min} days` : `${min}-${max} days`;
+  }, [products]);
+
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
     let list = [...products];
@@ -181,7 +189,7 @@ export const VendorStorefrontPage: React.FC = () => {
     return (
       <div className="storefront-loading-state">
         <div className="storefront-spinner" />
-        <p>Loading designer atelier...</p>
+        <p>Loading designer storefront...</p>
       </div>
     );
   }
@@ -190,30 +198,33 @@ export const VendorStorefrontPage: React.FC = () => {
     return (
       <div className="storefront-empty-state">
         <h2>Designer Storefront Not Found</h2>
-        <p>The atelier you are looking for may be temporarily unavailable or unverified.</p>
-        <Link to="/" className="btn-primary-emerald">
-          <span>Return to Marketplace</span>
+        <p>The designer you are looking for may be temporarily unavailable or unverified.</p>
+        <Link to="/designers" className="btn-primary-emerald">
+          <span>Browse Designer Directory</span>
         </Link>
       </div>
     );
   }
 
-  const ratingNum = parseFloat(profile.average_rating || '4.9').toFixed(1);
+  const totalReviews = profile.review_count || reviews.length;
+  const ratingNum = totalReviews > 0 ? parseFloat(profile.average_rating || '0').toFixed(1) : null;
+
+  // WhatsApp link preparation
+  const rawPhone = profile.whatsapp_phone || '';
+  const cleanPhone = rawPhone.replace(/\D/g, '');
+  const waPhone = cleanPhone.startsWith('0') ? '234' + cleanPhone.slice(1) : cleanPhone;
+  const hasWhatsApp = Boolean(waPhone && waPhone.length >= 10);
 
   return (
     <div className="storefront-container">
-      {/* Immersive Atelier Banner */}
+      {/* Cover Banner */}
       <div
         className="storefront-banner"
         style={{
-          backgroundImage: `url(${profile.banner_url || '/hero-bg.png'})`,
+          backgroundImage: profile.banner_url ? `url(${profile.banner_url})` : 'linear-gradient(135deg, #0C3B2E 0%, #07261E 100%)',
         }}
       >
         <div className="banner-overlay" />
-        <div className="banner-badge-floating">
-          <Sparkles size={14} color="#D4AF37" />
-          <span>VERIFIED NIGERIAN ATELIER</span>
-        </div>
       </div>
 
       {/* Profile Header Main Card */}
@@ -236,10 +247,15 @@ export const VendorStorefrontPage: React.FC = () => {
           <div className="profile-main-meta">
             <div className="title-row">
               <h1 className="store-name-serif">{profile.store_name}</h1>
-              {profile.is_verified && (
-                <div className="verified-badge-pill" title="Government and Workshop Verified Designer">
+              {profile.is_verified ? (
+                <div className="badge-verified-designer" title="Verified Nigerian Designer">
                   <CheckCircle2 size={13} />
-                  <span>VERIFIED ATELIER</span>
+                  <span>Verified Designer</span>
+                </div>
+              ) : (
+                <div className="badge-verification-progress" title="Application and credentials under review">
+                  <Clock size={13} />
+                  <span>Verification in Progress</span>
                 </div>
               )}
             </div>
@@ -248,36 +264,51 @@ export const VendorStorefrontPage: React.FC = () => {
               <div className="meta-item location-meta">
                 <MapPin size={15} />
                 <span>{profile.city}, {profile.state}</span>
-                {profile.landmark && <span className="landmark-tag">• {profile.landmark}</span>}
               </div>
 
               <div className="meta-item rating-item">
-                <Star size={15} className="star-filled" />
-                <span className="rating-num">{ratingNum}</span>
-                <span className="reviews-count">({profile.review_count || reviews.length} reviews)</span>
+                {ratingNum ? (
+                  <>
+                    <Star size={15} className="star-filled" />
+                    <span className="rating-num">{ratingNum}</span>
+                    <span className="reviews-count">({totalReviews} review{totalReviews !== 1 ? 's' : ''})</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={14} color="#D4AF37" />
+                    <span className="new-designer-text">New Designer · No reviews yet</span>
+                  </>
+                )}
               </div>
 
               {profile.instagram_handle && (
-                <div className="meta-item ig-meta">
-                  <Globe size={15} />
-                  <span>{profile.instagram_handle}</span>
-                </div>
+                <a
+                  href={`https://instagram.com/${profile.instagram_handle.replace(/^@/, '')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="meta-item ig-link"
+                >
+                  <span>{profile.instagram_handle.startsWith('@') ? profile.instagram_handle : `@${profile.instagram_handle}`}</span>
+                  <ExternalLink size={12} />
+                </a>
               )}
             </div>
 
-            <p className="store-description">{profile.description}</p>
+            {profile.description && (
+              <p className="store-description">{profile.description}</p>
+            )}
 
-            {/* Acquisition & Action Bar (PRD §43) */}
+            {/* Action Bar */}
             <div className="storefront-action-bar">
               <button
                 className={`btn-share-store ${copiedLink ? 'copied' : ''}`}
                 onClick={handleCopyStoreLink}
-                title="Share this store link with clients on Instagram/TikTok/WhatsApp"
+                title="Share store link"
               >
                 {copiedLink ? (
                   <>
                     <Check size={16} color="#064E3B" />
-                    <span>Link Copied to Clipboard!</span>
+                    <span>Link Copied!</span>
                   </>
                 ) : (
                   <>
@@ -287,47 +318,46 @@ export const VendorStorefrontPage: React.FC = () => {
                 )}
               </button>
 
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Check out ${profile.store_name} on Aso Fashion Marketplace: ${window.location.href}`)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-whatsapp-inquire"
-              >
-                <Phone size={15} />
-                <span>Inquire on WhatsApp</span>
-              </a>
+              {hasWhatsApp && (
+                <a
+                  href={`https://wa.me/${waPhone}?text=${encodeURIComponent(`Hello ${profile.store_name}, I am contacting you regarding your pieces on Aso Marketplace: ${window.location.href}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-whatsapp-inquire"
+                >
+                  <Phone size={15} />
+                  <span>Contact Designer on WhatsApp</span>
+                </a>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Highlights & Guarantees Strip */}
+        {/* Store Highlights Strip */}
         <div className="storefront-highlights-strip">
           <div className="highlight-pill">
             <ShoppingBag size={16} color="#064E3B" />
             <div className="highlight-text">
-              <strong>{products.length} Garments</strong>
-              <span>Exclusive Collection</span>
+              <strong>{products.length} Products</strong>
+              <span>Published Pieces</span>
             </div>
           </div>
-          <div className="highlight-pill">
-            <Clock size={16} color="#064E3B" />
-            <div className="highlight-text">
-              <strong>48h SLA Fulfillment</strong>
-              <span>Fast Order Dispatch</span>
+
+          {leadTimeRange && (
+            <div className="highlight-pill">
+              <Clock size={16} color="#064E3B" />
+              <div className="highlight-text">
+                <strong>{leadTimeRange} Prep Time</strong>
+                <span>Direct Designer Dispatch</span>
+              </div>
             </div>
-          </div>
-          <div className="highlight-pill">
-            <Scissors size={16} color="#064E3B" />
-            <div className="highlight-text">
-              <strong>Bespoke Tailoring</strong>
-              <span>Custom Nigerian Fits</span>
-            </div>
-          </div>
+          )}
+
           <div className="highlight-pill">
             <ShieldCheck size={16} color="#064E3B" />
             <div className="highlight-text">
-              <strong>Escrow Protection</strong>
-              <span>100% Safe Payments</span>
+              <strong>Buyer Protection</strong>
+              <span>Escrow Payment Security</span>
             </div>
           </div>
         </div>
@@ -346,14 +376,14 @@ export const VendorStorefrontPage: React.FC = () => {
             onClick={() => setActiveTab('story')}
           >
             <Info size={16} />
-            <span>About Atelier & Sizing</span>
+            <span>About {profile.store_name}</span>
           </button>
           <button
             className={`tab-link ${activeTab === 'reviews' ? 'active' : ''}`}
             onClick={() => setActiveTab('reviews')}
           >
             <MessageSquare size={16} />
-            <span>Client Reviews ({profile.review_count || reviews.length})</span>
+            <span>Customer Reviews ({totalReviews})</span>
           </button>
         </div>
       </div>
@@ -413,22 +443,24 @@ export const VendorStorefrontPage: React.FC = () => {
             {productsLoading ? (
               <div className="products-grid-loading">
                 <div className="storefront-spinner" />
-                <p>Loading collection items...</p>
+                <p>Loading collection pieces...</p>
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="empty-collection-state">
                 <ShoppingBag size={40} color="#9CA3AF" />
-                <h3>No garments found</h3>
-                <p>No products match your search or category filter in this atelier.</p>
-                <button
-                  className="btn-reset-filters"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('All');
-                  }}
-                >
-                  Reset Filters
-                </button>
+                <h3>No products found</h3>
+                <p>{searchQuery || selectedCategory !== 'All' ? 'No pieces match your search or filter in this store.' : 'This designer has not published any pieces yet.'}</p>
+                {(searchQuery || selectedCategory !== 'All') && (
+                  <button
+                    className="btn-reset-filters"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory('All');
+                    }}
+                  >
+                    Reset Filters
+                  </button>
+                )}
               </div>
             ) : (
               <div className="store-products-grid">
@@ -436,28 +468,38 @@ export const VendorStorefrontPage: React.FC = () => {
                   const displayImg =
                     product.primary_image_url ||
                     product.media?.[0]?.url ||
-                    '/traditional-men-1.png';
-                  const prepDays = product.preparation_time_days || 3;
+                    '';
+                  const prepDays = product.preparation_time_days;
 
                   return (
                     <div key={product.id} className="store-product-card">
                       <Link to={`/products/${product.slug || product.id}`} className="product-image-container">
-                        <img
-                          src={displayImg}
-                          alt={product.title}
-                          className="product-main-img"
-                          loading="lazy"
-                        />
-                        <div className="product-prep-tag">
-                          <Clock size={12} />
-                          <span>{prepDays}d prep</span>
-                        </div>
+                        {displayImg ? (
+                          <img
+                            src={displayImg}
+                            alt={product.title}
+                            className="product-main-img"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="product-img-fallback">
+                            <ShoppingBag size={32} />
+                          </div>
+                        )}
+                        {prepDays ? (
+                          <div className="product-prep-tag">
+                            <Clock size={12} />
+                            <span>{prepDays}d prep</span>
+                          </div>
+                        ) : null}
                       </Link>
 
                       <div className="product-info-box">
-                        <span className="product-category-chip">
-                          {product.category?.name || 'Traditional'}
-                        </span>
+                        {product.category?.name && (
+                          <span className="product-category-chip">
+                            {product.category.name}
+                          </span>
+                        )}
                         <h3 className="product-title-serif">
                           <Link to={`/products/${product.slug || product.id}`}>
                             {product.title}
@@ -487,22 +529,18 @@ export const VendorStorefrontPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 2: ABOUT ATELIER & SIZING */}
+        {/* TAB 2: ABOUT THE DESIGNER */}
         {activeTab === 'story' && (
           <div className="storefront-story-section">
             <div className="story-grid-layout">
               <div className="story-main-card">
-                <h2 className="story-section-title">The Master Artisan Behind {profile.store_name}</h2>
-                <p className="story-lead-text">
-                  Handcrafting bespoke ceremonial apparel and modern Nigerian silhouettes rooted in generational tailoring traditions.
-                </p>
+                <h2 className="story-section-title">About {profile.store_name}</h2>
                 <div className="story-body-paragraphs">
-                  <p>
-                    Every garment produced at {profile.store_name} is carefully measured, cut, and stitched by master tailors in {profile.city}. We source high-grade Nigerian woven textiles (Aso-Oke, handmade Adire, Swiss Voile, and Italian Cashmere) to deliver exquisite garments that stand out at any high-profile event.
-                  </p>
-                  <p>
-                    Our workshop maintains strict quality assurance on seam finishing, collar stiffness, embroidery longevity, and personalized measurements.
-                  </p>
+                  {profile.description ? (
+                    <p className="story-lead-text">{profile.description}</p>
+                  ) : (
+                    <p className="story-lead-text text-muted">Authentic Nigerian fashion from an independent designer on Aso Marketplace.</p>
+                  )}
                 </div>
 
                 <div className="workshop-address-box">
@@ -510,74 +548,60 @@ export const VendorStorefrontPage: React.FC = () => {
                     <MapPin size={22} color="#064E3B" />
                   </div>
                   <div>
-                    <h4>Workshop & Atelier Address</h4>
-                    <p>{profile.workshop_address || `${profile.city}, ${profile.state}`}</p>
-                    {profile.landmark && <span className="landmark-note">Landmark: {profile.landmark}</span>}
+                    <h4>Public Store Location</h4>
+                    <p>{profile.city}, {profile.state}</p>
+                    <span className="location-verified-note">Verified Nigerian Fashion Store</span>
                   </div>
                 </div>
               </div>
 
-              {/* Sizing & Bespoke Guidance Card */}
+              {/* Specialties & Brand Details */}
               <div className="story-side-card">
                 <h3 className="side-card-title">
-                  <Scissors size={18} color="#064E3B" />
-                  <span>Bespoke Measurement Guide</span>
+                  <Sparkles size={18} color="#064E3B" />
+                  <span>Design Specialties</span>
                 </h3>
                 <p className="side-card-desc">
-                  We cater to both ready-to-wear sizes (S to XXL) and custom tailored measurements.
+                  Categories and garment styles handcrafted by {profile.store_name}.
                 </p>
 
-                <div className="measurement-tips-list">
-                  <div className="tip-item">
-                    <span className="tip-bullet">1</span>
-                    <div>
-                      <strong>Chest / Bust:</strong>
-                      <span>Measure around the fullest part of your chest with a relaxed tape.</span>
-                    </div>
-                  </div>
-                  <div className="tip-item">
-                    <span className="tip-bullet">2</span>
-                    <div>
-                      <strong>Kaftan / Agbada Length:</strong>
-                      <span>Measure from the base of the neck down to your desired hemline.</span>
-                    </div>
-                  </div>
-                  <div className="tip-item">
-                    <span className="tip-bullet">3</span>
-                    <div>
-                      <strong>Trouser Waist & Inseam:</strong>
-                      <span>Measure around your natural waistline and from crotch to ankle.</span>
-                    </div>
-                  </div>
+                <div className="specialties-tags-list">
+                  {availableCategories.filter(c => c !== 'All').length > 0 ? (
+                    availableCategories.filter(c => c !== 'All').map(cat => (
+                      <span key={cat} className="specialty-tag">{cat}</span>
+                    ))
+                  ) : (
+                    <span className="specialty-tag">Nigerian Ready-to-Wear</span>
+                  )}
                 </div>
 
                 <div className="guarantee-box">
                   <ShieldCheck size={20} color="#D4AF37" />
-                  <span>All bespoke fits include free adjustment guarantee if sizing differs from provided notes.</span>
+                  <span>All purchases through Aso Marketplace are protected by buyer escrow protection.</span>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 3: CLIENT REVIEWS */}
+        {/* TAB 3: CUSTOMER REVIEWS */}
         {activeTab === 'reviews' && (
           <div className="storefront-reviews-section">
             <div className="reviews-summary-card">
               {/* Overall Score Box */}
               <div className="overall-score-box">
-                <div className="big-rating-number">{ratingNum}</div>
+                <div className="big-rating-number">{ratingNum || '—'}</div>
                 <div className="stars-row">
                   {[1, 2, 3, 4, 5].map((i) => (
                     <Star
                       key={i}
                       size={20}
-                      className={i <= Math.round(parseFloat(ratingNum)) ? 'star-filled' : 'star-empty'}
+                      className={ratingNum && i <= Math.round(parseFloat(ratingNum)) ? 'star-filled' : 'star-empty'}
                     />
                   ))}
                 </div>
                 <span className="total-reviews-caption">
-                  Based on {profile.review_count || reviews.length} verified customer orders
+                  {totalReviews > 0 ? `Based on ${totalReviews} verified customer order${totalReviews !== 1 ? 's' : ''}` : 'No customer reviews yet'}
                 </span>
               </div>
 
@@ -600,64 +624,49 @@ export const VendorStorefrontPage: React.FC = () => {
 
             {/* Reviews List */}
             {reviewsLoading ? (
-              <div className="reviews-loading-spinner">
+              <div className="reviews-loading">
                 <div className="storefront-spinner" />
-                <p>Loading verified client reviews...</p>
+                <p>Loading customer reviews...</p>
               </div>
             ) : reviews.length === 0 ? (
-              <div className="empty-reviews-state">
+              <div className="empty-reviews-card">
                 <MessageSquare size={36} color="#9CA3AF" />
-                <p>No client reviews submitted yet for this atelier.</p>
+                <h3>No customer reviews yet</h3>
+                <p>Be the first customer to purchase from {profile.store_name} and share your feedback once delivered.</p>
               </div>
             ) : (
               <div className="reviews-list-grid">
-                {reviews.map((rev) => {
-                  const customerName =
-                    typeof rev.customer === 'object' && rev.customer?.first_name
-                      ? `${rev.customer.first_name} ${rev.customer.last_name?.[0] ? rev.customer.last_name[0] + '.' : ''}`
-                      : rev.customer_name || 'Verified Customer';
-
-                  return (
-                    <div key={rev.id} className="store-review-card">
-                      <div className="review-card-top">
-                        <div className="reviewer-avatar">
-                          {customerName.charAt(0) || 'C'}
-                        </div>
-                        <div className="reviewer-meta">
-                          <div className="reviewer-name-row">
-                            <strong className="reviewer-name">
-                              {customerName}
-                            </strong>
-                            <span className="verified-purchase-badge">
-                              <CheckCircle2 size={12} />
-                              <span>Verified Buyer</span>
-                            </span>
-                          </div>
-                          <div className="review-stars-date">
-                            <div className="small-stars">
-                              {[1, 2, 3, 4, 5].map((s) => (
-                                <Star
-                                  key={s}
-                                  size={13}
-                                  className={s <= rev.rating ? 'star-filled' : 'star-empty'}
-                                />
-                              ))}
-                            </div>
-                            <span className="review-date">
-                              {new Date(rev.created_at).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
-                            </span>
-                          </div>
-                        </div>
+                {reviews.map((r) => (
+                  <div key={r.id} className="customer-review-card">
+                    <div className="review-top-row">
+                      <div className="review-stars">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            size={14}
+                            className={s <= (r.rating || 5) ? 'star-filled' : 'star-empty'}
+                          />
+                        ))}
                       </div>
-
-                      <p className="review-comment-text">{rev.comment}</p>
+                      <span className="review-date">
+                        {new Date(r.created_at).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </span>
                     </div>
-                  );
-                })}
+
+                    <p className="review-comment-text">"{r.comment}"</p>
+
+                    <div className="review-author-meta">
+                      <span className="author-name font-bold">{r.user_name || 'Verified Buyer'}</span>
+                      <span className="verified-buyer-badge">
+                        <CheckCircle2 size={12} /> Verified Purchase
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -666,5 +675,3 @@ export const VendorStorefrontPage: React.FC = () => {
     </div>
   );
 };
-
-export default VendorStorefrontPage;

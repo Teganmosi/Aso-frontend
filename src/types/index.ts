@@ -1,3 +1,65 @@
+
+export type StretchLevel = 'NON' | 'SLIGHT' | 'MEDIUM' | 'HIGH';
+
+export interface BodyMeasurementRow {
+  size: string;
+  us_size?: string;
+  bust?: string;
+  waist?: string;
+  hip?: string;
+  height?: string;
+  bust_cm?: string;
+  waist_cm?: string;
+  hip_cm?: string;
+  height_cm?: string;
+}
+
+export interface GarmentTopsRow {
+  size: string;
+  us_size?: string;
+  shoulder?: string;
+  chest?: string;
+  bust?: string;
+  length?: string;
+  sleeve?: string;
+  collar?: string;
+  cuff?: string;
+  shoulder_cm?: string;
+  chest_cm?: string;
+  bust_cm?: string;
+  length_cm?: string;
+  sleeve_cm?: string;
+  collar_cm?: string;
+  cuff_cm?: string;
+}
+
+export interface GarmentBottomsRow {
+  size: string;
+  us_size?: string;
+  waist?: string;
+  hip?: string;
+  length?: string;
+  inseam?: string;
+  thigh?: string;
+  waist_cm?: string;
+  hip_cm?: string;
+  length_cm?: string;
+  inseam_cm?: string;
+  thigh_cm?: string;
+}
+
+export interface SizeChart {
+  stretch?: StretchLevel;
+  unit_default?: 'IN' | 'CM';
+  garment_type?: string;
+  body_measurements?: BodyMeasurementRow[];
+  garment_measurements?: {
+    tops?: GarmentTopsRow[];
+    bottoms?: GarmentBottomsRow[];
+  };
+  notes?: string;
+}
+
 export interface VendorProfileBrief {
   id: string;
   store_name: string;
@@ -11,6 +73,8 @@ export interface VendorProfileBrief {
   landmark?: string;
   instagram_handle?: string;
   kyc_tier?: string;
+  nin_number?: string;
+  cac_number?: string;
 }
 
 export interface BankAccount {
@@ -31,13 +95,20 @@ export interface PublicVendorProfile {
   banner_url: string | null;
   city: string;
   state: string;
-  kyc_tier: string;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   is_verified: boolean;
   instagram_handle: string;
-  workshop_address: string;
-  landmark: string;
+  whatsapp_phone?: string;
+  lead_designer_name?: string;
+  workshop_address?: string;
+  landmark?: string;
+  kyc_tier?: string;
   average_rating: string;
   review_count: number;
+  product_count?: number;
+  starting_price_naira?: number | null;
+  preview_images?: string[];
+  categories?: string[];
   created_at: string;
 }
 
@@ -162,6 +233,7 @@ export interface Product {
   updated_at?: string;
   media?: ProductMedia[];
   variants?: ProductVariant[];
+  size_chart?: SizeChart;
 }
 
 export interface CreateProductPayload {
@@ -171,6 +243,10 @@ export interface CreateProductPayload {
   base_price_kobo: number;
   preparation_time_days?: number;
   status?: 'DRAFT' | 'PUBLISHED';
+  sizes?: string[];
+  colors?: string[];
+  stock_quantity?: number;
+  size_chart?: SizeChart;
 }
 
 export interface ProductItem {
@@ -292,6 +368,7 @@ export interface OrderItem {
   id: string;
   product_id?: string;
   variant_id: string | null;
+  product_image?: string;
   product_title_snapshot: string;
   variant_size_snapshot: string;
   variant_color_snapshot: string | null;
@@ -416,6 +493,7 @@ export interface Review {
     last_name: string;
   } | string;
   customer_name?: string;
+  user_name?: string;
   rating: number;
   comment: string;
   is_verified_purchase: boolean;

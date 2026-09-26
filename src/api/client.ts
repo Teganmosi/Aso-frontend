@@ -125,6 +125,12 @@ export const authApi = {
     const res = await apiClient.get('/me/');
     return res.data.user || res.data.data || res.data;
   },
+
+  updateProfile: async (payload: { first_name?: string; last_name?: string; phone_number?: string }): Promise<User> => {
+    await fetchCsrfToken();
+    const res = await apiClient.patch('/me/', payload);
+    return res.data.user || res.data.data || res.data;
+  },
 };
 
 // ─── Address API ─────────────────────────────────────────────────────────────
@@ -144,6 +150,12 @@ export const addressApi = {
   updateAddress: async (id: string, payload: Partial<Omit<Address, 'id' | 'created_at'>>): Promise<Address> => {
     await fetchCsrfToken();
     const res = await apiClient.put(`/auth/addresses/${id}/`, payload);
+    return res.data.address || res.data;
+  },
+
+  setDefaultAddress: async (id: string): Promise<Address> => {
+    await fetchCsrfToken();
+    const res = await apiClient.patch(`/auth/addresses/${id}/`, { is_default: true });
     return res.data.address || res.data;
   },
 
@@ -235,10 +247,22 @@ export const productApi = {
   getPublicProducts: async (params?: {
     search?: string;
     category?: string;
+    collection?: string;
     vendor?: string;
+    sort?: string;
     ordering?: string;
+    min_price?: number;
+    max_price?: number;
+    min_lead_time?: number;
+    max_lead_time?: number;
   }): Promise<Product[]> => {
-    const res = await apiClient.get('/products/', { params });
+    // Normalize ordering to sort if caller passed ordering
+    const queryParams: any = { ...params };
+    if (queryParams.ordering && !queryParams.sort) {
+      queryParams.sort = queryParams.ordering;
+      delete queryParams.ordering;
+    }
+    const res = await apiClient.get('/products/', { params: queryParams });
     return normalizeArray<Product>(res.data);
   },
 
@@ -255,13 +279,13 @@ export const productApi = {
   createVendorProduct: async (payload: CreateProductPayload): Promise<Product> => {
     await fetchCsrfToken();
     const res = await apiClient.post('/vendor/products/', payload);
-    return res.data;
+    return res.data.product || res.data.data || res.data;
   },
 
   updateVendorProduct: async (id: string, payload: Partial<CreateProductPayload>): Promise<Product> => {
     await fetchCsrfToken();
-    const res = await apiClient.put(`/vendor/products/${id}/`, payload);
-    return res.data;
+    const res = await apiClient.patch(`/vendor/products/${id}/`, payload);
+    return res.data.product || res.data.data || res.data;
   },
 
   deleteVendorProduct: async (id: string): Promise<void> => {
@@ -366,8 +390,9 @@ export const mediaApi = {
 // ─── Order API ───────────────────────────────────────────────────────────────
 
 export const orderApi = {
-  getOrders: async (): Promise<Order[]> => {
-    const res = await apiClient.get('/orders/');
+  getOrders: async (status?: string): Promise<Order[]> => {
+    const params = status && status !== 'ALL' ? { status } : undefined;
+    const res = await apiClient.get('/orders/', { params });
     return normalizeArray<Order>(res.data);
   },
 
@@ -418,6 +443,18 @@ export const paymentApi = {
     await fetchCsrfToken();
     const res = await apiClient.post('/payments/initialize/', { order_id: orderId });
     return res.data.data || res.data;
+  },
+
+  verifyPayment: async (reference: string): Promise<{ success: boolean; order_status?: string; message?: string; order?: Order }> => {
+    await fetchCsrfToken();
+    const res = await apiClient.get(`/payments/verify/${reference}/`);
+    return res.data;
+  },
+
+  verifyByOrderId: async (orderId: string): Promise<{ success: boolean; order_status?: string; message?: string; order?: Order }> => {
+    await fetchCsrfToken();
+    const res = await apiClient.get('/payments/verify/', { params: { order_id: orderId } });
+    return res.data;
   },
 };
 

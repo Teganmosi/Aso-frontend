@@ -1,0 +1,315 @@
+.aso-pwa-banner-card {
+  position: fixed;
+  bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  left: 1rem;
+  right: 1rem;
+  max-width: 440px;
+  margin: 0 auto;
+  z-index: 980;
+  background-color: #111827;
+  color: #FFFFFF;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@media (min-width: 769px) {
+  .aso-pwa-banner-card {
+    bottom: 2rem;
+    left: auto;
+    right: 2rem;
+    width: 380px;
+  }
+}
+
+.pwa-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.pwa-logo-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #004B44;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.pwa-app-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pwa-text-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pwa-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pwa-app-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+
+.pwa-tag-pill {
+  font-size: 0.6rem;
+  font-weight: 800;
+  background-color: #D4AF37;
+  color: #111827;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.pwa-description {
+  font-size: 0.72rem;
+  color: #9CA3AF;
+  margin: 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pwa-action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.pwa-btn-dismiss {
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  padding: 0.4rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.pwa-btn-dismiss:hover {
+  color: #FFFFFF;
+}
+
+.pwa-btn-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: linear-gradient(135deg, #004B44, #00695F);
+  color: #FFFFFF;
+  border: 1px solid #14B8A6;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pwa-btn-install:active {
+  transform: scale(0.95);
+}
+
+/* iOS Modal Guide */
+.aso-pwa-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .aso-pwa-modal-overlay {
+    align-items: center;
+  }
+}
+
+.aso-pwa-modal-body {
+  background-color: #FFFFFF;
+  color: #111827;
+  border-radius: 20px 20px 16px 16px;
+  width: 100%;
+  max-width: 440px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.pwa-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  position: relative;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.pwa-logo-wrapper-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #111827;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.pwa-logo-wrapper-lg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pwa-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: #111827;
+}
+
+.pwa-modal-subtitle {
+  font-size: 0.78rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+.pwa-modal-close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  padding: 0.25rem;
+  cursor: pointer;
+}
+
+.pwa-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.pwa-step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: #F9FAFB;
+  border: 1px solid #F3F4F6;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+}
+
+.pwa-step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #004B44;
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pwa-step-text {
+  font-size: 0.85rem;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.inline-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 2px;
+  color: #004B44;
+}
+
+.pwa-btn-understood {
+  width: 100%;
+  background-color: #004B44;
+  color: #FFFFFF;
+  padding: 0.85rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pwa-btn-understood:hover {
+  background-color: #003833;
+}
+
+/* Success Toast */
+.aso-pwa-success-toast {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  max-width: 400px;
+  margin: 0 auto;
+  z-index: 1000;
+  background-color: #E6F4F1;
+  color: #004B44;
+  border: 1px solid #A7F3D0;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}

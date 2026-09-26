@@ -22,6 +22,7 @@ interface AuthContextType {
   }) => Promise<User>;
   logout: () => Promise<void>;
   refreshMe: () => Promise<User | null>;
+  updateProfile: (payload: { first_name?: string; last_name?: string; phone_number?: string }) => Promise<User>;
   addresses: Address[];
   fetchAddresses: () => Promise<void>;
 }
@@ -47,6 +48,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const updateProfile = async (payload: { first_name?: string; last_name?: string; phone_number?: string }) => {
+    const updated = await authApi.updateProfile(payload);
+    setUser(updated);
+    return updated;
   };
 
   const fetchAddresses = async () => {
@@ -125,6 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         refreshMe,
+        updateProfile,
         addresses,
         fetchAddresses,
       }}

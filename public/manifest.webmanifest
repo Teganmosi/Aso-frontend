@@ -1,0 +1,80 @@
+{
+  "name": "Aso \u2014 Authentic Nigerian Craftsmanship",
+  "short_name": "Aso",
+  "description": "Discover bespoke and ready-to-wear Nigerian fashion, traditional craftsmanship, and direct artisan commerce.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#004B44",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/aso-logo-option2-profile.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "48x48",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": [
+    "shopping",
+    "lifestyle",
+    "fashion"
+  ],
+  "shortcuts": [
+    {
+      "name": "Men's Collection",
+      "short_name": "Men",
+      "description": "Explore Senators, Agbadas, Kaftans & Contemporary Men's Wear",
+      "url": "/men",
+      "icons": [
+        {
+          "src": "/aso-logo-option2-profile.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Women's Collection",
+      "short_name": "Women",
+      "description": "Explore Aso Ebi, Boubous, Corset Gowns & Co-ords",
+      "url": "/women",
+      "icons": [
+        {
+          "src": "/aso-logo-option2-profile.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Traditional & Bridal",
+      "short_name": "Traditional",
+      "description": "Explore Handwoven Aso Oke, Groom/Bride Regalia",
+      "url": "/traditional",
+      "icons": [
+        {
+          "src": "/aso-logo-option2-profile.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Designers & Artisans",
+      "short_name": "Designers",
+      "description": "Browse Verified Nigerian Fashion Designers",
+      "url": "/designers",
+      "icons": [
+        {
+          "src": "/aso-logo-option2-profile.svg",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

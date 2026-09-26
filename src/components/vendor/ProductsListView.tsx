@@ -81,7 +81,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
   }, []);
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (!window.confirm(`Are you sure you want to remove "${name}" from your atelier catalog?`)) {
+    if (!window.confirm(`Are you sure you want to archive "${name}"? Archived products will no longer be purchasable, while preserving historical orders.`)) {
       return;
     }
     try {
@@ -120,14 +120,14 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
       {/* Top Header */}
       <div className="dashboard-welcome-header">
         <div>
-          <h1 className="dashboard-serif-title">Garment Catalogue & Inventory</h1>
+          <h1 className="dashboard-serif-title">Products & Inventory</h1>
           <p className="dashboard-subtitle">
-            Manage your bespoke creations, update live pricing, sizes, and publish new luxury pieces.
+            Manage your products, live pricing, stock, variants, and preparation times.
           </p>
         </div>
         <button className="btn-action-primary" onClick={onAddNewProduct}>
           <Plus size={16} />
-          <span>Upload New Garment</span>
+          <span>Add New Product</span>
         </button>
       </div>
 
@@ -137,7 +137,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           className={`status-filter-tab ${selectedStatus === 'ALL' ? 'active' : ''}`}
           onClick={() => setSelectedStatus('ALL')}
         >
-          <span>All Garments</span>
+          <span>All Products</span>
           <span className="count-pill">{products.length}</span>
         </button>
         <button
@@ -151,7 +151,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           className={`status-filter-tab ${selectedStatus === 'PENDING' ? 'active' : ''}`}
           onClick={() => setSelectedStatus('PENDING')}
         >
-          <span>Pending Moderation</span>
+          <span>Pending Review</span>
           <span className="count-pill count-pending">{pendingCount}</span>
         </button>
         <button
@@ -169,7 +169,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           <Search size={16} className="search-icon" />
           <input
             type="text"
-            placeholder="Search by garment title, SKU or fabric..."
+            placeholder="Search by product title, SKU, or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -213,16 +213,16 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
       {loading ? (
         <div className="loading-state-card">
           <div className="storefront-spinner" />
-          <p>Syncing atelier inventory...</p>
+          <p>Loading product inventory from database...</p>
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="empty-products-card">
           <Package size={48} color="#9CA3AF" />
-          <h3>No garments found</h3>
-          <p>Try refining your search terms or upload a new garment to your collection.</p>
+          <h3>No products found</h3>
+          <p>Try refining your search terms or add a new product to your storefront.</p>
           <button className="btn-action-primary" onClick={onAddNewProduct}>
             <Plus size={16} />
-            <span>Upload New Garment</span>
+            <span>Add New Product</span>
           </button>
         </div>
       ) : viewMode === 'table' ? (
@@ -231,7 +231,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           <table className="styled-inventory-table">
             <thead>
               <tr>
-                <th>Garment</th>
+                <th>Product</th>
                 <th>Category</th>
                 <th>Price (₦)</th>
                 <th>Turnaround</th>
@@ -285,14 +285,14 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                         <button
                           className="btn-icon-action"
                           onClick={() => onEditProduct && onEditProduct(p)}
-                          title="Edit Garment"
+                          title="Edit Product"
                         >
                           <Edit3 size={15} />
                         </button>
                         <button
                           className="btn-icon-action danger"
                           onClick={() => handleDeleteProduct(p.id, p.name)}
-                          title="Delete Garment"
+                          title="Archive Product"
                         >
                           <Trash2 size={15} />
                         </button>

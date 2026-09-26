@@ -237,10 +237,11 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
                   {displayOrders.map((order) => {
                     const orderNum = order.order_number || `#ASO-${order.id?.slice(0, 6)}`;
                     const orderAmt = order.total_amount_naira || 0;
-                    const itemTitle = order.items?.[0]?.product_title_snapshot || 'Bespoke Garment';
-                    const itemSize = order.items?.[0]?.variant_size_snapshot || 'Custom';
+                    const firstItem = order.items?.[0];
+                    const itemTitle = firstItem?.product_title_snapshot || 'Bespoke Garment';
+                    const itemSize = firstItem?.variant_size_snapshot || 'Custom';
                     const custName = order.shipping_address_snapshot?.full_name || 'Customer';
-                    const itemImg = '/traditional-men-1.png';
+                    const itemImg = (firstItem as any)?.product_image || null;
                     const status = order.order_status || 'PAID';
 
                     return (
@@ -248,7 +249,13 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
                         <td className="cell-order-id">#{orderNum.replace('#', '')}</td>
                         <td className="cell-product-info">
                           <div className="product-media-group">
-                            <img src={itemImg} alt={itemTitle} className="product-thumb-sq" />
+                            {itemImg ? (
+                              <img src={itemImg} alt={itemTitle} className="product-thumb-sq" style={{ objectFit: 'cover' }} />
+                            ) : (
+                              <div className="product-thumb-sq" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3F4F6' }}>
+                                <ShoppingBag size={16} color="#0C3B2E" />
+                              </div>
+                            )}
                             <div>
                               <p className="product-title-text">{itemTitle}</p>
                               <p className="product-sub-meta">Size: {itemSize} • Customer: {custName}</p>
