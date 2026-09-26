@@ -7,7 +7,6 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ${VITE_API_URL:-http://69.164.247.208:8000/api/v1}
-    image: aso-frontend:latest
     container_name: aso_frontend
     restart: always
     ports:
