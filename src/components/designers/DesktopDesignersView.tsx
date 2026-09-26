@@ -7,7 +7,6 @@ import {
   ShoppingBag, 
   MapPin, 
   ArrowRight,
-  Store,
   Package,
   Building2,
   CreditCard,

@@ -5,9 +5,6 @@ import {
   ShieldCheck, 
   Search, 
   MapPin, 
-  ArrowRight,
-  Sparkles,
-  SlidersHorizontal,
   X,
   Store,
   ChevronRight
