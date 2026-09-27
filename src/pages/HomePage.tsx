@@ -114,6 +114,42 @@ export const matchesCategory = (product: Product, slug: string | null): boolean 
   return title.includes(s) || desc.includes(s);
 };
 
+// ── In-Memory & Session Storage Cache for 0ms Instant Home Loading ──
+let memoryCachedCatalog: Product[] | null = null;
+let memoryCachedVendors: PublicVendorProfile[] | null = null;
+const CACHE_CATALOG_KEY = 'aso_cached_home_catalog';
+const CACHE_VENDORS_KEY = 'aso_cached_home_vendors';
+
+function getInitialCachedCatalog(): Product[] {
+  if (memoryCachedCatalog && memoryCachedCatalog.length > 0) return memoryCachedCatalog;
+  try {
+    const raw = sessionStorage.getItem(CACHE_CATALOG_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryCachedCatalog = parsed;
+        return parsed;
+      }
+    }
+  } catch {}
+  return [];
+}
+
+function getInitialCachedVendors(): PublicVendorProfile[] {
+  if (memoryCachedVendors && memoryCachedVendors.length > 0) return memoryCachedVendors;
+  try {
+    const raw = sessionStorage.getItem(CACHE_VENDORS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryCachedVendors = parsed;
+        return parsed;
+      }
+    }
+  } catch {}
+  return [];
+}
+
 export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
   const isMobile = useIsMobile(768);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -122,10 +158,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
   const searchQuery = searchParams.get('search') || '';
   const urlCategory = searchParams.get('category') || null;
 
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [featuredVendors, setFeaturedVendors] = useState<PublicVendorProfile[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [allProducts, setAllProducts] = useState<Product[]>(getInitialCachedCatalog);
+  const [products, setProducts] = useState<Product[]>(getInitialCachedCatalog);
+  const [featuredVendors, setFeaturedVendors] = useState<PublicVendorProfile[]>(getInitialCachedVendors);
+  const [loading, setLoading] = useState<boolean>(() => getInitialCachedCatalog().length === 0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(urlCategory);
 
   useEffect(() => {
