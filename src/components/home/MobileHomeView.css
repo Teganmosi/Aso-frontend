@@ -498,121 +498,216 @@
 
 /* 7. Confidence */
 .mobile-confidence-section {
-  padding: 1rem 0 0.5rem;
+  padding: 1.25rem 0 0.5rem;
 }
 
 .mobile-confidence-card {
   background-color: #FFFFFF;
-  border-radius: 12px;
-  border: 1px solid #E5E2E1;
-  padding: 1.15rem;
+  border-radius: 14px;
+  border: 1px solid #E5E7EB;
+  padding: 1.35rem 1.15rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
 .mobile-confidence-tag {
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: #8B500A;
   text-transform: uppercase;
+  display: block;
 }
 
 .mobile-confidence-title {
   font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: #1C1B1B;
-  margin: 0.2rem 0 0.75rem 0;
+  color: #111827;
+  margin: 0.25rem 0 1rem 0;
 }
 
 .mobile-confidence-list {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 1rem;
 }
 
 .mobile-confidence-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.85rem;
 }
 
-.check-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+.mobile-confidence-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background-color: #E6F4F1;
-  color: #00322D;
-  font-size: 0.7rem;
-  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-top: 0.1rem;
 }
 
-.mobile-confidence-item strong {
+.mobile-confidence-content {
+  flex: 1;
+}
+
+.mobile-confidence-content strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111827;
   display: block;
-  font-size: 0.78rem;
-  color: #1C1B1B;
+  margin-bottom: 0.15rem;
 }
 
-.mobile-confidence-item p {
-  font-size: 0.7rem;
-  color: #707977;
+.mobile-confidence-content p {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #4B5563;
   margin: 0;
-  line-height: 1.3;
 }
 
 /* 8. Sell */
 .mobile-sell-section {
-  padding: 0.5rem 0 1rem;
+  padding: 1rem 0 1.5rem;
 }
 
 .mobile-sell-card {
-  border-radius: 12px;
-  background-color: #00322D;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #003832 0%, #00221E 100%);
   color: #FFFFFF;
-  padding: 1.15rem;
+  padding: 1.85rem 1.35rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.65rem;
+  min-height: 230px;
+  justify-content: space-between;
+  box-shadow: 0 8px 24px rgba(0, 50, 45, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .mobile-sell-tag {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: #FFB065;
+  text-transform: uppercase;
 }
 
 .mobile-sell-title {
   font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #FFFFFF;
-  margin: 0;
+  line-height: 1.35;
+  margin: 0.2rem 0 0 0;
 }
 
 .mobile-sell-desc {
-  font-size: 0.72rem;
-  line-height: 1.35;
-  color: #EAE7E7;
-  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #E2E8F0;
+  margin: 0.15rem 0 0.5rem 0;
 }
 
 .btn-mobile-sell {
   align-self: flex-start;
-  margin-top: 0.35rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: 8px;
+  margin-top: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 10px;
   background-color: #FFB065;
   color: #2D1600;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4rem;
   border: none;
   cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-mobile-sell:active {
+  transform: scale(0.98);
+  opacity: 0.92;
+}
+
+/* 6.5 How Aso Works Section */
+.mobile-how-works-section {
+  margin-top: 1.5rem;
+}
+
+.mobile-section-header-block {
+  margin-bottom: 0.85rem;
+}
+
+.mobile-section-subtitle-text {
+  font-size: 0.78rem;
+  color: #6B7280;
+  line-height: 1.4;
+  margin: 0.25rem 0 0 0;
+}
+
+.mobile-how-steps-carousel {
+  display: flex;
+  gap: 0.85rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 0.5rem;
+  margin: 0 -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.mobile-how-step-card {
+  flex: 0 0 240px;
+  scroll-snap-align: start;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 1.25rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-how-step-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.mobile-how-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #B1EEE4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-how-step-num {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #D1D5DB;
+  line-height: 1;
+}
+
+.mobile-how-step-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.35rem 0;
+}
+
+.mobile-how-step-text {
+  font-size: 0.78rem;
+  color: #4B5563;
+  line-height: 1.45;
+  margin: 0;
 }

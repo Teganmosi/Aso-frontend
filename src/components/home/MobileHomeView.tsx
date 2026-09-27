@@ -3,11 +3,16 @@ import {
   ArrowRight, 
   ChevronRight,
   CheckCircle2,
+  CreditCard,
+  ShieldCheck,
   Clock,
   Heart,
   Search,
   X,
-  Store
+  Store,
+  Compass,
+  ShoppingBag,
+  Truck
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Product, PublicVendorProfile } from '../../types';
@@ -274,6 +279,76 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
         </div>
       </section>
 
+      
+      {/* 6.5 How Aso Works */}
+      <section className="mobile-how-works-section">
+        <div className="mobile-section-header-block">
+          <span className="mobile-eyebrow">SIMPLE &amp; RELIABLE</span>
+          <h2 className="mobile-section-title">How Aso Works</h2>
+          <p className="mobile-section-subtitle-text">
+            Discover, order, and receive authentic Nigerian fashion with complete peace of mind.
+          </p>
+        </div>
+
+        <div className="mobile-how-steps-carousel no-scrollbar">
+          {/* 01 */}
+          <div className="mobile-how-step-card">
+            <div className="mobile-how-step-top">
+              <div className="mobile-how-icon-circle">
+                <Compass size={20} color="#004B44" />
+              </div>
+              <span className="mobile-how-step-num">01</span>
+            </div>
+            <h4 className="mobile-how-step-title">Discover</h4>
+            <p className="mobile-how-step-text">
+              Explore pieces from verified independent designers across Nigeria, all in one marketplace.
+            </p>
+          </div>
+
+          {/* 02 */}
+          <div className="mobile-how-step-card">
+            <div className="mobile-how-step-top">
+              <div className="mobile-how-icon-circle">
+                <ShoppingBag size={20} color="#004B44" />
+              </div>
+              <span className="mobile-how-step-num">02</span>
+            </div>
+            <h4 className="mobile-how-step-title">Order</h4>
+            <p className="mobile-how-step-text">
+              Choose your piece, select your ready-to-wear size or submit custom measurements, and securely pay online.
+            </p>
+          </div>
+
+          {/* 03 */}
+          <div className="mobile-how-step-card">
+            <div className="mobile-how-step-top">
+              <div className="mobile-how-icon-circle">
+                <Clock size={20} color="#004B44" />
+              </div>
+              <span className="mobile-how-step-num">03</span>
+            </div>
+            <h4 className="mobile-how-step-title">We Coordinate</h4>
+            <p className="mobile-how-step-text">
+              The designer accepts and prepares your piece while Aso tracks fulfillment and logistics milestones.
+            </p>
+          </div>
+
+          {/* 04 */}
+          <div className="mobile-how-step-card">
+            <div className="mobile-how-step-top">
+              <div className="mobile-how-icon-circle">
+                <Truck size={20} color="#004B44" />
+              </div>
+              <span className="mobile-how-step-num">04</span>
+            </div>
+            <h4 className="mobile-how-step-title">Receive</h4>
+            <p className="mobile-how-step-text">
+              Your order is safely dispatched and delivered directly to your doorstep with tracking updates.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* 7. Why Shop on Aso */}
       <section className="mobile-confidence-section">
         <div className="mobile-confidence-card">
@@ -281,22 +356,28 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
           <h3 className="mobile-confidence-title">Why Shop on Aso</h3>
           <div className="mobile-confidence-list">
             <div className="mobile-confidence-item">
-              <div className="check-dot">✓</div>
-              <div>
+              <div className="mobile-confidence-icon-box">
+                <CheckCircle2 size={20} color="#004B44" />
+              </div>
+              <div className="mobile-confidence-content">
                 <strong>Verified Designers</strong>
                 <p>Every designer on Aso goes through a verification process before they can sell on the marketplace.</p>
               </div>
             </div>
             <div className="mobile-confidence-item">
-              <div className="check-dot">✓</div>
-              <div>
+              <div className="mobile-confidence-icon-box">
+                <CreditCard size={20} color="#004B44" />
+              </div>
+              <div className="mobile-confidence-content">
                 <strong>Secure Online Payments</strong>
                 <p>Pay safely with your debit card or bank transfer without having to send money directly to strangers on social media.</p>
               </div>
             </div>
             <div className="mobile-confidence-item">
-              <div className="check-dot">✓</div>
-              <div>
+              <div className="mobile-confidence-icon-box">
+                <ShieldCheck size={20} color="#004B44" />
+              </div>
+              <div className="mobile-confidence-content">
                 <strong>72h Buyer Protection</strong>
                 <p>Your payment remains securely protected while your order is being fulfilled, giving you time to inspect your delivery.</p>
               </div>
