@@ -43,12 +43,16 @@ interface DepartmentOption {
 
 // Fallback standard categories in case server DB is unseeded
 const FALLBACK_CATEGORIES: Category[] = [
-  { id: 'cat-agbada', name: 'Agbada & Grand Native Sets', slug: 'agbada' },
-  { id: 'cat-senator', name: "Men's Two-Piece Senator Suits", slug: 'mens-two-piece' },
-  { id: 'cat-kaftan', name: 'Kaftans & Casual Tunics', slug: 'kaftan' },
-  { id: 'cat-aso-ebi', name: "Women's Traditional & Aso Ebi", slug: 'womens-traditional' },
+  { id: 'cat-womens-suits', name: "Women's Suits & Blazers", slug: 'womens-suits-blazers' },
+  { id: 'cat-female-senator', name: 'Female Senator & Two-Piece Sets', slug: 'female-senator' },
+  { id: 'cat-dresses', name: 'Corset Gowns & Evening Dresses', slug: 'corset-gowns-dresses' },
+  { id: 'cat-aso-ebi', name: 'Aso Ebi, Iro & Buba', slug: 'aso-ebi-iro-buba' },
   { id: 'cat-boubou', name: 'Boubous & Rich Auntie Gowns', slug: 'boubous' },
-  { id: 'cat-dresses', name: 'Corset Gowns & Ready-to-Wear Dresses', slug: 'dresses' },
+  { id: 'cat-jumpsuits', name: 'Jumpsuits & Playsuits', slug: 'jumpsuits' },
+  { id: 'cat-agbada', name: 'Agbada & Grand Native Sets', slug: 'agbada' },
+  { id: 'cat-senator', name: "Men's Two-Piece Senator Suits", slug: 'mens-senator-suits' },
+  { id: 'cat-kaftan', name: 'Kaftans & Tunics', slug: 'kaftans' },
+  { id: 'cat-mens-suits', name: "Men's Suits & Blazers", slug: 'mens-suits-blazers' },
   { id: 'cat-traditional', name: 'Handwoven Aso Oke & Bridal Regalia', slug: 'traditional-bridal' },
   { id: 'cat-accessories', name: 'Caps (Fila), Geles & Accessories', slug: 'accessories' },
 ];
