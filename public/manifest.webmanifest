@@ -1,23 +1,41 @@
 {
-  "name": "Aso \u2014 Authentic Nigerian Craftsmanship",
+  "name": "Aso — Authentic Nigerian Craftsmanship",
   "short_name": "Aso",
   "description": "Discover bespoke and ready-to-wear Nigerian fashion, traditional craftsmanship, and direct artisan commerce.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#111827",
-  "theme_color": "#004B44",
+  "theme_color": "#111827",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/aso-logo-option2-profile.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/favicon.svg",
-      "sizes": "48x48",
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/aso-logo-option2-profile.svg",
+      "sizes": "800x800",
       "type": "image/svg+xml",
       "purpose": "any"
     }
@@ -35,7 +53,7 @@
       "url": "/men",
       "icons": [
         {
-          "src": "/aso-logo-option2-profile.svg",
+          "src": "/icon-192.png",
           "sizes": "192x192"
         }
       ]
@@ -47,7 +65,7 @@
       "url": "/women",
       "icons": [
         {
-          "src": "/aso-logo-option2-profile.svg",
+          "src": "/icon-192.png",
           "sizes": "192x192"
         }
       ]
@@ -59,7 +77,7 @@
       "url": "/traditional",
       "icons": [
         {
-          "src": "/aso-logo-option2-profile.svg",
+          "src": "/icon-192.png",
           "sizes": "192x192"
         }
       ]
@@ -71,7 +89,7 @@
       "url": "/designers",
       "icons": [
         {
-          "src": "/aso-logo-option2-profile.svg",
+          "src": "/icon-192.png",
           "sizes": "192x192"
         }
       ]

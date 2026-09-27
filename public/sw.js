@@ -1,8 +1,14 @@
-const CACHE_NAME = 'aso-pwa-v1';
+const CACHE_NAME = 'aso-pwa-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
+  '/apple-touch-icon.png',
+  '/apple-touch-icon-180x180.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-512.png',
+  '/favicon-32x32.png',
   '/aso-logo-option2-profile.svg',
   '/aso-logo-option2-horizontal.svg',
   '/hero-bg.png',

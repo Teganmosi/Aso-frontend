@@ -2,18 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/aso-logo-option2-profile.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <title>Aso Marketplace — Authentic Nigerian Craftsmanship</title>
     
     <!-- PWA & Mobile Web App Meta Tags -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#004B44" />
+    <meta name="theme-color" content="#111827" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Aso" />
-    <link rel="apple-touch-icon" href="/aso-logo-option2-profile.svg" />
+    
+    <!-- iOS Home Screen Icons (PNG Required by iOS Safari) -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167x167.png" />
+
+    <!-- Standard Favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/svg+xml" href="/aso-logo-option2-profile.svg" />
     
     <!-- SEO & OpenGraph -->
     <meta name="description" content="Discover bespoke and ready-to-wear Nigerian fashion, traditional craftsmanship, and direct artisan commerce on Aso Marketplace." />
@@ -25,7 +34,7 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator && window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').catch((err) => {
             console.log('SW registration skipped:', err);
