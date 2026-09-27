@@ -41,6 +41,18 @@ interface DepartmentOption {
   description: string;
 }
 
+// Fallback standard categories in case server DB is unseeded
+const FALLBACK_CATEGORIES: Category[] = [
+  { id: 'cat-agbada', name: 'Agbada & Grand Native Sets', slug: 'agbada' },
+  { id: 'cat-senator', name: "Men's Two-Piece Senator Suits", slug: 'mens-two-piece' },
+  { id: 'cat-kaftan', name: 'Kaftans & Casual Tunics', slug: 'kaftan' },
+  { id: 'cat-aso-ebi', name: "Women's Traditional & Aso Ebi", slug: 'womens-traditional' },
+  { id: 'cat-boubou', name: 'Boubous & Rich Auntie Gowns', slug: 'boubous' },
+  { id: 'cat-dresses', name: 'Corset Gowns & Ready-to-Wear Dresses', slug: 'dresses' },
+  { id: 'cat-traditional', name: 'Handwoven Aso Oke & Bridal Regalia', slug: 'traditional-bridal' },
+  { id: 'cat-accessories', name: 'Caps (Fila), Geles & Accessories', slug: 'accessories' },
+];
+
 const DEPARTMENTS: DepartmentOption[] = [
   { id: 'Men', label: 'Men', icon: <Shirt size={18} />, description: 'Senators, Agbadas, Kaftans & Two-Piece Sets' },
   { id: 'Women', label: 'Women', icon: <Gem size={18} />, description: 'Aso Ebi, Boubous, Corset Gowns & Co-ords' },
@@ -183,12 +195,24 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
       try {
         const res = await categoryApi.getCategories();
         const catList = Array.isArray(res) ? res : ((res as any)?.results || []);
-        setCategories(catList);
-        if (catList.length > 0 && !categoryId) {
-          setCategoryId(catList[0].id);
+        if (catList.length > 0) {
+          setCategories(catList);
+          if (!categoryId) {
+            setCategoryId(catList[0].id);
+          }
+        } else {
+          // If server database is unseeded, use fallback category hierarchy
+          setCategories(FALLBACK_CATEGORIES);
+          if (!categoryId) {
+            setCategoryId(FALLBACK_CATEGORIES[0].id);
+          }
         }
       } catch (err) {
-        console.warn('Could not load categories:', err);
+        console.warn('Could not load categories from server, using standard taxonomy:', err);
+        setCategories(FALLBACK_CATEGORIES);
+        if (!categoryId) {
+          setCategoryId(FALLBACK_CATEGORIES[0].id);
+        }
       }
     };
     fetchCats();
@@ -584,7 +608,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
               >
-                {categories.length === 0 && <option value="">Loading categories...</option>}
+                {categories.length === 0 && <option value="">Select Category...</option>}
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name} {cat.slug ? `(${cat.slug})` : ''}
