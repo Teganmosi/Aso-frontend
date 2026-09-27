@@ -159,7 +159,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
           </Link>
         </div>
 
-        {loading ? (
+        {loading && products.length === 0 ? (
           <div className="mobile-loading-box">
             <p>Loading pieces...</p>
           </div>
@@ -184,6 +184,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
                       src={prod.primary_image_url || (prod.media && prod.media[0]?.url) || '/traditional-men-1.png'}
                       alt={prod.title}
                       loading="lazy"
+                      decoding="async"
                     />
                     <button
                       type="button"

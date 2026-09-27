@@ -168,65 +168,71 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
     setSelectedCategory(urlCategory);
   }, [urlCategory]);
 
-  // Initial full catalog load to determine active categories with pieces
-  const loadInitialCatalog = useCallback(async () => {
-    try {
-      const allData = await productApi.getPublicProducts({}).catch(() => []);
-      if (Array.isArray(allData)) {
-        setAllProducts(allData);
-      }
-    } catch (err) {
-      console.error('Failed to load initial product catalog:', err);
+  // Optimized SWR Data Fetching: 0ms instant display with silent background revalidation
+  const refreshCatalog = useCallback(async (categorySlug?: string | null, search?: string) => {
+    // Only show visible loading state if we have zero cached products to display
+    if (products.length === 0) {
+      setLoading(true);
     }
-  }, []);
 
-  useEffect(() => {
-    loadInitialCatalog();
-  }, [loadInitialCatalog]);
-
-  const fetchProducts = useCallback(async (categorySlug?: string | null, search?: string) => {
-    setLoading(true);
     try {
       const params: Record<string, string> = {};
       if (categorySlug) params.category = categorySlug;
       if (search) params.search = search;
-      
-      const prodData = await productApi.getPublicProducts(params).catch(() => []);
-      let result = Array.isArray(prodData) ? prodData : [];
 
-      // If backend returned empty for category or if searching, check local catalog fallback
-      if (result.length === 0 && allProducts.length > 0) {
-        result = allProducts.filter((p) => {
-          const matchesCat = categorySlug ? matchesCategory(p, categorySlug) : true;
-          const matchesSearch = search
-            ? (p.title || '').toLowerCase().includes(search.toLowerCase()) ||
-              (p.description || '').toLowerCase().includes(search.toLowerCase()) ||
-              (p.vendor?.store_name || '').toLowerCase().includes(search.toLowerCase())
-            : true;
-          return matchesCat && matchesSearch;
-        });
+      const [allData, filteredData] = await Promise.all([
+        // If not searching or filtering, fetch base catalog
+        (!categorySlug && !search) ? productApi.getPublicProducts({}).catch(() => []) : Promise.resolve(null),
+        (categorySlug || search) ? productApi.getPublicProducts(params).catch(() => []) : Promise.resolve(null)
+      ]);
+
+      if (allData && Array.isArray(allData)) {
+        setAllProducts(allData);
+        setProducts(allData);
+        memoryCachedCatalog = allData;
+        try {
+          sessionStorage.setItem(CACHE_CATALOG_KEY, JSON.stringify(allData));
+        } catch {}
+      } else if (filteredData && Array.isArray(filteredData)) {
+        let result = filteredData;
+        // Fallback filter if backend returns empty
+        if (result.length === 0 && allProducts.length > 0) {
+          result = allProducts.filter((p) => {
+            const matchesCat = categorySlug ? matchesCategory(p, categorySlug) : true;
+            const matchesSearch = search
+              ? (p.title || '').toLowerCase().includes(search.toLowerCase()) ||
+                (p.description || '').toLowerCase().includes(search.toLowerCase()) ||
+                (p.vendor?.store_name || '').toLowerCase().includes(search.toLowerCase())
+              : true;
+            return matchesCat && matchesSearch;
+          });
+        }
+        setProducts(result);
       }
-
-      setProducts(result);
     } catch (err) {
       console.error('Failed to load products:', err);
-      setProducts([]);
     } finally {
       setLoading(false);
     }
-  }, [allProducts]);
+  }, [products.length, allProducts]);
 
+  // Load featured vendors with SWR caching
   useEffect(() => {
     vendorApi.getVendors().then((vList) => {
-      if (Array.isArray(vList)) {
+      if (Array.isArray(vList) && vList.length > 0) {
         setFeaturedVendors(vList);
+        memoryCachedVendors = vList;
+        try {
+          sessionStorage.setItem(CACHE_VENDORS_KEY, JSON.stringify(vList));
+        } catch {}
       }
     }).catch(() => {});
   }, []);
 
+  // Trigger catalog fetch whenever filter/search changes
   useEffect(() => {
-    fetchProducts(selectedCategory, searchQuery);
-  }, [selectedCategory, searchQuery, fetchProducts]);
+    refreshCatalog(selectedCategory, searchQuery);
+  }, [selectedCategory, searchQuery]);
 
   // Only show categories that currently have at least 1 product available
   const availableCategories = useMemo(() => {
