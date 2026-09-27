@@ -375,3 +375,38 @@
   color: var(--color-primary);
   font-weight: 700;
 }
+
+
+/* ── Clean Mobile Top Navbar (Remove Hamburger & Top Cart Icon on Mobile) ── */
+@media (max-width: 900px) {
+  .stitch-nav-links {
+    display: none !important;
+  }
+  .mobile-hamburger-btn {
+    display: none !important;
+  }
+  .stitch-mobile-drawer {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .stitch-cart-btn {
+    display: none !important;
+  }
+  .mobile-hamburger-btn {
+    display: none !important;
+  }
+  .stitch-mobile-drawer {
+    display: none !important;
+  }
+  .navbar-admin-pill,
+  .navbar-designer-pill,
+  .navbar-sell-btn {
+    display: none !important;
+  }
+  .stitch-navbar-container {
+    padding: 0.65rem 1rem;
+    justify-content: space-between;
+  }
+}
