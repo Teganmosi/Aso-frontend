@@ -274,31 +274,31 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
         </div>
       </section>
 
-      {/* 7. Shop with Confidence */}
+      {/* 7. Why Shop on Aso */}
       <section className="mobile-confidence-section">
         <div className="mobile-confidence-card">
-          <span className="mobile-confidence-tag">BUY WITH PEACE OF MIND</span>
-          <h3 className="mobile-confidence-title">Shop with Confidence</h3>
+          <span className="mobile-confidence-tag">BUY WITH CONFIDENCE</span>
+          <h3 className="mobile-confidence-title">Why Shop on Aso</h3>
           <div className="mobile-confidence-list">
             <div className="mobile-confidence-item">
               <div className="check-dot">✓</div>
               <div>
                 <strong>Verified Designers</strong>
-                <p>Shop from designers who completed verification.</p>
+                <p>Every designer on Aso goes through a verification process before they can sell on the marketplace.</p>
               </div>
             </div>
             <div className="mobile-confidence-item">
               <div className="check-dot">✓</div>
               <div>
-                <strong>Buyer Protection</strong>
-                <p>Payment is protected while order is being fulfilled.</p>
+                <strong>Secure Online Payments</strong>
+                <p>Pay safely with your debit card or bank transfer without having to send money directly to strangers on social media.</p>
               </div>
             </div>
             <div className="mobile-confidence-item">
               <div className="check-dot">✓</div>
               <div>
-                <strong>Secure Payments</strong>
-                <p>Pay safely through Paystack with tracking.</p>
+                <strong>72h Buyer Protection</strong>
+                <p>Your payment remains securely protected while your order is being fulfilled, giving you time to inspect your delivery.</p>
               </div>
             </div>
           </div>
@@ -308,10 +308,18 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
       {/* 8. Sell on Aso */}
       <section className="mobile-sell-section">
         <div className="mobile-sell-card">
-          <span className="mobile-sell-tag">SELL ON ASO</span>
-          <h3 className="mobile-sell-title">Turn your designs into orders.</h3>
+          <span className="mobile-sell-tag">
+            {isDesigner ? 'STUDIO MANAGEMENT' : 'SELL ON ASO'}
+          </span>
+          <h3 className="mobile-sell-title">
+            {isDesigner
+              ? 'Your Fashion Studio is Live on Aso'
+              : 'Turn Your Instagram & WhatsApp Customers Into Orders'}
+          </h3>
           <p className="mobile-sell-desc">
-            Create your storefront, list pieces, and reach customers looking for authentic Nigerian fashion.
+            {isDesigner
+              ? 'Manage your live product catalogue, process client orders, track delivery dispatches, and withdraw settlements directly to your Nigerian bank account.'
+              : 'Create your own digital storefront on Aso, upload your designs, accept verified online payments, and manage all your customer orders from one place.'}
           </p>
           <button
             type="button"
@@ -319,7 +327,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
             className="btn-mobile-sell"
           >
             <Store size={15} />
-            <span>{isDesigner ? 'Go to Studio Dashboard' : 'Become a Designer'}</span>
+            <span>{isDesigner ? 'Go to Studio Dashboard' : 'Start Selling on Aso'}</span>
             <ArrowRight size={14} />
           </button>
         </div>
