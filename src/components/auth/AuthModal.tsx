@@ -45,7 +45,7 @@ export const AuthModal: React.FC = () => {
     try {
       await login(email, password);
       if (userType === 'designer') {
-        window.location.href = '/vendor/dashboard';
+        window.location.href = '/vendor/profile';
       }
     } catch (err: any) {
       console.error(err);

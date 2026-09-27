@@ -8,10 +8,13 @@ import {
   Store, 
   X, 
   ChevronRight, 
-  Scissors,
-  Crown,
-  Shirt,
-  Gem
+  Scissors, 
+  Crown, 
+  Shirt, 
+  Gem,
+  Package,
+  Clock,
+  Wallet,
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -36,6 +39,7 @@ export const MobileBottomNav: React.FC = () => {
 
   const isVendor = Boolean(user?.is_vendor || user?.vendor_profile);
   const isVendorRoute = location.pathname.startsWith('/vendor');
+
   const isCategoryActive = 
     location.pathname.startsWith('/men') || 
     location.pathname.startsWith('/women') || 
@@ -49,6 +53,76 @@ export const MobileBottomNav: React.FC = () => {
     navigate(path);
   };
 
+  // ═══════════════════════════════════════════════════════════════
+  // 1. VENDOR STUDIO BOTTOM NAV (Active on /vendor routes)
+  // ═══════════════════════════════════════════════════════════════
+  if (isVendorRoute) {
+    return (
+      <nav className="aso-mobile-bottom-nav studio-mode" aria-label="Studio Mobile Navigation">
+        <div className="mobile-nav-track">
+          {/* Overview */}
+          <NavLink
+            to="/vendor/dashboard"
+            end
+            className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <div className="nav-icon-container">
+              <Store size={21} />
+            </div>
+            <span className="nav-label">Overview</span>
+          </NavLink>
+
+          {/* Pieces */}
+          <NavLink
+            to="/vendor/products"
+            className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <div className="nav-icon-container">
+              <Package size={21} />
+            </div>
+            <span className="nav-label">Pieces</span>
+          </NavLink>
+
+          {/* Profile / Studio Profile (Center Tab) */}
+          <NavLink
+            to="/vendor/profile"
+            className={({ isActive }) => `mobile-nav-item ${isActive || location.pathname.startsWith('/vendor/settings') ? 'active' : ''}`}
+          >
+            <div className="nav-icon-container">
+              <UserIcon size={21} />
+            </div>
+            <span className="nav-label">Profile</span>
+          </NavLink>
+
+          {/* Orders */}
+          <NavLink
+            to="/vendor/orders"
+            className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <div className="nav-icon-container">
+              <Clock size={21} />
+            </div>
+            <span className="nav-label">Orders</span>
+          </NavLink>
+
+          {/* Earnings / Balance */}
+          <NavLink
+            to="/vendor/earnings"
+            className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <div className="nav-icon-container">
+              <Wallet size={21} />
+            </div>
+            <span className="nav-label">Earnings</span>
+          </NavLink>
+        </div>
+      </nav>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 2. CUSTOMER MARKETPLACE BOTTOM NAV (Active on marketplace routes)
+  // ═══════════════════════════════════════════════════════════════
   return (
     <>
       {/* Category Bottom Sheet Drawer */}

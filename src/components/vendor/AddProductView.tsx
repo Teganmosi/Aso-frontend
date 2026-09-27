@@ -1,20 +1,30 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   ArrowLeft, 
   Sparkles, 
-  X, 
   Clock, 
   Scissors, 
-  ShieldCheck, 
   Loader, 
   UploadCloud, 
   Check, 
   AlertCircle,
   Package,
   Image as ImageIcon,
+  Shirt,
+  Gem,
+  Crown,
+  Baby,
+  Layers,
+  Ruler,
+  Palette,
+  CheckCircle2,
+  Trash2,
+  Eye,
+  Plus
 } from 'lucide-react';
 import { categoryApi, productApi, mediaApi } from '../../api/client';
 import type { Category, ProductItem, CreateProductPayload } from '../../types';
+import './AddProductView.css';
 
 interface AddProductViewProps {
   onBack: () => void;
@@ -28,49 +38,49 @@ export type DepartmentType = 'Men' | 'Women' | 'Traditional & Bridal' | 'Unisex 
 interface DepartmentOption {
   id: DepartmentType;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   description: string;
 }
 
 const DEPARTMENTS: DepartmentOption[] = [
-  { id: 'Men', label: 'Men', icon: '👔', description: 'Senators, Agbadas, Kaftans & Two-Piece Sets' },
-  { id: 'Women', label: 'Women', icon: '👗', description: 'Aso Ebi, Boubous, Corset Gowns & Co-ords' },
-  { id: 'Traditional & Bridal', label: 'Traditional & Bridal', icon: '👑', description: 'Handwoven Aso Oke, Groom/Bride Regalia & Beads' },
-  { id: 'Unisex & Contemporary', label: 'Unisex & Contemporary', icon: '💫', description: 'Adire Lounge, Kimonos, Streetwear & Jackets' },
-  { id: 'Kids', label: 'Kids', icon: '👶', description: 'Boys & Girls Traditional Celebratory Wear' }
+  { id: 'Men', label: 'Men', icon: <Shirt size={18} />, description: 'Senators, Agbadas, Kaftans & Two-Piece Sets' },
+  { id: 'Women', label: 'Women', icon: <Gem size={18} />, description: 'Aso Ebi, Boubous, Corset Gowns & Co-ords' },
+  { id: 'Traditional & Bridal', label: 'Traditional & Bridal', icon: <Crown size={18} />, description: 'Handwoven Aso Oke, Groom/Bride Regalia & Beads' },
+  { id: 'Unisex & Contemporary', label: 'Unisex & Modern', icon: <Sparkles size={18} />, description: 'Adire Lounge, Kimonos, Streetwear & Jackets' },
+  { id: 'Kids', label: 'Kids & Teens', icon: <Baby size={18} />, description: 'Boys & Girls Traditional Celebratory Wear' }
 ];
 
-// Universal Apparel Sizing Presets (No footwear)
+// Universal Apparel Sizing Presets
 export type SizingSystem = 'ALPHA' | 'UK_WOMEN' | 'MEN_WAIST' | 'FREE_SIZE' | 'BESPOKE';
 
-const SIZING_PRESETS: Record<SizingSystem, { label: string; icon: string; sizes: string[]; hint: string }> = {
+const SIZING_PRESETS: Record<SizingSystem, { label: string; icon: React.ReactNode; sizes: string[]; hint: string }> = {
   ALPHA: {
     label: 'Standard Alpha (XS–4XL)',
-    icon: '🏷️',
+    icon: <Layers size={14} />,
     sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'],
     hint: 'Best for Senator suits, Kaftans, Agbadas, and casual native co-ords'
   },
   UK_WOMEN: {
-    label: "Women's UK Dress (UK 6–22)",
-    icon: '👗',
+    label: "Women's UK (6–22)",
+    icon: <Gem size={14} />,
     sizes: ['UK 6', 'UK 8', 'UK 10', 'UK 12', 'UK 14', 'UK 16', 'UK 18', 'UK 20', 'UK 22'],
     hint: "Best for Corset gowns, Aso Ebi dresses, fitted skirts, and bespoke women's wear"
   },
   MEN_WAIST: {
-    label: 'Men\'s Tailored Waist (30"-44")',
-    icon: '👖',
+    label: "Men's Tailored Waist (30-44 in)",
+    icon: <Scissors size={14} />,
     sizes: ['30"', '32"', '34"', '36"', '38"', '40"', '42"', '44"'],
     hint: 'Best for fitted native trousers, formal bottoms, and tailored waistbands'
   },
   FREE_SIZE: {
     label: 'Free Size / One Size',
-    icon: '👘',
-    sizes: ['Free Size (One Size Fits Most)'],
+    icon: <Sparkles size={14} />,
+    sizes: ['Free Size (Fits All)'],
     hint: 'Best for flowing Boubous, wide Agbada robes, Kimonos, Geles, and Shawls'
   },
   BESPOKE: {
-    label: 'Bespoke / Made-to-Measure',
-    icon: '✂️',
+    label: 'Bespoke / Custom',
+    icon: <Ruler size={14} />,
     sizes: ['Bespoke Fit (Custom Measurements)'],
     hint: 'Customer provides exact body measurements (chest, waist, shoulder, length) at checkout'
   }
@@ -100,7 +110,6 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     productToEdit?.raw_product?.category?.id || ''
   );
   const [categories, setCategories] = useState<Category[]>([]);
-  const [customCollectionTag, setCustomCollectionTag] = useState<string>('');
 
   // 2. Product Information
   const [productName, setProductName] = useState(productToEdit?.name || '');
@@ -139,19 +148,22 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
   const [stretchLevel, setStretchLevel] = useState<'NON' | 'SLIGHT' | 'MEDIUM' | 'HIGH'>(
     (productToEdit?.raw_product?.size_chart?.stretch as any) || 'NON'
   );
-  const [garmentCut, setGarmentCut] = useState<'SENATOR' | 'AGBADA' | 'GOWN' | 'TROUSERS'>(
-    (productToEdit?.raw_product?.size_chart?.garment_type as any) || 'SENATOR'
+  const [garmentCut, setGarmentCut] = useState<'SLIM' | 'REGULAR' | 'OVERSIZED' | 'TAILORED'>(
+    (productToEdit?.raw_product?.size_chart?.garment_type as any) || 'TAILORED'
   );
 
-  // 6. Colors State
-  const [colorInput, setColorInput] = useState('');
-  const [colors, setColors] = useState<{ name: string; hex: string }[]>([
-    { name: 'Navy Blue', hex: '#1E3A8A' },
-    { name: 'Emerald Green', hex: '#064E3B' },
-  ]);
+  // 6. Color Selection
+  const [colors, setColors] = useState<{ name: string; hex?: string }[]>(() => {
+    if (productToEdit?.colors?.length) {
+      return productToEdit.colors.map((c) => ({
+        name: c,
+        hex: PRESET_COLORS.find((p) => p.name.toLowerCase() === c.toLowerCase())?.hex || '#064E3B',
+      }));
+    }
+    return [{ name: 'Emerald Green', hex: '#064E3B' }];
+  });
 
-  // 7. Media Gallery State
-  const [imageUrlInput, setImageUrlInput] = useState('');
+  // 7. Media Gallery & Uploads
   const [images, setImages] = useState<string[]>(() => {
     if (productToEdit?.raw_product?.media?.length) {
       return productToEdit.raw_product.media.map((m) => m.url);
@@ -161,62 +173,49 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     }
     return [];
   });
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Feedback & Saving States
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Form Submission States
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Load Categories from Backend
+  // Fetch Categories
   useEffect(() => {
-    let isMounted = true;
-    categoryApi.getCategories().then((data) => {
-      if (isMounted && data && data.length > 0) {
-        setCategories(data);
-        if (!categoryId) {
-          const initialMatch = data.find(c => c.parent_name === selectedDepartment) || data[0];
-          setCategoryId(initialMatch.id);
+    const fetchCats = async () => {
+      try {
+        const res = await categoryApi.getCategories();
+        const catList = Array.isArray(res) ? res : ((res as any)?.results || []);
+        setCategories(catList);
+        if (catList.length > 0 && !categoryId) {
+          setCategoryId(catList[0].id);
         }
+      } catch (err) {
+        console.warn('Could not load categories:', err);
       }
-    }).catch((err) => {
-      console.error('Failed to load categories:', err);
-    });
-    return () => {
-      isMounted = false;
     };
+    fetchCats();
   }, []);
 
-  // Filtered categories for active Department
-  const departmentCategories = useMemo(() => {
-    const directMatches = categories.filter((c) => c.parent_name === selectedDepartment);
-    if (directMatches.length > 0) return directMatches;
-
-    const leaves = categories.filter((c) => c.parent_name || c.parent);
-    return leaves.length > 0 ? leaves : categories;
-  }, [categories, selectedDepartment]);
-
-  // When Department changes, auto-select first category in that department
-  const handleDepartmentChange = (dept: DepartmentType) => {
+  // Department switch
+  const handleDepartmentSelect = (dept: DepartmentType) => {
     setSelectedDepartment(dept);
-    const matchingCat = categories.find((c) => c.parent_name === dept);
-    if (matchingCat) {
-      setCategoryId(matchingCat.id);
-    }
-    if (dept === 'Women' && activeSizingSystem === 'ALPHA') {
+    if (dept === 'Women') {
       setActiveSizingSystem('UK_WOMEN');
       setSelectedSizes(['UK 8', 'UK 10', 'UK 12', 'UK 14']);
-      setGarmentCut('GOWN');
-    } else if (dept === 'Men' && activeSizingSystem === 'UK_WOMEN') {
+    } else if (dept === 'Traditional & Bridal') {
+      setActiveSizingSystem('BESPOKE');
+      setSelectedSizes(['Bespoke Fit (Custom Measurements)']);
+    } else {
       setActiveSizingSystem('ALPHA');
       setSelectedSizes(['S', 'M', 'L', 'XL']);
-      setGarmentCut('SENATOR');
     }
   };
 
-  // Switch Sizing System Presets
-  const handleSizingSystemSwitch = (sys: SizingSystem) => {
+  // Toggle Sizing System Preset
+  const handleSizingSystemSelect = (sys: SizingSystem) => {
     setActiveSizingSystem(sys);
     setSelectedSizes(SIZING_PRESETS[sys].sizes);
   };
@@ -224,74 +223,38 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
   // Toggle Individual Size Chip
   const toggleSize = (size: string) => {
     if (selectedSizes.includes(size)) {
-      if (selectedSizes.length === 1) {
-        setErrorMessage('At least one size must remain selected.');
-        setTimeout(() => setErrorMessage(''), 3000);
-        return;
+      if (selectedSizes.length > 1) {
+        setSelectedSizes(selectedSizes.filter((s) => s !== size));
       }
-      setSelectedSizes(selectedSizes.filter((s) => s !== size));
     } else {
       setSelectedSizes([...selectedSizes, size]);
     }
   };
 
-  // Select All / Deselect All for active preset
-  const handleSelectAllSizes = () => {
-    const preset = SIZING_PRESETS[activeSizingSystem].sizes;
-    setSelectedSizes(Array.from(new Set([...selectedSizes, ...preset])));
-  };
-
-  const handleClearSizes = () => {
-    setSelectedSizes([]);
-  };
-
-  // Add Custom Size Tag
-  const handleAddCustomSize = () => {
-    const trimmed = customSizeInput.trim();
-    if (!trimmed) return;
-    if (!selectedSizes.includes(trimmed)) {
-      setSelectedSizes([...selectedSizes, trimmed]);
+  // Add Custom Size
+  const handleAddCustomSize = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (customSizeInput.trim() && !selectedSizes.includes(customSizeInput.trim())) {
+      setSelectedSizes([...selectedSizes, customSizeInput.trim()]);
+      setCustomSizeInput('');
     }
-    setCustomSizeInput('');
   };
 
-  // Color Handlers
-  const handleAddColor = (nameToAdd?: string, hexToAdd?: string) => {
-    const name = (nameToAdd || colorInput).trim();
-    if (name) {
-      const exists = colors.some((c) => c.name.toLowerCase() === name.toLowerCase());
-      if (!exists) {
-        const hex = hexToAdd || '#111827';
-        setColors([...colors, { name, hex }]);
+  // Toggle Color Swatch
+  const toggleColor = (preset: { name: string; hex: string }) => {
+    const exists = colors.some((c) => c.name.toLowerCase() === preset.name.toLowerCase());
+    if (exists) {
+      if (colors.length > 1) {
+        setColors(colors.filter((c) => c.name.toLowerCase() !== preset.name.toLowerCase()));
       }
-      setColorInput('');
+    } else {
+      setColors([...colors, preset]);
     }
   };
 
-  const handleRemoveColor = (index: number) => {
-    setColors(colors.filter((_, idx) => idx !== index));
-  };
-
-  // Media Handlers
-  const handleAddImageUrl = () => {
-    const url = imageUrlInput.trim();
-    if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/'))) {
-      if (!images.includes(url)) {
-        setImages([...images, url]);
-      }
-      setImageUrlInput('');
-    } else if (url) {
-      setErrorMessage('Please enter a valid image URL (https://...)');
-      setTimeout(() => setErrorMessage(''), 3000);
-    }
-  };
-
-  const handleRemoveImage = (index: number) => {
-    setImages(images.filter((_, idx) => idx !== index));
-  };
-
-  const handleDeviceFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+  // Media Management
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setIsUploadingMedia(true);
@@ -315,16 +278,16 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             setImages((prev) => [...prev, presigned.public_url]);
           } else {
             const reader = new FileReader();
-            reader.onload = (e) => {
-              const dataUrl = e.target?.result as string;
+            reader.onload = (ev) => {
+              const dataUrl = ev.target?.result as string;
               if (dataUrl) setImages((prev) => [...prev, dataUrl]);
             };
             reader.readAsDataURL(file);
           }
         } catch {
           const reader = new FileReader();
-          reader.onload = (e) => {
-            const dataUrl = e.target?.result as string;
+          reader.onload = (ev) => {
+            const dataUrl = ev.target?.result as string;
             if (dataUrl) setImages((prev) => [...prev, dataUrl]);
           };
           reader.readAsDataURL(file);
@@ -336,6 +299,17 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
       setIsUploadingMedia(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
+  };
+
+  const setPrimaryImage = (index: number) => {
+    if (index === 0) return;
+    const target = images[index];
+    const rest = images.filter((_, i) => i !== index);
+    setImages([target, ...rest]);
   };
 
   // Submit Handler
@@ -459,1064 +433,543 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
   };
 
   const selectedCategoryObj = categories.find((c) => c.id === categoryId);
+  const formattedPriceDisplay = price && !isNaN(parseFloat(price)) 
+    ? '₦' + parseFloat(price).toLocaleString() 
+    : '₦0.00';
 
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 0 3rem 0', color: '#1C1B1B' }}>
-      {/* Top Sticky Action Bar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '1.75rem',
-          paddingBottom: '1rem',
-          borderBottom: '1px solid #E5E2E1',
-          gap: '1rem',
-          flexWrap: 'wrap',
-        }}
-      >
-        <button
-          type="button"
-          onClick={onBack}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            background: 'none',
-            border: 'none',
-            color: '#004B44',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          <ArrowLeft size={18} />
-          <span>Back to Products</span>
-        </button>
+    <div className="add-piece-container">
+      {/* ── Top Header Action Bar ── */}
+      <div className="add-piece-header-bar">
+        <div>
+          <div className="add-piece-breadcrumb">
+            <button type="button" onClick={onBack} className="btn-back-link">
+              <ArrowLeft size={16} />
+              <span>Studio Products</span>
+            </button>
+            <span>/</span>
+            <span>{isEditing ? 'Edit Piece' : 'Create New Piece'}</span>
+          </div>
+          <div className="header-title-group">
+            <h1 className="header-main-title">
+              {isEditing ? 'Edit Fashion Piece' : 'Add New Fashion Piece'}
+            </h1>
+            <span className={`status-indicator-badge ${isEditing ? 'active' : 'draft'}`}>
+              {isEditing ? 'Live in Catalog' : 'Draft Creation'}
+            </span>
+          </div>
+        </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div className="header-actions-row">
           <button
             type="button"
+            className="btn-save-draft"
             onClick={() => handleSave('Draft')}
             disabled={saving}
-            style={{
-              padding: '0.65rem 1.25rem',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              color: '#3F4947',
-              backgroundColor: '#F0EDED',
-              border: '1px solid #E5E2E1',
-              borderRadius: '6px',
-              cursor: saving ? 'not-allowed' : 'pointer',
-            }}
           >
-            Save Draft
+            {saving ? <Loader size={15} className="spin-icon" /> : null}
+            <span>Save Draft</span>
           </button>
-
           <button
             type="button"
+            className="btn-publish-piece"
             onClick={() => handleSave('Active')}
             disabled={saving}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.65rem 1.45rem',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              color: '#FFFFFF',
-              backgroundColor: saving ? '#535F5C' : '#004B44',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              boxShadow: '0 2px 4px rgba(0, 75, 68, 0.15)',
-            }}
           >
-            {saving ? (
-              <>
-                <Loader size={16} className="cart-spinner" />
-                <span>Publishing...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles size={16} />
-                <span>{isEditing ? 'Save Changes' : 'Publish Product'}</span>
-              </>
-            )}
+            {saving ? <Loader size={16} className="spin-icon" /> : <Sparkles size={16} />}
+            <span>{isEditing ? 'Save & Update Piece' : 'Publish to Storefront'}</span>
           </button>
         </div>
       </div>
 
-      {/* Feedback Alerts */}
+      {/* ── Alerts ── */}
       {errorMessage && (
-        <div
-          style={{
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FECACA',
-            padding: '0.85rem 1.15rem',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem',
-            color: '#DC2626',
-            fontSize: '0.875rem',
-            marginBottom: '1.5rem',
-          }}
-        >
+        <div className="form-feedback-alert error">
           <AlertCircle size={18} />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {successMessage && (
-        <div
-          style={{
-            backgroundColor: '#ECFDF5',
-            border: '1px solid #A7F3D0',
-            padding: '0.85rem 1.15rem',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem',
-            color: '#065F46',
-            fontSize: '0.875rem',
-            marginBottom: '1.5rem',
-          }}
-        >
-          <Check size={18} />
+        <div className="form-feedback-alert success">
+          <CheckCircle2 size={18} />
           <span>{successMessage}</span>
         </div>
       )}
 
-      {/* Main Form Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(320px, 1.2fr)', gap: '2rem' }}>
-        {/* LEFT COLUMN: Step-by-Step Upload Workflow */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* STEP 1: Department & Style Taxonomy */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#004B44', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 700 }}>
-                1
+      {/* ── Main 2-Column Split ── */}
+      <div className="add-piece-grid-split">
+        {/* Left: Input Sections */}
+        <div className="form-sections-stack">
+          {/* Card 1: Basic Information */}
+          <div className="piece-form-card">
+            <div className="card-section-header">
+              <div className="section-icon-box">
+                <Shirt size={18} />
               </div>
-              <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#1C1B1B' }}>
-                  Target Audience & Garment Style
-                </h3>
-                <p style={{ fontSize: '0.75rem', color: '#707977', margin: '0.15rem 0 0 0' }}>
-                  Select the audience department and authentic garment category for search & catalog discovery.
-                </p>
+              <div className="section-title-wrap">
+                <h3>Basic Information &amp; Taxonomy</h3>
+                <p>Categorize your piece so customers can find it across departments.</p>
               </div>
             </div>
 
-            {/* Department Pills */}
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.5rem' }}>
-                Department / Audience *
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem' }}>
-                {DEPARTMENTS.map((dept) => {
-                  const isSelected = selectedDepartment === dept.id;
-                  return (
-                    <button
-                      key={dept.id}
-                      type="button"
-                      onClick={() => handleDepartmentChange(dept.id)}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '0.75rem 0.5rem',
-                        borderRadius: '6px',
-                        border: isSelected ? '2px solid #004B44' : '1px solid #E5E2E1',
-                        backgroundColor: isSelected ? '#E6F4F1' : '#FCF9F8',
-                        color: isSelected ? '#004B44' : '#3F4947',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <span style={{ fontSize: '1.25rem', marginBottom: '0.2rem' }}>{dept.icon}</span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: isSelected ? 700 : 600 }}>{dept.label}</span>
-                    </button>
-                  );
-                })}
+            {/* Department Selection */}
+            <div className="field-group">
+              <label className="field-label">Target Department / Audience *</label>
+              <div className="department-selection-grid">
+                {DEPARTMENTS.map((dept) => (
+                  <button
+                    key={dept.id}
+                    type="button"
+                    className={`department-card-btn ${selectedDepartment === dept.id ? 'active' : ''}`}
+                    onClick={() => handleDepartmentSelect(dept.id)}
+                  >
+                    <div className="dept-icon-wrapper">
+                      {dept.icon}
+                    </div>
+                    <span className="dept-title">{dept.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Garment Style / Category Grid */}
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.5rem' }}>
-                Garment Category ({selectedDepartment}) *
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.5rem' }}>
-                {departmentCategories.map((c) => {
-                  const isSelected = categoryId === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setCategoryId(c.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '6px',
-                        border: isSelected ? '2px solid #004B44' : '1px solid #E5E2E1',
-                        backgroundColor: isSelected ? '#004B44' : '#FFFFFF',
-                        color: isSelected ? '#FFFFFF' : '#1C1B1B',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        textAlign: 'left',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <span>{c.name}</span>
-                      {isSelected && <Check size={14} />}
-                    </button>
-                  );
-                })}
+            {/* Title */}
+            <div className="field-group">
+              <div className="field-label-row">
+                <label className="field-label">Piece Title / Design Name *</label>
+                <span className="char-counter">{productName.length}/120</span>
               </div>
-            </div>
-
-            {/* Product Title */}
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                Product Title *
-              </label>
               <input
                 type="text"
-                placeholder="e.g. Royal Emerald Senator Kaftan Set with Gold Embroidery"
+                className="field-input"
+                placeholder="e.g. Royal Emerald 3-Piece Agbada with Gold Threadwork"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 0.85rem',
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  border: '1px solid #E5E2E1',
-                  borderRadius: '4px',
-                  backgroundColor: '#FCF9F8',
-                  color: '#1C1B1B',
-                }}
+                maxLength={120}
               />
             </div>
 
-            {/* Storefront Custom Drop / Collection Tag */}
-            <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947' }}>
-                  Brand Collection / Drop (Optional)
-                </label>
-                <span style={{ fontSize: '0.7rem', color: '#707977' }}>Organizes items on your public store</span>
-              </div>
-              <input
-                type="text"
-                placeholder="e.g. Harmattan 2026 Collection, The Velvet Edit, Owambe Luxury"
-                value={customCollectionTag}
-                onChange={(e) => setCustomCollectionTag(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.65rem 0.85rem',
-                  fontSize: '0.85rem',
-                  border: '1px solid #E5E2E1',
-                  borderRadius: '4px',
-                  backgroundColor: '#FCF9F8',
-                  color: '#1C1B1B',
-                }}
-              />
+            {/* Category Dropdown */}
+            <div className="field-group">
+              <label className="field-label">Marketplace Category *</label>
+              <select
+                className="field-select"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+              >
+                {categories.length === 0 && <option value="">Loading categories...</option>}
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name} {cat.slug ? `(${cat.slug})` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Product Description */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                Product Description *
-              </label>
+            {/* Description */}
+            <div className="field-group">
+              <label className="field-label">Garment Story &amp; Craft Details</label>
               <textarea
-                rows={3}
-                placeholder="Describe fabric grade (e.g. 100% Cashmere Wool, Swiss Cotton, Raw Silk), embroidery details, tailoring finish, and included garments..."
+                className="field-textarea"
+                placeholder="Detail the fabric composition (e.g. 100% Swiss Damask, Aso Oke), embroidery motif, silhouette cut, and styling recommendations..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 0.85rem',
-                  fontSize: '0.9rem',
-                  lineHeight: '1.5',
-                  border: '1px solid #E5E2E1',
-                  borderRadius: '4px',
-                  backgroundColor: '#FCF9F8',
-                  color: '#1C1B1B',
-                  resize: 'vertical',
-                }}
+                rows={4}
               />
+              <span className="field-hint-text">
+                High-quality tailoring descriptions build immediate trust with bespoke buyers.
+              </span>
             </div>
           </div>
 
-          {/* STEP 2: Pricing & Fulfillment Model */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#004B44', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 700 }}>
-                2
+          {/* Card 2: Media & Imagery */}
+          <div className="piece-form-card">
+            <div className="card-section-header">
+              <div className="section-icon-box">
+                <ImageIcon size={18} />
               </div>
-              <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#1C1B1B' }}>
-                  Pricing & Fulfillment Model
-                </h3>
-                <p style={{ fontSize: '0.75rem', color: '#707977', margin: '0.15rem 0 0 0' }}>
-                  Define retail pricing and specify if this piece is Made-to-Order or Ready-to-Wear.
+              <div className="section-title-wrap">
+                <h3>Product Imagery &amp; Photography</h3>
+                <p>Upload clean, high-resolution shots showing front, back, and embroidery closeups.</p>
+              </div>
+            </div>
+
+            <div
+              className="media-uploader-dropzone"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+              <div className="dropzone-inner">
+                <div className="dropzone-icon-circle">
+                  {isUploadingMedia ? <Loader size={24} className="spin-icon" /> : <UploadCloud size={24} />}
+                </div>
+                <p className="dropzone-title">
+                  {isUploadingMedia ? 'Uploading high-res photos...' : 'Click or Drag images to upload'}
                 </p>
+                <p className="dropzone-sub">Supports JPG, PNG, WEBP up to 10MB each</p>
               </div>
             </div>
 
-            {/* Price & Fulfillment Mode Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                  Price (₦ Naira) *
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#004B44' }}>
-                    ₦
-                  </span>
-                  <input
-                    type="number"
-                    placeholder="85,000"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 0.85rem 0.75rem 2.2rem',
-                      fontSize: '1rem',
-                      fontWeight: 700,
-                      border: '1px solid #E5E2E1',
-                      borderRadius: '4px',
-                      backgroundColor: '#FCF9F8',
-                      color: '#1C1B1B',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                  Fulfillment Type *
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setFulfillmentMode('MADE_TO_ORDER')}
-                    style={{
-                      padding: '0.65rem 0.5rem',
-                      borderRadius: '4px',
-                      border: fulfillmentMode === 'MADE_TO_ORDER' ? '2px solid #004B44' : '1px solid #E5E2E1',
-                      backgroundColor: fulfillmentMode === 'MADE_TO_ORDER' ? '#E6F4F1' : '#FFFFFF',
-                      color: fulfillmentMode === 'MADE_TO_ORDER' ? '#004B44' : '#3F4947',
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    🧵 Made to Order
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFulfillmentMode('READY_TO_WEAR')}
-                    style={{
-                      padding: '0.65rem 0.5rem',
-                      borderRadius: '4px',
-                      border: fulfillmentMode === 'READY_TO_WEAR' ? '2px solid #004B44' : '1px solid #E5E2E1',
-                      backgroundColor: fulfillmentMode === 'READY_TO_WEAR' ? '#E6F4F1' : '#FFFFFF',
-                      color: fulfillmentMode === 'READY_TO_WEAR' ? '#004B44' : '#3F4947',
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ⚡ Ready to Wear
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Conditional Fulfillment Settings */}
-            {fulfillmentMode === 'MADE_TO_ORDER' ? (
-              <div style={{ backgroundColor: '#F8FAF9', padding: '1rem', borderRadius: '6px', border: '1px solid #E2EAE8', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <Clock size={16} color="#004B44" />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#004B44' }}>Tailoring Turnaround Time</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem' }}>
-                  {[
-                    { days: '1', label: '1 Day' },
-                    { days: '2', label: '2 Days' },
-                    { days: '3', label: '3 Days (Standard)' },
-                    { days: '5', label: '5 Days' },
-                    { days: '7', label: '7 Days (Elaborate)' },
-                    { days: '10', label: '10 Days' },
-                    { days: '14', label: '14 Days (Bespoke)' },
-                  ].map((opt) => (
+            {images.length > 0 && (
+              <div className="media-preview-grid">
+                {images.map((imgUrl, idx) => (
+                  <div key={idx} className="media-thumb-card">
+                    <img src={imgUrl} alt={`Preview ${idx + 1}`} className="media-thumb-img" />
+                    {idx === 0 && <span className="media-primary-badge">PRIMARY</span>}
                     <button
-                      key={opt.days}
                       type="button"
-                      onClick={() => setPrepDays(opt.days)}
-                      style={{
-                        padding: '0.5rem 0.4rem',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        borderRadius: '4px',
-                        border: prepDays === opt.days ? '2px solid #004B44' : '1px solid #E5E2E1',
-                        backgroundColor: prepDays === opt.days ? '#004B44' : '#FFFFFF',
-                        color: prepDays === opt.days ? '#FFFFFF' : '#3F4947',
-                        cursor: 'pointer',
+                      className="btn-remove-thumb"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage(idx);
                       }}
+                      title="Remove image"
                     >
-                      {opt.label}
+                      <Trash2 size={12} />
+                    </button>
+                    {idx !== 0 && (
+                      <button
+                        type="button"
+                        className="btn-set-primary-thumb"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPrimaryImage(idx);
+                        }}
+                      >
+                        Set as Main
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Card 3: Pricing & Fulfillment */}
+          <div className="piece-form-card">
+            <div className="card-section-header">
+              <div className="section-icon-box">
+                <Package size={18} />
+              </div>
+              <div className="section-title-wrap">
+                <h3>Pricing &amp; Fulfillment Model</h3>
+                <p>Set your selling price and define whether this piece is tailored on-demand or ready to ship.</p>
+              </div>
+            </div>
+
+            {/* Price */}
+            <div className="field-group">
+              <label className="field-label">Base Retail Price (NGN ₦) *</label>
+              <div className="currency-input-wrap">
+                <span className="currency-symbol-box">₦</span>
+                <input
+                  type="number"
+                  className="field-input currency-input"
+                  placeholder="e.g. 45000"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  min="0"
+                  step="500"
+                />
+              </div>
+            </div>
+
+            {/* Fulfillment Mode Switch */}
+            <div className="field-group">
+              <label className="field-label">Production &amp; Inventory Model *</label>
+              <div className="fulfillment-switch-row">
+                <div
+                  className={`fulfillment-card-option ${fulfillmentMode === 'MADE_TO_ORDER' ? 'active' : ''}`}
+                  onClick={() => setFulfillmentMode('MADE_TO_ORDER')}
+                >
+                  <div className="fulfillment-header">
+                    <span className="fulfillment-title">✨ Made to Order (Bespoke)</span>
+                    {fulfillmentMode === 'MADE_TO_ORDER' && <Check size={16} color="#004B44" />}
+                  </div>
+                  <p>Tailored upon customer order. Dispatched within your custom tailoring lead time.</p>
+                </div>
+
+                <div
+                  className={`fulfillment-card-option ${fulfillmentMode === 'READY_TO_WEAR' ? 'active' : ''}`}
+                  onClick={() => setFulfillmentMode('READY_TO_WEAR')}
+                >
+                  <div className="fulfillment-header">
+                    <span className="fulfillment-title">📦 Ready to Wear (In Stock)</span>
+                    {fulfillmentMode === 'READY_TO_WEAR' && <Check size={16} color="#004B44" />}
+                  </div>
+                  <p>Finished garment already sewn in your studio. Dispatched immediately within 24 hours.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Conditional: Prep Days vs Stock Units */}
+            {fulfillmentMode === 'MADE_TO_ORDER' ? (
+              <div className="field-group">
+                <label className="field-label">Tailoring Lead Time (SLA) *</label>
+                <div className="lead-time-options-bar">
+                  {['2', '3', '5', '7', '10', '14'].map((days) => (
+                    <button
+                      key={days}
+                      type="button"
+                      className={`lead-time-btn ${prepDays === days ? 'active' : ''}`}
+                      onClick={() => setPrepDays(days)}
+                    >
+                      {days} {days === '1' ? 'Day' : 'Days'}
                     </button>
                   ))}
                 </div>
-                <span style={{ fontSize: '0.7rem', color: '#707977', display: 'block', marginTop: '0.4rem' }}>
-                  ✨ Made to Order items remain available continuously. Customers are informed of your tailoring timeframe.
+                <span className="field-hint-text">
+                  Time required from order confirmation to nationwide courier pickup.
                 </span>
               </div>
             ) : (
-              <div style={{ backgroundColor: '#F8FAF9', padding: '1rem', borderRadius: '6px', border: '1px solid #E2EAE8', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <Package size={16} color="#004B44" />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#004B44' }}>Physical Inventory Stock Count</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="e.g. 5"
-                    value={stockQuantity}
-                    onChange={(e) => setStockQuantity(e.target.value)}
-                    style={{
-                      width: '140px',
-                      padding: '0.65rem 0.85rem',
-                      fontSize: '0.95rem',
-                      fontWeight: 700,
-                      border: '1px solid #E5E2E1',
-                      borderRadius: '4px',
-                      backgroundColor: '#FFFFFF',
-                      color: '#1C1B1B',
-                    }}
-                  />
-                  <span style={{ fontSize: '0.75rem', color: '#707977' }}>
-                    Available pieces ready for immediate courier pickup. Atomically decremented on each customer order.
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Payout Preview Banner */}
-            {parseFloat(price) > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', backgroundColor: '#F3F4F6', borderRadius: '6px', fontSize: '0.8rem' }}>
-                <span style={{ color: '#4B5563' }}>
-                  Marketplace Fee (10%): <strong>₦ {(parseFloat(price) * 0.1).toLocaleString()}</strong>
-                </span>
-                <span style={{ color: '#004B44', fontWeight: 700 }}>
-                  Estimated Payout: ₦ {(parseFloat(price) * 0.9).toLocaleString()}
-                </span>
+              <div className="field-group">
+                <label className="field-label">Available In-Stock Quantity *</label>
+                <input
+                  type="number"
+                  className="field-input"
+                  placeholder="e.g. 5"
+                  value={stockQuantity}
+                  onChange={(e) => setStockQuantity(e.target.value)}
+                  min="1"
+                />
               </div>
             )}
           </div>
 
-          {/* STEP 3: Universal Apparel Sizing Engine */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#004B44', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 700 }}>
-                3
+          {/* Card 4: Sizing Engine */}
+          <div className="piece-form-card">
+            <div className="card-section-header">
+              <div className="section-icon-box">
+                <Ruler size={18} />
               </div>
-              <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#1C1B1B' }}>
-                  Available Sizing & Measurements
-                </h3>
-                <p style={{ fontSize: '0.75rem', color: '#707977', margin: '0.15rem 0 0 0' }}>
-                  Select the sizing system matching your garment (Alpha, UK Dress sizes, Waist inches, Free Size, or Bespoke).
-                </p>
+              <div className="section-title-wrap">
+                <h3>Sizing System &amp; Fit Specifications</h3>
+                <p>Select the sizing framework that best fits this garment type.</p>
               </div>
             </div>
 
-            {/* Sizing Preset System Tabs */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
-              {(Object.keys(SIZING_PRESETS) as SizingSystem[]).map((sysKey) => {
-                const isSelected = activeSizingSystem === sysKey;
-                const sys = SIZING_PRESETS[sysKey];
+            {/* Presets Tabs */}
+            <div className="sizing-presets-tabs">
+              {(Object.keys(SIZING_PRESETS) as SizingSystem[]).map((key) => {
+                const preset = SIZING_PRESETS[key];
                 return (
                   <button
-                    key={sysKey}
+                    key={key}
                     type="button"
-                    onClick={() => handleSizingSystemSwitch(sysKey)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      padding: '0.5rem 0.85rem',
-                      borderRadius: '20px',
-                      fontSize: '0.8rem',
-                      fontWeight: isSelected ? 700 : 500,
-                      border: isSelected ? '1px solid #004B44' : '1px solid #E5E2E1',
-                      backgroundColor: isSelected ? '#004B44' : '#F9FAFB',
-                      color: isSelected ? '#FFFFFF' : '#3F4947',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
+                    className={`sizing-tab-btn ${activeSizingSystem === key ? 'active' : ''}`}
+                    onClick={() => handleSizingSystemSelect(key)}
                   >
-                    <span>{sys.icon}</span>
-                    <span>{sys.label}</span>
+                    {preset.icon}
+                    <span>{preset.label}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Sizing Hint */}
-            <p style={{ fontSize: '0.75rem', color: '#004B44', margin: '0 0 1rem 0', fontWeight: 500 }}>
-              💡 {SIZING_PRESETS[activeSizingSystem].hint}
+            <p className="field-hint-text" style={{ marginBottom: '0.75rem' }}>
+              {SIZING_PRESETS[activeSizingSystem]?.hint}
             </p>
 
-            {/* Size Chips Selection Box */}
-            <div style={{ backgroundColor: '#FCF9F8', padding: '1rem', borderRadius: '6px', border: '1px solid #E5E2E1', marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#3F4947' }}>
-                  Selected Sizes ({selectedSizes.length})
-                </span>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button
-                    type="button"
-                    onClick={handleSelectAllSizes}
-                    style={{ background: 'none', border: 'none', color: '#004B44', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
-                  >
-                    + Select All
-                  </button>
-                  <span style={{ color: '#E5E2E1' }}>|</span>
-                  <button
-                    type="button"
-                    onClick={handleClearSizes}
-                    style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
-                  >
-                    Clear All
-                  </button>
-                </div>
-              </div>
+            {/* Size Chips Matrix */}
+            <div className="size-chips-matrix">
+              {SIZING_PRESETS[activeSizingSystem]?.sizes.map((sz) => (
+                <button
+                  key={sz}
+                  type="button"
+                  className={`size-chip-toggle ${selectedSizes.includes(sz) ? 'active' : ''}`}
+                  onClick={() => toggleSize(sz)}
+                >
+                  {sz}
+                </button>
+              ))}
+            </div>
 
-              {/* Chips Grid */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                {SIZING_PRESETS[activeSizingSystem].sizes.map((sz) => {
-                  const isSelected = selectedSizes.includes(sz);
+            {/* Add Custom Size Form */}
+            <form onSubmit={handleAddCustomSize} className="custom-size-adder-row">
+              <input
+                type="text"
+                className="field-input"
+                placeholder="+ Add custom size (e.g. 5XL)"
+                value={customSizeInput}
+                onChange={(e) => setCustomSizeInput(e.target.value)}
+              />
+              <button type="submit" className="btn-save-draft" style={{ whiteSpace: 'nowrap' }}>
+                <Plus size={14} />
+                <span>Add</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Card 5: Color Swatches & Stretch */}
+          <div className="piece-form-card">
+            <div className="card-section-header">
+              <div className="section-icon-box">
+                <Palette size={18} />
+              </div>
+              <div className="section-title-wrap">
+                <h3>Color Palette &amp; Fabric Characteristics</h3>
+                <p>Indicate available colorways and garment stretch level.</p>
+              </div>
+            </div>
+
+            <div className="field-group">
+              <label className="field-label">Available Colorways</label>
+              <div className="color-swatches-row">
+                {PRESET_COLORS.map((preset) => {
+                  const isSelected = colors.some((c) => c.name.toLowerCase() === preset.name.toLowerCase());
                   return (
-                    <button
-                      key={sz}
-                      type="button"
-                      onClick={() => toggleSize(sz)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        padding: '0.5rem 0.85rem',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        borderRadius: '6px',
-                        border: isSelected ? '2px solid #004B44' : '1px solid #D1D5DB',
-                        backgroundColor: isSelected ? '#004B44' : '#FFFFFF',
-                        color: isSelected ? '#FFFFFF' : '#374151',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
+                    <div
+                      key={preset.name}
+                      className={`color-swatch-item ${isSelected ? 'active' : ''}`}
+                      onClick={() => toggleColor(preset)}
                     >
-                      {sz.includes('Bespoke') && <Scissors size={13} />}
-                      <span>{sz}</span>
-                      {isSelected && <Check size={13} />}
-                    </button>
+                      <span className="swatch-circle" style={{ backgroundColor: preset.hex }} />
+                      <span>{preset.name}</span>
+                      {isSelected && <Check size={12} color="#004B44" />}
+                    </div>
                   );
                 })}
               </div>
-
-              {/* Custom Size Tag Input */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', maxWidth: '360px' }}>
-                <input
-                  type="text"
-                  placeholder="Add custom size (e.g. Tall / L, Plus Fit)"
-                  value={customSizeInput}
-                  onChange={(e) => setCustomSizeInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomSize(); } }}
-                  style={{
-                    flex: 1,
-                    padding: '0.45rem 0.75rem',
-                    fontSize: '0.8rem',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '4px',
-                    backgroundColor: '#FFFFFF',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomSize}
-                  style={{
-                    padding: '0.45rem 0.85rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    backgroundColor: '#004B44',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Add
-                </button>
-              </div>
             </div>
 
-            {/* Colors Section */}
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.5rem' }}>
-                Available Colors
-              </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem' }}>
-                {colors.map((c, idx) => (
-                  <span
-                    key={idx}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      padding: '0.35rem 0.75rem',
-                      backgroundColor: '#F0EDED',
-                      borderRadius: '20px',
-                      fontSize: '0.8rem',
-                      color: '#1C1B1B',
-                      border: '1px solid #E5E2E1',
-                      fontWeight: 500,
-                    }}
-                  >
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: c.hex }} />
-                    <span>{c.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveColor(idx)}
-                      style={{ border: 'none', background: 'none', color: '#707977', cursor: 'pointer', padding: 0 }}
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-
-              {/* Color Presets */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.75rem', color: '#707977', marginRight: '0.35rem' }}>Presets:</span>
-                {PRESET_COLORS.map((pc) => (
+            {/* Garment Cut / Silhouette */}
+            <div className="field-group" style={{ marginTop: '1rem' }}>
+              <label className="field-label">Garment Silhouette / Tailored Cut</label>
+              <div className="lead-time-options-bar">
+                {[
+                  { id: 'TAILORED', label: 'Tailored Fit (Traditional)' },
+                  { id: 'REGULAR', label: 'Regular Classic' },
+                  { id: 'SLIM', label: 'Slim / Form-Fitting' },
+                  { id: 'OVERSIZED', label: 'Oversized / Flowing' },
+                ].map((c) => (
                   <button
-                    key={pc.name}
+                    key={c.id}
                     type="button"
-                    onClick={() => handleAddColor(pc.name, pc.hex)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      padding: '0.25rem 0.5rem',
-                      fontSize: '0.75rem',
-                      borderRadius: '4px',
-                      border: '1px solid #E5E2E1',
-                      backgroundColor: '#FFFFFF',
-                      cursor: 'pointer',
-                    }}
+                    className={`lead-time-btn ${garmentCut === c.id ? 'active' : ''}`}
+                    onClick={() => setGarmentCut(c.id as any)}
                   >
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: pc.hex }} />
-                    <span>+ {pc.name}</span>
+                    {c.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Fabric Stretch & Size Guide Preset */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                  Fabric Stretch (For Size Guide)
-                </label>
-                <select
-                  value={stretchLevel}
-                  onChange={(e) => setStretchLevel(e.target.value as any)}
-                  style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.85rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8' }}
-                >
-                  <option value="NON">Non-Stretch (Rigid / Silk / Brocade)</option>
-                  <option value="SLIGHT">Slight Stretch (Tailored Give)</option>
-                  <option value="MEDIUM">Medium Stretch (Flexible Wool)</option>
-                  <option value="HIGH">High Stretch (Figure-Hugging Knits)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                  Measurement Preset Guide
-                </label>
-                <select
-                  value={garmentCut}
-                  onChange={(e) => setGarmentCut(e.target.value as any)}
-                  style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.85rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8' }}
-                >
-                  <option value="SENATOR">Senator Two-Piece (Top + Trousers)</option>
-                  <option value="AGBADA">Agbada 3-Piece Grand Set</option>
-                  <option value="GOWN">Traditional Gown / Dress</option>
-                  <option value="TROUSERS">Tailored Trousers Only</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* STEP 4: High-Res Photos & Media Gallery */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#004B44', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 700 }}>
-                4
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#1C1B1B' }}>
-                  Product Photos & Media Gallery
-                </h3>
-                <p style={{ fontSize: '0.75rem', color: '#707977', margin: '0.15rem 0 0 0' }}>
-                  Upload high-resolution photography from your device or paste image URLs.
-                </p>
-              </div>
-            </div>
-
-            {/* Device Upload Area */}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                border: '2px dashed #004B44',
-                borderRadius: '8px',
-                padding: '1.5rem 1rem',
-                textAlign: 'center',
-                backgroundColor: '#F7FBF9',
-                cursor: 'pointer',
-                marginBottom: '1rem',
-              }}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                multiple
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handleDeviceFileUpload}
-              />
-              <UploadCloud size={32} color="#004B44" style={{ margin: '0 auto 0.5rem auto' }} />
-              <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#004B44', margin: 0 }}>
-                {isUploadingMedia ? 'Uploading photos...' : 'Click to Upload Photos from Device'}
-              </p>
-              <span style={{ fontSize: '0.7rem', color: '#707977' }}>
-                PNG, JPG, WEBP up to 10MB each
-              </span>
-            </div>
-
-            {/* URL Input Fallback */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-              <input
-                type="url"
-                placeholder="Or paste image URL (https://...)"
-                value={imageUrlInput}
-                onChange={(e) => setImageUrlInput(e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: '0.55rem 0.75rem',
-                  fontSize: '0.85rem',
-                  border: '1px solid #E5E2E1',
-                  borderRadius: '4px',
-                  backgroundColor: '#FCF9F8',
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleAddImageUrl}
-                style={{
-                  padding: '0.55rem 1rem',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  backgroundColor: '#F0EDED',
-                  color: '#3F4947',
-                  border: '1px solid #E5E2E1',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Add URL
-              </button>
-            </div>
-
-            {/* Gallery Thumbnail Strip */}
-            {images.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {images.map((img, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      position: 'relative',
-                      width: '80px',
-                      height: '96px',
-                      borderRadius: '6px',
-                      overflow: 'hidden',
-                      border: idx === 0 ? '2px solid #004B44' : '1px solid #E5E2E1',
-                    }}
+            {/* Stretch Level */}
+            <div className="field-group" style={{ marginTop: '1rem' }}>
+              <label className="field-label">Fabric Stretch Specification</label>
+              <div className="lead-time-options-bar">
+                {[
+                  { id: 'NON', label: 'No Stretch (Structured)' },
+                  { id: 'SLIGHT', label: 'Slight Stretch' },
+                  { id: 'MEDIUM', label: 'Medium Stretch' },
+                  { id: 'HIGH', label: 'High Stretch (Spandex)' },
+                ].map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`lead-time-btn ${stretchLevel === s.id ? 'active' : ''}`}
+                    onClick={() => setStretchLevel(s.id as any)}
                   >
-                    <img src={img} alt={`Uploaded ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    {idx === 0 && (
-                      <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,75,68,0.85)', color: '#FFF', fontSize: '0.6rem', textAlign: 'center', padding: '1px 0' }}>
-                        Primary
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(idx)}
-                      style={{
-                        position: 'absolute',
-                        top: '3px',
-                        right: '3px',
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        color: '#FFF',
-                        border: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        padding: 0,
-                      }}
-                    >
-                      <X size={10} />
-                    </button>
-                  </div>
+                    {s.label}
+                  </button>
                 ))}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Live Shopper PDP Preview */}
-        <div style={{ position: 'sticky', top: '1.5rem', height: 'fit-content' }}>
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #E5E2E1' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#004B44' }}>
-                SHOPPER PREVIEW
+        {/* Right Column: Sticky Live Storefront Preview Card */}
+        <div className="sidebar-preview-stack">
+          {/* Live Preview Card */}
+          <div className="live-preview-card">
+            <div className="live-preview-header">
+              <span className="preview-badge-live">
+                <span className="preview-pulse-dot" />
+                LIVE STOREFRONT PREVIEW
               </span>
-              <span style={{ fontSize: '0.7rem', color: '#707977' }}>How customers see this piece</span>
+              <Eye size={15} color="#64748B" />
             </div>
 
-            {/* Preview Image Card */}
-            <div
-              style={{
-                position: 'relative',
-                width: '100%',
-                height: '300px',
-                backgroundColor: '#F7F6F5',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                marginBottom: '1rem',
-                border: '1px solid #E5E2E1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <div className="preview-image-container">
               {images.length > 0 ? (
-                <>
-                  <img
-                    src={images[0]}
-                    alt={productName || 'Product preview'}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '0.75rem',
-                      left: '0.75rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.35rem',
-                    }}
-                  >
-                    <span
-                      style={{
-                        backgroundColor: 'rgba(28,27,27,0.75)',
-                        color: '#FFF',
-                        padding: '0.25rem 0.5rem',
-                        borderRadius: '4px',
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
-                        backdropFilter: 'blur(4px)',
-                      }}
-                    >
-                      {selectedDepartment} • {selectedCategoryObj?.name || 'Garment'}
-                    </span>
-                    {fulfillmentMode === 'MADE_TO_ORDER' ? (
-                      <span
-                        style={{
-                          backgroundColor: '#004B44',
-                          color: '#FFF',
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '4px',
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Tailored in {prepDays}d
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          backgroundColor: '#D97706',
-                          color: '#FFF',
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '4px',
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {stockQuantity} in stock
-                      </span>
-                    )}
-                  </div>
-                </>
+                <img src={images[0]} alt="Storefront Preview" className="preview-product-img" />
               ) : (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: '#FAF9F8',
-                    transition: 'background-color 0.2s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F0EDED')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FAF9F8')}
-                >
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      backgroundColor: '#E6F4F1',
-                      color: '#004B44',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: '0.75rem',
-                    }}
-                  >
-                    <ImageIcon size={24} />
-                  </div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1C1B1B', marginBottom: '0.25rem' }}>
-                    No image uploaded yet
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: '#707977', maxWidth: '220px', lineHeight: 1.4 }}>
-                    Upload a primary photo or enter a URL on the left to preview your product
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fileInputRef.current?.click();
-                    }}
-                    style={{
-                      marginTop: '0.75rem',
-                      padding: '0.35rem 0.75rem',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: '#004B44',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #004B44',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Upload Image
-                  </button>
+                <div className="preview-image-placeholder">
+                  <ImageIcon size={32} />
+                  <span>No primary image uploaded yet</span>
                 </div>
               )}
             </div>
 
-            {/* Title & Collection */}
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 0.25rem 0', color: '#1C1B1B' }}>
-              {productName || 'Product Title Preview'}
-            </h4>
-            {customCollectionTag && (
-              <span style={{ display: 'inline-block', fontSize: '0.75rem', color: '#004B44', fontWeight: 600, marginBottom: '0.75rem' }}>
-                Collection: {customCollectionTag}
-              </span>
-            )}
-
-            {/* Price Preview */}
-            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#004B44', margin: '0.5rem 0 1rem 0' }}>
-              ₦ {price ? parseFloat(price).toLocaleString() : '85,000'}
-            </div>
-
-            {/* Size Chips Preview */}
-            <div style={{ marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#707977', display: 'block', marginBottom: '0.35rem' }}>
-                Available Sizes ({activeSizingSystem})
-              </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                {selectedSizes.map((sz) => (
-                  <span
-                    key={sz}
-                    style={{
-                      padding: '0.25rem 0.55rem',
-                      backgroundColor: '#F0EDED',
-                      borderRadius: '4px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: '#1C1B1B',
-                    }}
-                  >
-                    {sz}
-                  </span>
-                ))}
+            <div className="preview-content-body">
+              <div className="preview-dept-tag">
+                {selectedDepartment} • {selectedCategoryObj?.name || 'African Fashion'}
               </div>
-            </div>
-
-            {/* Colors Preview */}
-            {colors.length > 0 && (
-              <div style={{ marginBottom: '1rem' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#707977', display: 'block', marginBottom: '0.35rem' }}>
-                  Available Colors
+              <h4 className="preview-title">
+                {productName.trim() || 'Untitled Fashion Piece'}
+              </h4>
+              <div className="preview-price">
+                {formattedPriceDisplay}
+              </div>
+              <div className="preview-sla-pill">
+                <Clock size={12} />
+                <span>
+                  {fulfillmentMode === 'MADE_TO_ORDER'
+                    ? `Tailored & Dispatched in ${prepDays} Days`
+                    : 'Ready to Ship (24h Dispatch)'}
                 </span>
-                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                  {colors.map((c, i) => (
-                    <span
-                      key={i}
-                      title={c.name}
-                      style={{
-                        width: '16px',
-                        height: '16px',
-                        borderRadius: '50%',
-                        backgroundColor: c.hex,
-                        border: '1px solid #D1D5DB',
-                      }}
-                    />
-                  ))}
-                </div>
               </div>
-            )}
-
-            {/* Buyer Trust Guarantee */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', backgroundColor: '#E6F4F1', borderRadius: '6px', color: '#004B44', fontSize: '0.75rem', fontWeight: 600 }}>
-              <ShieldCheck size={16} />
-              <span>Aso Buyer Protection & Escrow Payout Guaranteed</span>
             </div>
           </div>
+
+          {/* Publishing Checklist Card */}
+          <div className="checklist-card">
+            <h4 className="checklist-title">Publishing Quality Checklist</h4>
+            <div className={`checklist-item ${productName.trim() ? 'done' : ''}`}>
+              <span className="check-box-indicator">
+                {productName.trim() ? <Check size={11} /> : null}
+              </span>
+              <span>Design title provided</span>
+            </div>
+            <div className={`checklist-item ${price && parseFloat(price) > 0 ? 'done' : ''}`}>
+              <span className="check-box-indicator">
+                {price && parseFloat(price) > 0 ? <Check size={11} /> : null}
+              </span>
+              <span>Valid selling price configured</span>
+            </div>
+            <div className={`checklist-item ${images.length > 0 ? 'done' : ''}`}>
+              <span className="check-box-indicator">
+                {images.length > 0 ? <Check size={11} /> : null}
+              </span>
+              <span>High-resolution image attached</span>
+            </div>
+            <div className={`checklist-item ${selectedSizes.length > 0 ? 'done' : ''}`}>
+              <span className="check-box-indicator">
+                {selectedSizes.length > 0 ? <Check size={11} /> : null}
+              </span>
+              <span>Available sizes selected</span>
+            </div>
+          </div>
+
+          {/* Direct Publish CTA */}
+          <button
+            type="button"
+            className="btn-publish-piece"
+            style={{ width: '100%', justifyContent: 'center', padding: '0.85rem 1rem' }}
+            onClick={() => handleSave('Active')}
+            disabled={saving}
+          >
+            {saving ? <Loader size={16} className="spin-icon" /> : <Sparkles size={16} />}
+            <span>{isEditing ? 'Save & Update Piece' : 'Publish to Storefront'}</span>
+          </button>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { vendorApi, payoutApi } from '../api/client';
 import type { BankAccount, VendorBalance, PayoutRequest, LedgerEntry, ProductItem } from '../types';
@@ -38,6 +38,30 @@ export type DesignerPortalTab = 'dashboard' | 'products' | 'add-product' | 'orde
 export const VendorDashboardPage: React.FC = () => {
   const { user, refreshMe, openAuthModal, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === '/vendor/products') {
+      if (location.search.includes('action=add')) {
+        setActiveTab('add-product');
+      } else {
+        setActiveTab('products');
+      }
+      setProductToEdit(null);
+    } else if (location.pathname === '/vendor/orders') {
+      setActiveTab('orders');
+      setProductToEdit(null);
+    } else if (location.pathname === '/vendor/earnings') {
+      setActiveTab('earnings');
+      setProductToEdit(null);
+    } else if (location.pathname === '/vendor/settings' || location.pathname === '/vendor/profile') {
+      setActiveTab('profile');
+      setProductToEdit(null);
+    } else if (location.pathname === '/vendor/dashboard' || location.pathname === '/vendor') {
+      setActiveTab('dashboard');
+      setProductToEdit(null);
+    }
+  }, [location.pathname, location.search]);
   const [activeTab, setActiveTab] = useState<DesignerPortalTab>('dashboard');
   const [productToEdit, setProductToEdit] = useState<ProductItem | null>(null);
   const [previewDemo, setPreviewDemo] = useState(false);
@@ -521,6 +545,7 @@ export const VendorDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+              
       </header>
 
       {/* Main Designer Portal Content Area */}
