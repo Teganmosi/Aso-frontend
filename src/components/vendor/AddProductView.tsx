@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { 
+import {
+  X, 
   ArrowLeft, 
   Sparkles, 
   Clock, 
-  Scissors, 
   Loader, 
   UploadCloud, 
   Check, 
@@ -13,7 +13,6 @@ import {
   Shirt,
   Gem,
   Crown,
-  Baby,
   Layers,
   Ruler,
   Palette,
@@ -33,7 +32,7 @@ interface AddProductViewProps {
 }
 
 // Department / Target Audience Taxonomy
-export type DepartmentType = 'Men' | 'Women' | 'Traditional & Bridal' | 'Unisex & Contemporary' | 'Kids';
+export type DepartmentType = 'Men' | 'Women' | 'Traditional & Bridal';
 
 interface DepartmentOption {
   id: DepartmentType;
@@ -45,44 +44,24 @@ interface DepartmentOption {
 const DEPARTMENTS: DepartmentOption[] = [
   { id: 'Men', label: 'Men', icon: <Shirt size={18} />, description: 'Senators, Agbadas, Kaftans & Two-Piece Sets' },
   { id: 'Women', label: 'Women', icon: <Gem size={18} />, description: 'Aso Ebi, Boubous, Corset Gowns & Co-ords' },
-  { id: 'Traditional & Bridal', label: 'Traditional & Bridal', icon: <Crown size={18} />, description: 'Handwoven Aso Oke, Groom/Bride Regalia & Beads' },
-  { id: 'Unisex & Contemporary', label: 'Unisex & Modern', icon: <Sparkles size={18} />, description: 'Adire Lounge, Kimonos, Streetwear & Jackets' },
-  { id: 'Kids', label: 'Kids & Teens', icon: <Baby size={18} />, description: 'Boys & Girls Traditional Celebratory Wear' }
+  { id: 'Traditional & Bridal', label: 'Traditional', icon: <Crown size={18} />, description: 'Handwoven Aso Oke, Groom/Bride Regalia & Ceremonial Attire' }
 ];
 
 // Universal Apparel Sizing Presets
-export type SizingSystem = 'ALPHA' | 'UK_WOMEN' | 'MEN_WAIST' | 'FREE_SIZE' | 'BESPOKE';
+export type SizingSystem = 'STANDARD' | 'CUSTOM';
 
 const SIZING_PRESETS: Record<SizingSystem, { label: string; icon: React.ReactNode; sizes: string[]; hint: string }> = {
-  ALPHA: {
-    label: 'Standard Alpha (XS–4XL)',
-    icon: <Layers size={14} />,
+  STANDARD: {
+    label: 'Standard Sizing (XS–4XL)',
+    icon: <Layers size={15} />,
     sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'],
-    hint: 'Best for Senator suits, Kaftans, Agbadas, and casual native co-ords'
+    hint: 'Best for ready-to-wear Senator suits, Kaftans, Agbadas, Gowns, and native sets'
   },
-  UK_WOMEN: {
-    label: "Women's UK (6–22)",
-    icon: <Gem size={14} />,
-    sizes: ['UK 6', 'UK 8', 'UK 10', 'UK 12', 'UK 14', 'UK 16', 'UK 18', 'UK 20', 'UK 22'],
-    hint: "Best for Corset gowns, Aso Ebi dresses, fitted skirts, and bespoke women's wear"
-  },
-  MEN_WAIST: {
-    label: "Men's Tailored Waist (30-44 in)",
-    icon: <Scissors size={14} />,
-    sizes: ['30"', '32"', '34"', '36"', '38"', '40"', '42"', '44"'],
-    hint: 'Best for fitted native trousers, formal bottoms, and tailored waistbands'
-  },
-  FREE_SIZE: {
-    label: 'Free Size / One Size',
-    icon: <Sparkles size={14} />,
-    sizes: ['Free Size (Fits All)'],
-    hint: 'Best for flowing Boubous, wide Agbada robes, Kimonos, Geles, and Shawls'
-  },
-  BESPOKE: {
-    label: 'Bespoke / Custom',
-    icon: <Ruler size={14} />,
-    sizes: ['Bespoke Fit (Custom Measurements)'],
-    hint: 'Customer provides exact body measurements (chest, waist, shoulder, length) at checkout'
+  CUSTOM: {
+    label: 'Custom / Bespoke',
+    icon: <Ruler size={15} />,
+    sizes: ['Custom Measurements (Bespoke)'],
+    hint: 'Customer provides exact body measurements (chest, waist, shoulder, sleeve length, etc.) at checkout'
   }
 };
 
@@ -132,7 +111,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
   );
 
   // 4. Universal Sizing Engine State
-  const [activeSizingSystem, setActiveSizingSystem] = useState<SizingSystem>('ALPHA');
+  const [activeSizingSystem, setActiveSizingSystem] = useState<SizingSystem>('STANDARD');
   const [selectedSizes, setSelectedSizes] = useState<string[]>(() => {
     if (productToEdit?.raw_product?.available_sizes?.length) {
       return productToEdit.raw_product.available_sizes;
@@ -143,6 +122,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     return ['S', 'M', 'L', 'XL'];
   });
   const [customSizeInput, setCustomSizeInput] = useState('');
+  const [customSizes, setCustomSizes] = useState<string[]>([]);
 
   // 5. Fabric & Garment Cut Specs
   const [stretchLevel, setStretchLevel] = useState<'NON' | 'SLIGHT' | 'MEDIUM' | 'HIGH'>(
@@ -152,7 +132,19 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     (productToEdit?.raw_product?.size_chart?.garment_type as any) || 'TAILORED'
   );
 
-  // 6. Color Selection
+  // 6. Color Selection & Custom Colorways
+  const [availableColors, setAvailableColors] = useState<{ name: string; hex: string }[]>(() => {
+    const list = [...PRESET_COLORS];
+    if (productToEdit?.colors?.length) {
+      productToEdit.colors.forEach((cName) => {
+        if (!list.some((p) => p.name.toLowerCase() === cName.toLowerCase())) {
+          list.push({ name: cName, hex: '#8B5CF6' });
+        }
+      });
+    }
+    return list;
+  });
+
   const [colors, setColors] = useState<{ name: string; hex?: string }[]>(() => {
     if (productToEdit?.colors?.length) {
       return productToEdit.colors.map((c) => ({
@@ -162,6 +154,9 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     }
     return [{ name: 'Emerald Green', hex: '#064E3B' }];
   });
+
+  const [customColorName, setCustomColorName] = useState('');
+  const [customColorHex, setCustomColorHex] = useState('#8B5CF6');
 
   // 7. Media Gallery & Uploads
   const [images, setImages] = useState<string[]>(() => {
@@ -202,15 +197,12 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
   // Department switch
   const handleDepartmentSelect = (dept: DepartmentType) => {
     setSelectedDepartment(dept);
-    if (dept === 'Women') {
-      setActiveSizingSystem('UK_WOMEN');
-      setSelectedSizes(['UK 8', 'UK 10', 'UK 12', 'UK 14']);
-    } else if (dept === 'Traditional & Bridal') {
-      setActiveSizingSystem('BESPOKE');
-      setSelectedSizes(['Bespoke Fit (Custom Measurements)']);
+    if (dept === 'Traditional & Bridal') {
+      setActiveSizingSystem('STANDARD');
+      setSelectedSizes(SIZING_PRESETS.STANDARD.sizes);
     } else {
-      setActiveSizingSystem('ALPHA');
-      setSelectedSizes(['S', 'M', 'L', 'XL']);
+      setActiveSizingSystem('STANDARD');
+      setSelectedSizes(SIZING_PRESETS.STANDARD.sizes);
     }
   };
 
@@ -234,10 +226,21 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
   // Add Custom Size
   const handleAddCustomSize = (e: React.FormEvent) => {
     e.preventDefault();
-    if (customSizeInput.trim() && !selectedSizes.includes(customSizeInput.trim())) {
-      setSelectedSizes([...selectedSizes, customSizeInput.trim()]);
+    const trimmed = customSizeInput.trim();
+    if (trimmed) {
+      if (!customSizes.includes(trimmed)) {
+        setCustomSizes((prev) => [...prev, trimmed]);
+      }
+      if (!selectedSizes.includes(trimmed)) {
+        setSelectedSizes((prev) => [...prev, trimmed]);
+      }
       setCustomSizeInput('');
     }
+  };
+
+  const handleRemoveCustomSize = (sizeToRemove: string) => {
+    setCustomSizes((prev) => prev.filter((s) => s !== sizeToRemove));
+    setSelectedSizes((prev) => prev.filter((s) => s !== sizeToRemove));
   };
 
   // Toggle Color Swatch
@@ -250,6 +253,30 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     } else {
       setColors([...colors, preset]);
     }
+  };
+
+  const handleAddCustomColor = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = customColorName.trim();
+    if (!trimmed) return;
+
+    const existing = availableColors.find((c) => c.name.toLowerCase() === trimmed.toLowerCase());
+    const newColor = existing || { name: trimmed, hex: customColorHex };
+
+    if (!existing) {
+      setAvailableColors((prev) => [...prev, newColor]);
+    }
+
+    if (!colors.some((c) => c.name.toLowerCase() === trimmed.toLowerCase())) {
+      setColors((prev) => [...prev, newColor]);
+    }
+
+    setCustomColorName('');
+  };
+
+  const handleRemoveCustomColor = (colorName: string) => {
+    setAvailableColors((prev) => prev.filter((c) => c.name.toLowerCase() !== colorName.toLowerCase()));
+    setColors((prev) => prev.filter((c) => c.name.toLowerCase() !== colorName.toLowerCase()));
   };
 
   // Media Management
@@ -780,17 +807,57 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
             {/* Size Chips Matrix */}
             <div className="size-chips-matrix">
-              {SIZING_PRESETS[activeSizingSystem]?.sizes.map((sz) => (
-                <button
-                  key={sz}
-                  type="button"
-                  className={`size-chip-toggle ${selectedSizes.includes(sz) ? 'active' : ''}`}
-                  onClick={() => toggleSize(sz)}
-                >
-                  {sz}
-                </button>
-              ))}
+              {[...new Set([...(SIZING_PRESETS[activeSizingSystem]?.sizes || []), ...customSizes])].map((sz) => {
+                const isCustom = !(SIZING_PRESETS[activeSizingSystem]?.sizes || []).includes(sz);
+                const isSelected = selectedSizes.includes(sz);
+                return (
+                  <div key={sz} className={`size-chip-badge ${isSelected ? 'active' : ''} ${isCustom ? 'is-custom' : ''}`}>
+                    <button
+                      type="button"
+                      className="size-chip-toggle-btn"
+                      onClick={() => toggleSize(sz)}
+                    >
+                      {sz}
+                    </button>
+                    {isCustom && (
+                      <button
+                        type="button"
+                        className="size-chip-delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveCustomSize(sz);
+                        }}
+                        title="Remove custom size"
+                        aria-label="Remove custom size"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+
+            {/* Custom Bespoke Measurement Guidance Box */}
+            {activeSizingSystem === 'CUSTOM' && (
+              <div className="custom-bespoke-guide-box">
+                <div className="bespoke-guide-header">
+                  <Ruler size={16} color="#004B44" />
+                  <h4>Client Custom Measurement Guide</h4>
+                </div>
+                <p className="bespoke-guide-desc">
+                  When buyers order this bespoke piece, Aso will collect their tailored body measurements during checkout:
+                </p>
+                <div className="bespoke-tags-list">
+                  <span className="bespoke-tag">Chest / Bust</span>
+                  <span className="bespoke-tag">Waist &amp; Hips</span>
+                  <span className="bespoke-tag">Shoulder Span</span>
+                  <span className="bespoke-tag">Sleeve Length</span>
+                  <span className="bespoke-tag">Garment Full Length</span>
+                  <span className="bespoke-tag">Inseam / Agbada Flare</span>
+                </div>
+              </div>
+            )}
 
             {/* Add Custom Size Form */}
             <form onSubmit={handleAddCustomSize} className="custom-size-adder-row">
@@ -821,23 +888,62 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             </div>
 
             <div className="field-group">
-              <label className="field-label">Available Colorways</label>
+              <label className="field-label">Available Colorways &amp; Fabric Shades</label>
               <div className="color-swatches-row">
-                {PRESET_COLORS.map((preset) => {
+                {availableColors.map((preset) => {
                   const isSelected = colors.some((c) => c.name.toLowerCase() === preset.name.toLowerCase());
+                  const isCustom = !PRESET_COLORS.some((p) => p.name.toLowerCase() === preset.name.toLowerCase());
                   return (
                     <div
                       key={preset.name}
-                      className={`color-swatch-item ${isSelected ? 'active' : ''}`}
+                      className={`color-swatch-item ${isSelected ? 'active' : ''} ${isCustom ? 'is-custom-color' : ''}`}
                       onClick={() => toggleColor(preset)}
                     >
                       <span className="swatch-circle" style={{ backgroundColor: preset.hex }} />
                       <span>{preset.name}</span>
                       {isSelected && <Check size={12} color="#004B44" />}
+                      {isCustom && (
+                        <button
+                          type="button"
+                          className="color-swatch-delete-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveCustomColor(preset.name);
+                          }}
+                          title="Remove custom shade"
+                          aria-label="Remove custom shade"
+                        >
+                          <X size={11} />
+                        </button>
+                      )}
                     </div>
                   );
                 })}
               </div>
+
+              {/* Custom Color Creator Form */}
+              <form onSubmit={handleAddCustomColor} className="custom-color-adder-form">
+                <div className="custom-color-input-wrap">
+                  <input
+                    type="color"
+                    className="custom-color-picker"
+                    value={customColorHex}
+                    onChange={(e) => setCustomColorHex(e.target.value)}
+                    title="Choose fabric color shade"
+                  />
+                  <input
+                    type="text"
+                    className="field-input custom-color-name-input"
+                    placeholder="+ Add custom shade (e.g. Burnt Orange, Teal, Lilac, Indigo)"
+                    value={customColorName}
+                    onChange={(e) => setCustomColorName(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="btn-save-draft" style={{ whiteSpace: 'nowrap' }}>
+                  <Plus size={14} />
+                  <span>Add Color</span>
+                </button>
+              </form>
             </div>
 
             {/* Garment Cut / Silhouette */}

@@ -893,3 +893,227 @@
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
+/* Sizing 2-Option Preset Styling */
+.sizing-presets-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 480px) {
+  .sizing-presets-tabs {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
+
+.sizing-tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sizing-tab-btn:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+.sizing-tab-btn.active {
+  background: #00322D;
+  color: #FFFFFF;
+  border-color: #00322D;
+  box-shadow: 0 4px 12px rgba(0, 50, 45, 0.18);
+}
+
+
+/* ── Custom Sizing Badges & Bespoke Guidance ── */
+.size-chip-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  background: #F1F5F9;
+  border: 1.5px solid #E2E8F0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.size-chip-badge:hover {
+  background: #E2E8F0;
+  border-color: #CBD5E1;
+}
+
+.size-chip-badge.active {
+  background: #00322D;
+  border-color: #00322D;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0, 50, 45, 0.25);
+}
+
+.size-chip-toggle-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.size-chip-delete-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0.5rem 0.5rem 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+.size-chip-delete-btn:hover {
+  opacity: 1;
+}
+
+.custom-bespoke-guide-box {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.bespoke-guide-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.bespoke-guide-header h4 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #004B44;
+  margin: 0;
+}
+
+.bespoke-guide-desc {
+  font-size: 0.8rem;
+  color: #374151;
+  margin: 0 0 0.65rem 0;
+  line-height: 1.4;
+}
+
+.bespoke-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.bespoke-tag {
+  background: #FFFFFF;
+  border: 1px solid #86EFAC;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #065F46;
+}
+
+
+/* ── Custom Color Adder & Swatch Delete Styling ── */
+.custom-color-adder-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .custom-color-adder-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.custom-color-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+  transition: border-color 0.2s ease;
+}
+
+.custom-color-input-wrap:focus-within {
+  border-color: #004B44;
+  box-shadow: 0 0 0 3px rgba(0, 75, 68, 0.1);
+}
+
+.custom-color-picker {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.custom-color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.custom-color-picker::-webkit-color-swatch {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+}
+
+.custom-color-name-input {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0.45rem 0.25rem !important;
+  font-size: 0.82rem !important;
+  flex: 1;
+}
+
+.color-swatch-delete-btn {
+  background: transparent;
+  border: none;
+  padding: 0 0 0 0.25rem;
+  color: #64748B;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.color-swatch-delete-btn:hover {
+  opacity: 1;
+  color: #DC2626;
+}

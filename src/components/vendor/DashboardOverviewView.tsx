@@ -131,12 +131,12 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
           <div className="metric-header-row">
             <h3 className="metric-label">TOTAL SALES (₦)</h3>
             <div className="metric-icon-box">
-              <Wallet size={20} color="#00322d" />
+              <Wallet size={16} />
             </div>
           </div>
           <p className="metric-amount-serif">₦ {totalSalesNaira.toLocaleString()}</p>
           <div className="metric-trend-positive">
-            <TrendingUp size={16} />
+            <TrendingUp size={13} />
             <span>Cumulative marketplace orders</span>
           </div>
         </div>
@@ -146,7 +146,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
           <div className="metric-header-row">
             <h3 className="metric-label">ACTIVE ORDERS</h3>
             <div className="metric-icon-box">
-              <ShoppingBag size={20} color="#00322d" />
+              <ShoppingBag size={16} />
             </div>
           </div>
           <p className="metric-amount-serif">{activeOrdersCount}</p>
@@ -160,7 +160,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
           <div className="metric-header-row">
             <h3 className="metric-label">AVAILABLE BALANCE</h3>
             <div className="metric-icon-box">
-              <CreditCard size={20} color="#00322d" />
+              <CreditCard size={16} />
             </div>
           </div>
           <p className="metric-amount-serif">₦ {availableNaira.toLocaleString()}</p>
@@ -174,7 +174,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
           <div className="metric-header-row">
             <h3 className="metric-label">PENDING PAYOUTS</h3>
             <div className="metric-icon-box">
-              <Clock size={20} color="#00322d" />
+              <Clock size={16} />
             </div>
           </div>
           <p className="metric-amount-serif">₦ {pendingNaira.toLocaleString()}</p>
