@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Aso" />
     
-    <!-- iOS Home Screen Icons (PNG Required by iOS Safari) -->
+    <!-- iOS Home Screen Icons -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png" />
@@ -29,9 +29,115 @@
     <meta property="og:title" content="Aso Marketplace — Authentic Nigerian Craftsmanship" />
     <meta property="og:description" content="Bespoke & Ready-to-Wear Nigerian Luxury Garments from Verified Designers." />
     <meta property="og:image" content="/hero-bg.png" />
+
+    <style>
+      /* Pre-boot splash screen styles */
+      #initial-splash {
+        position: fixed;
+        inset: 0;
+        background: #111827;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        box-sizing: border-box;
+      }
+      .splash-emblem-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .splash-glow {
+        position: absolute;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, rgba(0, 75, 68, 0.15) 50%, transparent 75%);
+        animation: splashGlow 2.4s ease-in-out infinite alternate;
+      }
+      .splash-svg {
+        position: relative;
+        z-index: 2;
+        width: 80px;
+        height: 80px;
+        filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.4));
+      }
+      .splash-brand {
+        margin-top: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      .splash-title {
+        font-size: 1.35rem;
+        font-weight: 900;
+        letter-spacing: 0.25em;
+        color: #FFFFFF;
+        text-transform: uppercase;
+      }
+      .splash-subtitle {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        color: #D4AF37;
+        text-transform: uppercase;
+      }
+      .splash-shimmer-track {
+        width: 120px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        margin-top: 1.25rem;
+        overflow: hidden;
+        position: relative;
+      }
+      .splash-shimmer-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 45%;
+        background: linear-gradient(90deg, transparent, #D4AF37, #004B44, transparent);
+        border-radius: 999px;
+        animation: splashShimmer 1.6s ease-in-out infinite;
+      }
+      @keyframes splashGlow {
+        0% { transform: scale(0.85); opacity: 0.4; }
+        100% { transform: scale(1.15); opacity: 0.9; }
+      }
+      @keyframes splashShimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(260%); }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant Pre-boot Brand Splash Screen -->
+      <div id="initial-splash">
+        <div class="splash-emblem-wrap">
+          <div class="splash-glow"></div>
+          <svg class="splash-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g>
+              <path d="M32 78 L72 22" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round"/>
+              <circle cx="68" cy="27" r="2.8" fill="#111827"/>
+            </g>
+            <path d="M16 54 C 36 16, 78 22, 66 54 C 54 80, 92 78, 96 46" stroke="#D4AF37" stroke-width="6" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <div class="splash-brand">
+          <span class="splash-title">ASO</span>
+          <span class="splash-subtitle">MARKETPLACE</span>
+        </div>
+        <div class="splash-shimmer-track">
+          <div class="splash-shimmer-bar"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {

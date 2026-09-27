@@ -1,0 +1,155 @@
+/* ═══════════════════════════════════════════════════════════════
+   ASO BRAND LOADER & SPLASH SCREEN STYLING
+   ═══════════════════════════════════════════════════════════════ */
+
+.aso-brand-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.aso-brand-loader-container.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #111827;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.aso-brand-loader-container.embedded {
+  min-height: 280px;
+}
+
+.aso-loader-emblem-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ambient Pulsing Glow */
+.aso-loader-glow {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.22) 0%, rgba(0, 75, 68, 0.15) 50%, transparent 75%);
+  animation: asoGlowPulse 2.4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.aso-loader-glow.size-sm { width: 90px; height: 90px; }
+.aso-loader-glow.size-md { width: 140px; height: 140px; }
+.aso-loader-glow.size-lg { width: 200px; height: 200px; }
+
+/* SVG Logo Animation */
+.aso-loader-svg {
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
+}
+
+.aso-needle-path {
+  animation: asoNeedleFloat 2.4s ease-in-out infinite alternate;
+}
+
+.aso-thread-path {
+  stroke-dasharray: 180;
+  stroke-dashoffset: 180;
+  animation: asoThreadTrace 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Brand Wordmark */
+.aso-loader-brand {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.aso-loader-title {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  color: #FFFFFF;
+  text-transform: uppercase;
+}
+
+.aso-brand-loader-container.light-theme .aso-loader-title {
+  color: #111827;
+}
+
+.aso-loader-subtitle {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #D4AF37;
+  text-transform: uppercase;
+}
+
+/* Progress / Shimmer Line */
+.aso-loader-shimmer-track {
+  width: 120px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  margin-top: 1rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.aso-brand-loader-container.light-theme .aso-loader-shimmer-track {
+  background: rgba(17, 24, 39, 0.08);
+}
+
+.aso-loader-shimmer-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, #D4AF37, #004B44, transparent);
+  border-radius: 999px;
+  animation: asoShimmerSlide 1.6s ease-in-out infinite;
+}
+
+.aso-loader-message {
+  margin-top: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #9CA3AF;
+  letter-spacing: 0.02em;
+}
+
+.aso-brand-loader-container.light-theme .aso-loader-message {
+  color: #6B7280;
+}
+
+/* Keyframes */
+@keyframes asoGlowPulse {
+  0% { transform: scale(0.85); opacity: 0.4; }
+  100% { transform: scale(1.15); opacity: 0.9; }
+}
+
+@keyframes asoNeedleFloat {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+@keyframes asoThreadTrace {
+  0% { stroke-dashoffset: 180; opacity: 0.2; }
+  50% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: -180; opacity: 0.2; }
+}
+
+@keyframes asoShimmerSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(260%); }
+}

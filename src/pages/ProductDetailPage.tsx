@@ -1,3 +1,4 @@
+import { BrandLoader } from '../components/common/BrandLoader';
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productApi, reviewApi } from '../api/client';
@@ -122,12 +123,7 @@ export const ProductDetailPage: React.FC = () => {
   const stockStatus = getStockStatus(selectedVariant);
 
   if (loading) {
-    return (
-      <div className="pdp-loading-state">
-        <Loader size={32} className="pdp-spinner" />
-        <p>Loading product...</p>
-      </div>
-    );
+    return <BrandLoader message="Loading luxury piece details..." theme="light" />;
   }
 
   if (error || !product) {

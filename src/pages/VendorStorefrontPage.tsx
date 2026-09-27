@@ -1,3 +1,4 @@
+import { BrandLoader } from '../components/common/BrandLoader';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { vendorApi, productApi, reviewApi } from '../api/client';
@@ -186,12 +187,7 @@ export const VendorStorefrontPage: React.FC = () => {
   }, [reviews]);
 
   if (loading) {
-    return (
-      <div className="storefront-loading-state">
-        <div className="storefront-spinner" />
-        <p>Loading designer storefront...</p>
-      </div>
-    );
+    return <BrandLoader message="Opening designer storefront & atelier..." theme="light" />;
   }
 
   if (!profile) {
