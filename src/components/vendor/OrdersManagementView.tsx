@@ -13,8 +13,10 @@ import {
   AlertTriangle,
   FileText,
   PackageCheck,
-  Check
+  Check,
+  MessageSquare
 } from 'lucide-react';
+import { OrderWorkspaceChat } from '../orders/OrderWorkspaceChat';
 
 interface OrdersManagementViewProps {
   onRefreshStats?: () => void;
@@ -24,6 +26,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orderDetailTab, setOrderDetailTab] = useState<'DETAILS' | 'WORKSPACE'>('DETAILS');
   
   // Filtering Tabs
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'PAID' | 'PREPARING' | 'READY_FOR_PICKUP' | 'DELIVERY' | 'COMPLETED'>('ALL');
@@ -251,10 +254,25 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                                 <strong className="order-card-amount">
                                   ₦ {orderAmount.toLocaleString()}
                                 </strong>
-                                <span className="order-dest-city">
-                                  <MapPin size={12} />
-                                  <span>{formattedCity}</span>
-                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span className="order-dest-city">
+                                    <MapPin size={12} />
+                                    <span>{formattedCity}</span>
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="btn-order-card-chat"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedOrder(order);
+                                      setOrderDetailTab('WORKSPACE');
+                                    }}
+                                    title="Open Atelier Chat & Workspace"
+                                  >
+                                    <MessageSquare size={12} />
+                                    <span>Chat</span>
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -291,6 +309,49 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                 </span>
               </div>
 
+              {/* Workspace / Details Tab Switcher */}
+              <div className="order-detail-tab-switcher">
+                <button
+                  type="button"
+                  className={`tab-switch-btn ${orderDetailTab === 'DETAILS' ? 'active' : ''}`}
+                  onClick={() => setOrderDetailTab('DETAILS')}
+                >
+                  <FileText size={15} />
+                  <span>Production &amp; Specs</span>
+                </button>
+                <button
+                  type="button"
+                  className={`tab-switch-btn ${orderDetailTab === 'WORKSPACE' ? 'active' : ''}`}
+                  onClick={() => setOrderDetailTab('WORKSPACE')}
+                >
+                  <MessageSquare size={15} />
+                  <span>Atelier Chat &amp; Workspace</span>
+                </button>
+              </div>
+
+              {orderDetailTab === 'WORKSPACE' ? (
+                <div style={{ marginTop: '1rem' }}>
+                  <OrderWorkspaceChat
+                    orderId={selectedOrder.id}
+                    orderNumber={selectedOrder.order_number}
+                    userRole="VENDOR"
+                    counterpartyName={selectedOrder.shipping_address_snapshot?.full_name || 'Client'}
+                    garmentTitle={selectedOrder.items?.[0]?.product_title_snapshot}
+                    customMeasurements={selectedOrder.items?.[0]?.custom_measurements}
+                    onMeasurementsUpdated={(updated) => {
+                      if (selectedOrder.items?.[0]) {
+                        const cur = (selectedOrder.items[0].custom_measurements as any) || {};
+                        selectedOrder.items[0].custom_measurements = {
+                          ...cur,
+                          ...updated,
+                        } as any;
+                        setSelectedOrder({ ...selectedOrder });
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <>
               {/* Action Buttons: Permitted Transitions (PRD §16 & §22) */}
               <div className="order-progression-bar">
                 {selectedOrder.order_status === 'PAID' && (
@@ -477,6 +538,8 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                   </div>
                 </div>
               </div>
+              </>
+              )}
             </div>
           ) : (
             <div className="no-order-selected-card">

@@ -8,8 +8,10 @@ import {
   User as UserIcon, MapPin, Plus, Trash2, CheckCircle, Star, Scissors, Save,
   AlertCircle, Loader, ShoppingBag, ChevronRight,
   ArrowLeft, Truck, X, CreditCard, ShieldCheck, Copy,
-  ExternalLink, Sparkles, Clock, Check, RefreshCw, Edit3, ArrowUpRight
+  ExternalLink, Sparkles, Clock, Check, RefreshCw, Edit3, ArrowUpRight,
+  MessageSquare
 } from 'lucide-react';
+import { OrderWorkspaceChat } from '../components/orders/OrderWorkspaceChat';
 import './ProfilePage.css';
 
 const NIGERIAN_STATES = [
@@ -96,6 +98,7 @@ export const ProfilePage: React.FC = () => {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [chatWorkspaceOrder, setChatWorkspaceOrder] = useState<Order | null>(null);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
   const [paymentActionLoading, setPaymentActionLoading] = useState(false);
@@ -1053,13 +1056,38 @@ export const ProfilePage: React.FC = () => {
                               </span>
                             </div>
 
-                            <button
-                              className="aso-btn-view-order"
-                              onClick={() => handleSelectOrder(order)}
-                            >
-                              <span>View Order & Tracking</span>
-                              <ChevronRight size={15} />
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              <button
+                                type="button"
+                                className="aso-btn-order-workspace"
+                                onClick={() => setChatWorkspaceOrder(order)}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.45rem',
+                                  background: '#0C3B2E',
+                                  color: '#FFFFFF',
+                                  border: '1px solid #D4AF37',
+                                  borderRadius: '8px',
+                                  padding: '0.55rem 0.95rem',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                <MessageSquare size={14} color="#D4AF37" />
+                                <span>Atelier Chat &amp; Workspace</span>
+                              </button>
+
+                              <button
+                                className="aso-btn-view-order"
+                                onClick={() => handleSelectOrder(order)}
+                              >
+                                <span>View Order & Tracking</span>
+                                <ChevronRight size={15} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1538,6 +1566,52 @@ export const ProfilePage: React.FC = () => {
                 Got It
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Atelier Order Workspace Modal */}
+      {chatWorkspaceOrder && (
+        <div
+          className="order-chat-modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1rem',
+          }}
+          onClick={() => setChatWorkspaceOrder(null)}
+        >
+          <div
+            style={{ maxWidth: '680px', width: '100%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <OrderWorkspaceChat
+              orderId={chatWorkspaceOrder.id}
+              orderNumber={chatWorkspaceOrder.order_number}
+              userRole="CUSTOMER"
+              counterpartyName={chatWorkspaceOrder.vendor?.store_name || 'Atelier Designer'}
+              garmentTitle={chatWorkspaceOrder.items?.[0]?.product_title_snapshot}
+              customMeasurements={chatWorkspaceOrder.items?.[0]?.custom_measurements}
+              onMeasurementsUpdated={(updated) => {
+                if (chatWorkspaceOrder.items?.[0]) {
+                  const cur = (chatWorkspaceOrder.items[0].custom_measurements as any) || {};
+                  chatWorkspaceOrder.items[0].custom_measurements = {
+                    ...cur,
+                    ...updated,
+                  } as any;
+                  setChatWorkspaceOrder({ ...chatWorkspaceOrder });
+                }
+              }}
+              onClose={() => setChatWorkspaceOrder(null)}
+            />
           </div>
         </div>
       )}

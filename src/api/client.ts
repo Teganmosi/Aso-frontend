@@ -26,6 +26,7 @@ import type {
   CreateReviewPayload,
   AdminVendorApplication,
   BespokeMeasurements,
+  OrderMessage,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -652,5 +653,37 @@ export const fitApi = {
     await fetchCsrfToken();
     const res = await apiClient.post('/fit/feedback/', payload);
     return res.data;
+  },
+};
+
+
+export const orderChatApi = {
+  getMessages: async (orderId: string): Promise<OrderMessage[]> => {
+    const res = await apiClient.get(`/orders/${orderId}/messages/`);
+    return res.data?.data || [];
+  },
+
+  sendMessage: async (orderId: string, content: string): Promise<OrderMessage> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/orders/${orderId}/messages/`, { content });
+    return res.data?.data;
+  },
+
+  requestMeasurementRecheck: async (
+    orderId: string,
+    payload: { measurement_key: string; label: string; prompt?: string }
+  ): Promise<OrderMessage> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/orders/${orderId}/messages/action-request/`, payload);
+    return res.data?.data;
+  },
+
+  resolveMeasurement: async (
+    orderId: string,
+    payload: { message_id: string; measurement_key: string; new_value: string }
+  ): Promise<OrderMessage> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/orders/${orderId}/messages/action-resolve/`, payload);
+    return res.data?.data;
   },
 };

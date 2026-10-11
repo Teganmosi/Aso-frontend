@@ -558,3 +558,29 @@ export interface AdminVendorApplication extends PublicVendorProfile {
   bank_account?: BankAccount | null;
 }
 
+
+
+export interface OrderMessage {
+  id: string;
+  order_id: string;
+  sender_id: string;
+  sender_email: string;
+  sender_name: string;
+  sender_role: 'CUSTOMER' | 'VENDOR' | 'SUPPORT';
+  message_type: 'TEXT' | 'ACTION_REQUEST' | 'ACTION_RESOLVED' | 'SYSTEM_AUDIT';
+  content: string;
+  is_masked: boolean;
+  mask_reason?: string | null;
+  mask_tier?: 'HEURISTIC' | 'LLM_NEMOTRON' | null;
+  action_type?: string | null;
+  action_payload?: {
+    measurement_key?: string;
+    label?: string;
+    current_value?: string;
+    unit?: string;
+    status?: 'PENDING' | 'RESOLVED';
+    resolved_value?: string;
+  };
+  read_at?: string | null;
+  created_at: string;
+}
