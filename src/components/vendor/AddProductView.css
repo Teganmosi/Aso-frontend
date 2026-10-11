@@ -1117,3 +1117,247 @@
   opacity: 1;
   color: #DC2626;
 }
+
+/* ==========================================================================
+   ENHANCED STUDIO STYLING: HYBRID SIZING, PAYOUT CALCULATOR & PHOTO GUIDANCE
+   ========================================================================== */
+
+/* Photo Guidance Bar */
+.photo-guidance-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(26, 43, 31, 0.04) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.photo-guidance-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #855d14;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.photo-guidance-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.p-guidance-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1A2B1F;
+  background: #ffffff;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* Designer Payout Calculator Card */
+.designer-payout-card {
+  background: #0D1610;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-top: 1.25rem;
+  color: #F7F5F0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.payout-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #D4AF37;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.payout-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.payout-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.84rem;
+  color: #94A3B8;
+}
+
+.payout-row span:last-child {
+  font-weight: 600;
+  color: #F1F5F9;
+}
+
+.payout-row .fee-val {
+  color: #EF4444 !important;
+}
+
+.payout-highlight {
+  margin-top: 0.4rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+  font-size: 0.95rem !important;
+  color: #F7F5F0 !important;
+}
+
+.payout-highlight span:first-child {
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.payout-highlight strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #10B981;
+}
+
+.payout-note {
+  margin: 0.75rem 0 0 0;
+  font-size: 0.75rem;
+  color: #64748B;
+  line-height: 1.4;
+}
+
+/* Made-to-order Capacity Badge */
+.made-to-order-capacity-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #065F46;
+  margin-top: 0.5rem;
+}
+
+/* Hybrid Bespoke Switch Card */
+.bespoke-enable-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.06) 0%, rgba(26, 43, 31, 0.03) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.bespoke-enable-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bespoke-enable-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1A2B1F;
+}
+
+.bespoke-enable-badge svg {
+  color: #D4AF37;
+}
+
+.bespoke-tag {
+  background: #D4AF37;
+  color: #0D1610;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-left: 0.35rem;
+}
+
+.bespoke-enable-info p {
+  font-size: 0.8rem;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Custom Toggle Switch */
+.aso-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.aso-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.aso-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #CBD5E1;
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 26px;
+}
+
+.aso-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.aso-switch input:checked + .aso-slider {
+  background-color: #1A2B1F;
+}
+
+.aso-switch input:checked + .aso-slider:before {
+  transform: translateX(22px);
+  background-color: #D4AF37;
+}
+
+.field-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.char-counter {
+  font-size: 0.75rem;
+  color: #64748B;
+  font-weight: 500;
+}

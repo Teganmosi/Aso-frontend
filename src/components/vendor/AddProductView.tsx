@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   X, 
   ArrowLeft, 
@@ -19,7 +19,9 @@ import {
   CheckCircle2,
   Trash2,
   Eye,
-  Plus
+  Plus,
+  Scissors,
+  ShieldCheck
 } from 'lucide-react';
 import { categoryApi, productApi, mediaApi } from '../../api/client';
 import type { Category, ProductItem, CreateProductPayload } from '../../types';
@@ -56,6 +58,83 @@ const FALLBACK_CATEGORIES: Category[] = [
   { id: 'cat-traditional', name: 'Handwoven Aso Oke & Bridal Regalia', slug: 'traditional-bridal' },
   { id: 'cat-accessories', name: 'Caps (Fila), Geles & Accessories', slug: 'accessories' },
 ];
+
+// Dynamic Department Category Filtering (Omits raw developer slugs and top-level parents)
+export const filterCategoriesByDepartment = (cats: Category[], dept: DepartmentType): Category[] => {
+  const normDept = dept.toLowerCase();
+  
+  // Exclude root parent category slugs so designers only categorize into specific apparel types
+  const nonParentCats = cats.filter(c => {
+    const slug = (c.slug || '').toLowerCase();
+    return slug !== 'men' && slug !== 'women' && slug !== 'traditional-heritage' && slug !== 'traditional-bridal';
+  });
+
+  if (normDept.includes('men') && !normDept.includes('women')) {
+    const menCats = nonParentCats.filter(c => {
+      const p = (c.parent_name || '').toLowerCase();
+      const s = (c.slug || '').toLowerCase();
+      const n = (c.name || '').toLowerCase();
+      return (
+        p === 'men' ||
+        s.startsWith('mens-') ||
+        s === 'agbada' ||
+        s.includes('agbada') ||
+        s.includes('senator') ||
+        s.includes('kaftan') ||
+        s.includes('fila') ||
+        s.includes('two-piece') ||
+        (!p && (n.includes('men') || n.includes('agbada') || n.includes('senator') || n.includes('kaftan')))
+      ) && !s.includes('womens') && !s.includes('female');
+    });
+    return menCats.length > 0 ? menCats : nonParentCats;
+  }
+
+  if (normDept.includes('women')) {
+    const womenCats = nonParentCats.filter(c => {
+      const p = (c.parent_name || '').toLowerCase();
+      const s = (c.slug || '').toLowerCase();
+      const n = (c.name || '').toLowerCase();
+      return (
+        p === 'women' ||
+        s.startsWith('womens-') ||
+        s.includes('female') ||
+        s.includes('boubou') ||
+        s.includes('corset') ||
+        s.includes('dress') ||
+        s.includes('gown') ||
+        s.includes('aso-ebi') ||
+        s.includes('iro') ||
+        s.includes('jumpsuit') ||
+        s.includes('gele') ||
+        (!p && (n.includes('women') || n.includes('boubou') || n.includes('dress') || n.includes('gown') || n.includes('corset') || n.includes('female')))
+      );
+    });
+    return womenCats.length > 0 ? womenCats : nonParentCats;
+  }
+
+  // Traditional & Bridal
+  const tradCats = nonParentCats.filter(c => {
+    const p = (c.parent_name || '').toLowerCase();
+    const s = (c.slug || '').toLowerCase();
+    const n = (c.name || '').toLowerCase();
+    return (
+      p.includes('traditional') ||
+      p.includes('bridal') ||
+      p.includes('accessories') ||
+      s.includes('aso-oke') ||
+      s.includes('bridal') ||
+      s.includes('adire') ||
+      s.includes('batik') ||
+      s.includes('bead') ||
+      s.includes('agbada') ||
+      s.includes('heritage') ||
+      s.includes('regalia') ||
+      s.includes('aso-ebi') ||
+      (!p && (n.includes('aso oke') || n.includes('traditional') || n.includes('bridal') || n.includes('regalia') || n.includes('bead') || n.includes('heritage')))
+    );
+  });
+  return tradCats.length > 0 ? tradCats : nonParentCats;
+};
 
 const DEPARTMENTS: DepartmentOption[] = [
   { id: 'Men', label: 'Men', icon: <Shirt size={18} />, description: 'Senators, Agbadas, Kaftans & Two-Piece Sets' },
@@ -127,7 +206,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
   );
 
   // 4. Universal Sizing Engine State
-  const [activeSizingSystem, setActiveSizingSystem] = useState<SizingSystem>('STANDARD');
+  const [_activeSizingSystem, _setActiveSizingSystem] = useState<SizingSystem>('STANDARD');
   const [selectedSizes, setSelectedSizes] = useState<string[]>(() => {
     if (productToEdit?.raw_product?.available_sizes?.length) {
       return productToEdit.raw_product.available_sizes;
@@ -139,6 +218,13 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
   });
   const [customSizeInput, setCustomSizeInput] = useState('');
   const [customSizes, setCustomSizes] = useState<string[]>([]);
+  const [allowBespoke, setAllowBespoke] = useState<boolean>(() => {
+    const sc = productToEdit?.raw_product?.size_chart as any;
+    if (sc?.allows_custom_tailoring !== undefined) {
+      return Boolean(sc.allows_custom_tailoring);
+    }
+    return true; // Default to true to encourage bespoke custom fit availability
+  });
 
   // 5. Fabric & Garment Cut Specs
   const [stretchLevel, setStretchLevel] = useState<'NON' | 'SLIGHT' | 'MEDIUM' | 'HIGH'>(
@@ -201,13 +287,19 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         const catList = Array.isArray(res) ? res : ((res as any)?.results || []);
         if (catList.length > 0) {
           setCategories(catList);
-          if (!categoryId) {
+          const initialFiltered = filterCategoriesByDepartment(catList, selectedDepartment);
+          if (!categoryId && initialFiltered.length > 0) {
+            setCategoryId(initialFiltered[0].id);
+          } else if (!categoryId) {
             setCategoryId(catList[0].id);
           }
         } else {
           // If server database is unseeded, use fallback category hierarchy
           setCategories(FALLBACK_CATEGORIES);
-          if (!categoryId) {
+          const initialFiltered = filterCategoriesByDepartment(FALLBACK_CATEGORIES, selectedDepartment);
+          if (!categoryId && initialFiltered.length > 0) {
+            setCategoryId(initialFiltered[0].id);
+          } else if (!categoryId) {
             setCategoryId(FALLBACK_CATEGORIES[0].id);
           }
         }
@@ -222,23 +314,27 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     fetchCats();
   }, []);
 
-  // Department switch
+  // Filtered categories for active department
+  const filteredCategories = useMemo(() => {
+    return filterCategoriesByDepartment(categories, selectedDepartment);
+  }, [categories, selectedDepartment]);
+
+  // Department switch with smart category re-targeting
   const handleDepartmentSelect = (dept: DepartmentType) => {
     setSelectedDepartment(dept);
-    if (dept === 'Traditional & Bridal') {
-      setActiveSizingSystem('STANDARD');
-      setSelectedSizes(SIZING_PRESETS.STANDARD.sizes);
-    } else {
-      setActiveSizingSystem('STANDARD');
-      setSelectedSizes(SIZING_PRESETS.STANDARD.sizes);
+    const newFiltered = filterCategoriesByDepartment(categories, dept);
+    if (newFiltered.length > 0 && !newFiltered.some(c => c.id === categoryId)) {
+      setCategoryId(newFiltered[0].id);
     }
   };
 
-  // Toggle Sizing System Preset
-  const handleSizingSystemSelect = (sys: SizingSystem) => {
-    setActiveSizingSystem(sys);
+  // Toggle Sizing System Preset (Kept for future sizing preset expansions)
+  const _handleSizingSystemSelect = (sys: SizingSystem) => {
+    _setActiveSizingSystem(sys);
     setSelectedSizes(SIZING_PRESETS[sys].sizes);
   };
+  void _activeSizingSystem;
+  void _handleSizingSystemSelect;
 
   // Toggle Individual Size Chip
   const toggleSize = (size: string) => {
@@ -410,11 +506,17 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         targetCategoryId = categories[0].id;
       }
 
+      const finalSizes = [...selectedSizes];
+      if (allowBespoke && !finalSizes.includes('Bespoke Fit')) {
+        finalSizes.push('Bespoke Fit');
+      }
+
       const compiledSizeChart = {
         stretch: stretchLevel,
         unit_default: 'IN' as const,
         garment_type: garmentCut,
-        sizing_system: activeSizingSystem,
+        sizing_system: allowBespoke ? 'HYBRID' : 'STANDARD',
+        allows_custom_tailoring: allowBespoke,
       };
 
       const finalStock = fulfillmentMode === 'MADE_TO_ORDER' ? 99 : (parseInt(stockQuantity) || 5);
@@ -428,7 +530,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         base_price_kobo: koboPrice,
         preparation_time_days: finalPrepDays,
         status: apiStatus,
-        sizes: selectedSizes,
+        sizes: finalSizes,
         colors: colors.map((c) => c.name),
         stock_quantity: finalStock,
         size_chart: compiledSizeChart,
@@ -606,16 +708,19 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
             {/* Category Dropdown */}
             <div className="field-group">
-              <label className="field-label">Marketplace Category *</label>
+              <div className="field-label-row">
+                <label className="field-label">Marketplace Category *</label>
+                <span className="char-counter">{filteredCategories.length} categories in {selectedDepartment}</span>
+              </div>
               <select
                 className="field-select"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
               >
-                {categories.length === 0 && <option value="">Select Category...</option>}
-                {categories.map((cat) => (
+                {filteredCategories.length === 0 && <option value="">Select Category...</option>}
+                {filteredCategories.map((cat: Category) => (
                   <option key={cat.id} value={cat.id}>
-                    {cat.name} {cat.slug ? `(${cat.slug})` : ''}
+                    {cat.name}
                   </option>
                 ))}
               </select>
@@ -649,6 +754,16 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
               </div>
             </div>
 
+            {/* Photo Guidelines Bar */}
+            <div className="photo-guidance-bar">
+              <span className="photo-guidance-title">💡 Recommended Portfolio Angles:</span>
+              <div className="photo-guidance-chips">
+                <span className="p-guidance-pill">1. Front Silhouette (Main)</span>
+                <span className="p-guidance-pill">2. Embroidery &amp; Fabric Detail</span>
+                <span className="p-guidance-pill">3. Back Drape / Hem</span>
+              </div>
+            </div>
+
             <div
               className="media-uploader-dropzone"
               onClick={() => fileInputRef.current?.click()}
@@ -677,7 +792,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 {images.map((imgUrl, idx) => (
                   <div key={idx} className="media-thumb-card">
                     <img src={imgUrl} alt={`Preview ${idx + 1}`} className="media-thumb-img" />
-                    {idx === 0 && <span className="media-primary-badge">PRIMARY</span>}
+                    {idx === 0 && <span className="media-primary-badge">★ MAIN PHOTO</span>}
                     <button
                       type="button"
                       className="btn-remove-thumb"
@@ -734,6 +849,33 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                   step="500"
                 />
               </div>
+
+              {/* Designer Take-Home Payout Calculator */}
+              {parseFloat(price) > 0 && (() => {
+                const numericPrice = parseFloat(price);
+                const fee = Math.round(numericPrice * 0.10);
+                const netPayout = numericPrice - fee;
+                return (
+                  <div className="designer-payout-card">
+                    <div className="payout-row">
+                      <span className="payout-label">Retail Selling Price:</span>
+                      <span className="payout-val">₦{numericPrice.toLocaleString()}</span>
+                    </div>
+                    <div className="payout-row">
+                      <span className="payout-label">Aso Marketplace Fee (10%):</span>
+                      <span className="payout-val fee-val">-₦{fee.toLocaleString()}</span>
+                    </div>
+                    <div className="payout-row total-row">
+                      <span className="payout-label"><strong>Your Direct Escrow Payout:</strong></span>
+                      <strong className="payout-val payout-highlight">₦{netPayout.toLocaleString()}</strong>
+                    </div>
+                    <div className="payout-note">
+                      <ShieldCheck size={13} color="#059669" />
+                      <span>Disbursed directly to your bank account upon order delivery confirmation.</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Fulfillment Mode Switch */}
@@ -780,9 +922,10 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                     </button>
                   ))}
                 </div>
-                <span className="field-hint-text">
-                  Time required from order confirmation to nationwide courier pickup.
-                </span>
+                <div className="made-to-order-capacity-badge">
+                  <Sparkles size={14} color="#D4AF37" />
+                  <span>Garments are tailored upon customer order from fabric. Finished studio stock is not required (Default order capacity: 99 units).</span>
+                </div>
               </div>
             ) : (
               <div className="field-group">
@@ -795,112 +938,116 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                   onChange={(e) => setStockQuantity(e.target.value)}
                   min="1"
                 />
+                <span className="field-hint-text">
+                  Physical units sewn and ready in your studio for immediate 24h dispatch.
+                </span>
               </div>
             )}
           </div>
 
-          {/* Card 4: Sizing Engine */}
+          {/* Card 4: Hybrid Sizing Engine ("My Aso Fit") */}
           <div className="piece-form-card">
             <div className="card-section-header">
               <div className="section-icon-box">
                 <Ruler size={18} />
               </div>
               <div className="section-title-wrap">
-                <h3>Sizing System &amp; Fit Specifications</h3>
-                <p>Select the sizing framework that best fits this garment type.</p>
+                <h3>Sizing Framework &amp; Fit Specifications</h3>
+                <p>Configure available ready-to-wear sizes and enable custom made-to-measure tailoring.</p>
               </div>
             </div>
 
-            {/* Presets Tabs */}
-            <div className="sizing-presets-tabs">
-              {(Object.keys(SIZING_PRESETS) as SizingSystem[]).map((key) => {
-                const preset = SIZING_PRESETS[key];
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`sizing-tab-btn ${activeSizingSystem === key ? 'active' : ''}`}
-                    onClick={() => handleSizingSystemSelect(key)}
-                  >
-                    {preset.icon}
-                    <span>{preset.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {/* Section A: Standard Ready-To-Wear Sizes */}
+            <div className="field-group">
+              <div className="field-label-row">
+                <label className="field-label">Available Standard Sizes (Ready-to-Wear)</label>
+                <span className="char-counter">{selectedSizes.length} sizes active</span>
+              </div>
+              <p className="field-hint-text" style={{ marginBottom: '0.65rem' }}>
+                Select standard sizing options available for this piece. Buyers looking for standard fit can checkout instantly.
+              </p>
 
-            <p className="field-hint-text" style={{ marginBottom: '0.75rem' }}>
-              {SIZING_PRESETS[activeSizingSystem]?.hint}
-            </p>
-
-            {/* Size Chips Matrix */}
-            <div className="size-chips-matrix">
-              {[...new Set([...(SIZING_PRESETS[activeSizingSystem]?.sizes || []), ...customSizes])].map((sz) => {
-                const isCustom = !(SIZING_PRESETS[activeSizingSystem]?.sizes || []).includes(sz);
-                const isSelected = selectedSizes.includes(sz);
-                return (
-                  <div key={sz} className={`size-chip-badge ${isSelected ? 'active' : ''} ${isCustom ? 'is-custom' : ''}`}>
-                    <button
-                      type="button"
-                      className="size-chip-toggle-btn"
-                      onClick={() => toggleSize(sz)}
-                    >
-                      {sz}
-                    </button>
-                    {isCustom && (
+              {/* Size Chips Matrix */}
+              <div className="size-chips-matrix">
+                {[...new Set([...['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', 'Free Size'], ...customSizes])].map((sz) => {
+                  const isCustom = !['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', 'Free Size'].includes(sz);
+                  const isSelected = selectedSizes.includes(sz);
+                  return (
+                    <div key={sz} className={`size-chip-badge ${isSelected ? 'active' : ''} ${isCustom ? 'is-custom' : ''}`}>
                       <button
                         type="button"
-                        className="size-chip-delete-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveCustomSize(sz);
-                        }}
-                        title="Remove custom size"
-                        aria-label="Remove custom size"
+                        className="size-chip-toggle-btn"
+                        onClick={() => toggleSize(sz)}
                       >
-                        <X size={12} />
+                        {sz}
                       </button>
-                    )}
-                  </div>
-                );
-              })}
+                      {isCustom && (
+                        <button
+                          type="button"
+                          className="size-chip-delete-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveCustomSize(sz);
+                          }}
+                          title="Remove custom size"
+                          aria-label="Remove custom size"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add Custom Size Form */}
+              <form onSubmit={handleAddCustomSize} className="custom-size-adder-row" style={{ marginTop: '0.65rem' }}>
+                <input
+                  type="text"
+                  className="field-input"
+                  placeholder="+ Add custom size (e.g. 5XL)"
+                  value={customSizeInput}
+                  onChange={(e) => setCustomSizeInput(e.target.value)}
+                />
+                <button type="submit" className="btn-save-draft" style={{ whiteSpace: 'nowrap' }}>
+                  <Plus size={14} />
+                  <span>Add</span>
+                </button>
+              </form>
             </div>
 
-            {/* Custom Bespoke Measurement Guidance Box */}
-            {activeSizingSystem === 'CUSTOM' && (
-              <div className="custom-bespoke-guide-box">
-                <div className="bespoke-guide-header">
-                  <Ruler size={16} color="#004B44" />
-                  <h4>Client Custom Measurement Guide</h4>
+            {/* Section B: Hybrid Bespoke Tailoring Toggle Card */}
+            <div className={`bespoke-enable-card ${allowBespoke ? 'active' : ''}`}>
+              <div className="bespoke-enable-header">
+                <div className="bespoke-enable-info">
+                  <div className="bespoke-title-row">
+                    <Scissors size={18} color="#D4AF37" />
+                    <strong className="bespoke-enable-title">Allow Custom Made-to-Measure Fit</strong>
+                    <span className="badge-recommended">Recommended</span>
+                  </div>
+                  <p className="bespoke-enable-desc">
+                    When enabled, clients can either order standard sizes or click <strong>Custom Fit</strong> to have this piece tailored to their exact body silhouette (Bust/Chest, Waist, Hips, Sleeve, Length).
+                  </p>
                 </div>
-                <p className="bespoke-guide-desc">
-                  When buyers order this bespoke piece, Aso will collect their tailored body measurements during checkout:
-                </p>
-                <div className="bespoke-tags-list">
-                  <span className="bespoke-tag">Chest / Bust</span>
-                  <span className="bespoke-tag">Waist &amp; Hips</span>
-                  <span className="bespoke-tag">Shoulder Span</span>
-                  <span className="bespoke-tag">Sleeve Length</span>
-                  <span className="bespoke-tag">Garment Full Length</span>
-                  <span className="bespoke-tag">Inseam / Agbada Flare</span>
-                </div>
+                <label className="aso-switch">
+                  <input
+                    type="checkbox"
+                    checked={allowBespoke}
+                    onChange={(e) => setAllowBespoke(e.target.checked)}
+                  />
+                  <span className="aso-slider" />
+                </label>
               </div>
-            )}
 
-            {/* Add Custom Size Form */}
-            <form onSubmit={handleAddCustomSize} className="custom-size-adder-row">
-              <input
-                type="text"
-                className="field-input"
-                placeholder="+ Add custom size (e.g. 5XL)"
-                value={customSizeInput}
-                onChange={(e) => setCustomSizeInput(e.target.value)}
-              />
-              <button type="submit" className="btn-save-draft" style={{ whiteSpace: 'nowrap' }}>
-                <Plus size={14} />
-                <span>Add</span>
-              </button>
-            </form>
+              {allowBespoke && (
+                <div className="bespoke-active-notice">
+                  <Sparkles size={14} color="#065F46" />
+                  <span>
+                    <strong>Zero Setup Required:</strong> Aso's Smart Fit Estimator automatically detects your garment silhouette ({garmentCut.toLowerCase()}) and collects calibrated client measurements during checkout.
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Card 5: Color Swatches & Stretch */}
