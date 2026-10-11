@@ -7,7 +7,8 @@ import {
   CheckCircle2,
   RefreshCw,
   X,
-  Info
+  Info,
+  Lock
 } from 'lucide-react';
 import { orderChatApi } from '../../api/client';
 import type { OrderMessage } from '../../types';
@@ -20,6 +21,7 @@ interface OrderWorkspaceChatProps {
   counterpartyName: string;
   garmentTitle?: string;
   customMeasurements?: Record<string, any> | null;
+  orderStatus?: string;
   onMeasurementsUpdated?: (updatedMeasurements: Record<string, any>) => void;
   onClose?: () => void;
 }
@@ -31,9 +33,11 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
   counterpartyName,
   garmentTitle,
   customMeasurements: _initialMeasurements,
+  orderStatus,
   onMeasurementsUpdated,
   onClose,
 }) => {
+  const [isLockedUnpaid, setIsLockedUnpaid] = useState(false);
   const [messages, setMessages] = useState<OrderMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -92,7 +96,10 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
 
         return data;
       });
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 403 || err?.response?.data?.code === 'PAYMENT_REQUIRED') {
+        setIsLockedUnpaid(true);
+      }
       console.error('Failed to load order messages', err);
     } finally {
       if (!quiet) setLoading(false);
@@ -192,6 +199,50 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
       setResolveLoading(false);
     }
   };
+
+
+  // ESCROW ENFORCEMENT: Unpaid orders are strictly locked from designer chat
+  if (orderStatus === 'PENDING_PAYMENT' || isLockedUnpaid) {
+    return (
+      <div className="order-workspace-container" style={{ minHeight: '380px' }}>
+        <div className="order-chat-header">
+          <div className="order-chat-header-info">
+            <div className="order-chat-brand-tag">
+              <ShieldCheck size={14} color="#D4AF37" />
+              <span>Aso Escrow Security Shield</span>
+            </div>
+            <h3 className="order-chat-title">Order #{orderNumber} Workspace</h3>
+          </div>
+          {onClose && (
+            <button className="order-chat-close-btn" onClick={onClose} aria-label="Close modal">
+              <X size={18} />
+            </button>
+          )}
+        </div>
+
+        <div className="order-chat-escrow-locked">
+          <div className="escrow-lock-icon-wrap">
+            <Lock size={28} color="#D97706" />
+          </div>
+          <h4 className="escrow-lock-title">Atelier Workspace Locked</h4>
+          <p className="escrow-lock-desc">
+            Direct communication with the designer is protected under <strong>Aso Escrow</strong> and is unlocked only after payment has been completed.
+          </p>
+          <div className="escrow-lock-info-box">
+            <Info size={16} color="#0C3B2E" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span>
+              Once paid, your funds are safely held in escrow while you and the designer coordinate tailoring details, fabric cuts, and delivery dispatch.
+            </span>
+          </div>
+          {onClose && (
+            <button type="button" className="btn-close-locked-workspace" onClick={onClose}>
+              Return to Order Details
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="order-workspace-container">

@@ -1069,28 +1069,54 @@ export const ProfilePage: React.FC = () => {
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              <button
-                                type="button"
-                                className="aso-btn-order-workspace"
-                                onClick={() => setChatWorkspaceOrder(order)}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.45rem',
-                                  background: '#0C3B2E',
-                                  color: '#FFFFFF',
-                                  border: '1px solid #D4AF37',
-                                  borderRadius: '8px',
-                                  padding: '0.55rem 0.95rem',
-                                  fontSize: '0.82rem',
-                                  fontWeight: 600,
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                }}
-                              >
-                                <MessageSquare size={14} color="#D4AF37" />
-                                <span>Atelier Chat &amp; Workspace</span>
-                              </button>
+                              {['PAID', 'VENDOR_ACCEPTED', 'PREPARING', 'READY_FOR_PICKUP', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(order.order_status) ? (
+                                <button
+                                  type="button"
+                                  className="aso-btn-order-workspace"
+                                  onClick={() => setChatWorkspaceOrder(order)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.45rem',
+                                    background: '#0C3B2E',
+                                    color: '#FFFFFF',
+                                    border: '1px solid #D4AF37',
+                                    borderRadius: '8px',
+                                    padding: '0.55rem 0.95rem',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                  }}
+                                >
+                                  <MessageSquare size={14} color="#D4AF37" />
+                                  <span>Atelier Chat &amp; Workspace</span>
+                                </button>
+                              ) : order.order_status === 'PENDING_PAYMENT' ? (
+                                <button
+                                  type="button"
+                                  className="aso-btn-pay-pending-mini"
+                                  onClick={() => handlePayPendingOrder(order)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.45rem',
+                                    background: '#D97706',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    padding: '0.55rem 0.95rem',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                  }}
+                                  title="Complete payment to unlock Atelier workspace chat with designer"
+                                >
+                                  <CreditCard size={14} />
+                                  <span>Pay Now to Unlock Chat</span>
+                                </button>
+                              ) : null}
 
                               <button
                                 className="aso-btn-view-order"
@@ -1608,6 +1634,7 @@ export const ProfilePage: React.FC = () => {
             <OrderWorkspaceChat
               orderId={chatWorkspaceOrder.id}
               orderNumber={chatWorkspaceOrder.order_number}
+              orderStatus={chatWorkspaceOrder.order_status}
               userRole="CUSTOMER"
               counterpartyName={chatWorkspaceOrder.vendor?.store_name || 'Atelier Designer'}
               garmentTitle={chatWorkspaceOrder.items?.[0]?.product_title_snapshot}

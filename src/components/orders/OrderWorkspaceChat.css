@@ -656,3 +656,77 @@
     margin: 0.5rem;
   }
 }
+
+/* Escrow Payment Required Locked State */
+.order-chat-escrow-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background: #FFFDF5;
+  border-radius: 0 0 12px 12px;
+  flex: 1;
+}
+
+.escrow-lock-icon-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #FEF3C7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.15);
+}
+
+.escrow-lock-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0C3B2E;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-serif, serif);
+}
+
+.escrow-lock-desc {
+  font-size: 0.9rem;
+  color: #4B5563;
+  max-width: 440px;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.escrow-lock-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  max-width: 460px;
+  font-size: 0.82rem;
+  color: #065F46;
+  text-align: left;
+  line-height: 1.45;
+  margin-bottom: 1.5rem;
+}
+
+.btn-close-locked-workspace {
+  background: #0C3B2E;
+  color: #FFFFFF;
+  border: 1px solid #D4AF37;
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-close-locked-workspace:hover {
+  background: #082920;
+  transform: translateY(-1px);
+}
