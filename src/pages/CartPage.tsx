@@ -46,15 +46,17 @@ export const CartPage: React.FC = () => {
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
   const [shippingQuote, setShippingQuote] = useState<{
-    fee: number;
+    fee: number | null;
     eta: string;
     carrier: string;
     loading: boolean;
+    hasLiveQuote: boolean;
   }>({
-    fee: 0,
-    eta: 'Standard Courier Dispatch',
+    fee: null,
+    eta: 'Calculated upon dispatch',
     carrier: 'Dellyman Logistics',
-    loading: false
+    loading: false,
+    hasLiveQuote: false
   });
 
   // Inline address form States
@@ -84,20 +86,33 @@ export const CartPage: React.FC = () => {
     const vendorId = firstItem?.product?.vendor_id || firstItem?.product?.vendor?.id || undefined;
     deliveryApi.getQuote(selectedAddressId, vendorId)
       .then(q => {
-        if (q && q.success) {
+        if (q && q.success && q.has_live_quote && q.delivery_fee_naira !== null && q.delivery_fee_naira !== undefined) {
           setShippingQuote({
-            fee: q.delivery_fee_naira || 0,
+            fee: q.delivery_fee_naira,
             eta: q.eta || 'Same-Day / Next-Day Delivery',
             carrier: q.carrier || 'Dellyman Logistics',
-            loading: false
+            loading: false,
+            hasLiveQuote: true
           });
         } else {
-          setShippingQuote(prev => ({ ...prev, loading: false }));
+          setShippingQuote({
+            fee: null,
+            eta: q?.eta || 'Calculated upon dispatch',
+            carrier: q?.carrier || 'Dellyman Logistics',
+            loading: false,
+            hasLiveQuote: false
+          });
         }
       })
       .catch(err => {
         console.warn('Dellyman quote calculation error', err);
-        setShippingQuote(prev => ({ ...prev, loading: false }));
+        setShippingQuote({
+          fee: null,
+          eta: 'Calculated upon dispatch',
+          carrier: 'Dellyman Logistics',
+          loading: false,
+          hasLiveQuote: false
+        });
       });
   }, [selectedAddressId, cart?.items]);
 
@@ -625,8 +640,14 @@ export const CartPage: React.FC = () => {
                       {shippingQuote.loading ? 'Calculating live rate...' : shippingQuote.eta}
                     </span>
                   </div>
-                  <span style={{ fontWeight: 600 }}>
-                    {shippingQuote.loading ? '...' : (shippingQuote.fee === 0 ? 'Free' : `₦${shippingQuote.fee.toLocaleString()}`)}
+                  <span style={{ fontWeight: 600, color: shippingQuote.hasLiveQuote ? 'inherit' : '#6B7280', fontSize: shippingQuote.hasLiveQuote ? 'inherit' : '0.85rem' }}>
+                    {shippingQuote.loading ? (
+                      '...'
+                    ) : shippingQuote.hasLiveQuote && shippingQuote.fee !== null ? (
+                      shippingQuote.fee === 0 ? 'Free' : `₦${shippingQuote.fee.toLocaleString()}`
+                    ) : (
+                      'Calculated at dispatch'
+                    )}
                   </span>
                 </div>
               </div>
@@ -634,7 +655,7 @@ export const CartPage: React.FC = () => {
               <div className="cart-summary-total-row">
                 <span>Grand Total</span>
                 <span className="cart-summary-total-price">
-                  ₦{(cart.subtotal_naira + shippingQuote.fee).toLocaleString()}
+                  ₦{(cart.subtotal_naira + (shippingQuote.hasLiveQuote && shippingQuote.fee ? shippingQuote.fee : 0)).toLocaleString()}
                 </span>
               </div>
 

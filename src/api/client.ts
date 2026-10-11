@@ -483,10 +483,12 @@ export const deliveryApi = {
 
   getQuote: async (addressId: string, vendorId?: string): Promise<{
     success: boolean;
-    delivery_fee_naira: number;
+    has_live_quote?: boolean;
+    delivery_fee_naira: number | null;
     delivery_fee_kobo: number;
     eta: string;
     carrier: string;
+    message?: string;
   }> => {
     const res = await apiClient.post('/deliveries/quote/', {
       address_id: addressId,
