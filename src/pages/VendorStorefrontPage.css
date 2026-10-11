@@ -159,14 +159,35 @@
 }
 
 .ig-link {
-  color: #064E3B;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #9D174D;
+  background: #FDF2F8;
+  border: 1px solid #FBCFE8;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
   text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .ig-link:hover {
-  color: #D4AF37;
+  background: #FCE7F3;
+  color: #831843;
+  border-color: #F472B6;
+  transform: translateY(-1px);
+}
+
+.ig-icon {
+  color: #E1306C;
+  flex-shrink: 0;
+}
+
+.ig-ext-icon {
+  color: #9CA3AF;
+  margin-left: 0.15rem;
 }
 
 .store-description {

@@ -89,6 +89,7 @@ export interface VendorProfileBrief {
   slug: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   is_verified: boolean;
+  has_started_verification?: boolean;
   city?: string;
   state?: string;
   description?: string;
@@ -120,6 +121,7 @@ export interface PublicVendorProfile {
   state: string;
   status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   is_verified: boolean;
+  has_started_verification?: boolean;
   instagram_handle: string;
   whatsapp_phone?: string;
   lead_designer_name?: string;

@@ -15,13 +15,31 @@ import {
   Search, 
   SlidersHorizontal,
   Sparkles,
-  Phone,
   Check,
   ChevronRight,
   Info,
   ExternalLink
 } from 'lucide-react';
 import './VendorStorefrontPage.css';
+
+// Clean SVG Instagram Icon (compatible across all lucide versions)
+const InstagramIcon: React.FC<{ size?: number; className?: string }> = ({ size = 14, className }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+);
 
 export const VendorStorefrontPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -205,11 +223,7 @@ export const VendorStorefrontPage: React.FC = () => {
   const totalReviews = profile.review_count || reviews.length;
   const ratingNum = totalReviews > 0 ? parseFloat(profile.average_rating || '0').toFixed(1) : null;
 
-  // WhatsApp link preparation
-  const rawPhone = profile.whatsapp_phone || '';
-  const cleanPhone = rawPhone.replace(/\D/g, '');
-  const waPhone = cleanPhone.startsWith('0') ? '234' + cleanPhone.slice(1) : cleanPhone;
-  const hasWhatsApp = Boolean(waPhone && waPhone.length >= 10);
+
 
   return (
     <div className="storefront-container">
@@ -248,12 +262,12 @@ export const VendorStorefrontPage: React.FC = () => {
                   <CheckCircle2 size={13} />
                   <span>Verified Designer</span>
                 </div>
-              ) : (
+              ) : profile.has_started_verification ? (
                 <div className="badge-verification-progress" title="Application and credentials under review">
                   <Clock size={13} />
                   <span>Verification in Progress</span>
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div className="meta-details-row">
@@ -283,9 +297,11 @@ export const VendorStorefrontPage: React.FC = () => {
                   target="_blank"
                   rel="noreferrer"
                   className="meta-item ig-link"
+                  title="View Instagram Portfolio"
                 >
+                  <InstagramIcon size={14} className="ig-icon" />
                   <span>{profile.instagram_handle.startsWith('@') ? profile.instagram_handle : `@${profile.instagram_handle}`}</span>
-                  <ExternalLink size={12} />
+                  <ExternalLink size={11} className="ig-ext-icon" />
                 </a>
               )}
             </div>
@@ -314,17 +330,7 @@ export const VendorStorefrontPage: React.FC = () => {
                 )}
               </button>
 
-              {hasWhatsApp && (
-                <a
-                  href={`https://wa.me/${waPhone}?text=${encodeURIComponent(`Hello ${profile.store_name}, I am contacting you regarding your pieces on Aso Marketplace: ${window.location.href}`)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-whatsapp-inquire"
-                >
-                  <Phone size={15} />
-                  <span>Contact Designer on WhatsApp</span>
-                </a>
-              )}
+
             </div>
           </div>
         </div>
