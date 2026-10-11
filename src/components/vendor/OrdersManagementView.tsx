@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { orderApi } from '../../api/client';
-import type { Order } from '../../types';
+import { orderApi, deliveryApi } from '../../api/client';
+import type { Order, Delivery } from '../../types';
 import {
   ShoppingBag, 
   Loader, 
@@ -14,7 +14,9 @@ import {
   FileText,
   PackageCheck,
   Check,
-  MessageSquare
+  MessageSquare,
+  Printer,
+  Truck
 } from 'lucide-react';
 import { OrderWorkspaceChat } from '../orders/OrderWorkspaceChat';
 
@@ -31,6 +33,25 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
   // Filtering Tabs
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'PAID' | 'PREPARING' | 'READY_FOR_PICKUP' | 'DELIVERY' | 'COMPLETED'>('ALL');
   const [updateLoading, setUpdateLoading] = useState<string | null>(null);
+  const [delivery, setDelivery] = useState<Delivery | null>(null);
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
+
+
+  // Sync delivery details when selected order changes
+  useEffect(() => {
+    if (selectedOrder && ['READY_FOR_PICKUP', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.order_status)) {
+      setDeliveryLoading(true);
+      deliveryApi.getDeliveryDetail(selectedOrder.id)
+        .then(d => setDelivery(d))
+        .catch(err => {
+          console.warn('Delivery details not available yet', err);
+          setDelivery(null);
+        })
+        .finally(() => setDeliveryLoading(false));
+    } else {
+      setDelivery(null);
+    }
+  }, [selectedOrder?.id, selectedOrder?.order_status]);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -106,6 +127,12 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
       await loadOrders();
       if (selectedOrder?.id === orderId) {
         setSelectedOrder(prev => prev ? { ...prev, order_status: 'READY_FOR_PICKUP' } : null);
+      }
+      try {
+        const d = await deliveryApi.getDeliveryDetail(orderId);
+        setDelivery(d);
+      } catch (e) {
+        console.warn('Failed to load delivery immediately after readying', e);
       }
     } catch (err: any) {
       setOrders(orders.map(o => o.id === orderId ? { ...o, order_status: 'READY_FOR_PICKUP' } : o));
@@ -400,9 +427,63 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                 )}
 
                 {['READY_FOR_PICKUP', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.order_status) && (
-                  <div className="order-completed-notice">
-                    <CheckCircle size={18} color="#064E3B" />
-                    <span>Garment is marked ready. Handed over to logistics courier for delivery dispatch.</span>
+                  <div className="dellyman-dispatch-panel">
+                    <div className="dellyman-dispatch-top">
+                      <div className="dellyman-brand">
+                        <div className="dellyman-brand-icon">
+                          <Truck size={18} color="#0C3B2E" />
+                        </div>
+                        <div>
+                          <strong className="dellyman-title">Dellyman Logistics Courier Dispatch</strong>
+                          <span className="dellyman-subtitle">Automated courier booking & digital waybill</span>
+                        </div>
+                      </div>
+                      <button
+                        className="btn-print-waybill"
+                        onClick={() => window.open(deliveryApi.getWaybillPdfUrl(selectedOrder.id), '_blank')}
+                        title="Open and print digital shipping waybill PDF"
+                      >
+                        <Printer size={15} />
+                        <span>🖨️ Print Dellyman Waybill</span>
+                      </button>
+                    </div>
+
+                    <div className="dellyman-meta-grid">
+                      <div className="dellyman-meta-item">
+                        <span className="dellyman-meta-k">Tracking Number</span>
+                        <span className="dellyman-meta-v font-mono">
+                          {delivery?.dellyman_tracking_id || delivery?.tracking_number || (deliveryLoading ? 'Summoning...' : 'Pending Dispatch')}
+                        </span>
+                      </div>
+
+                      <div className="dellyman-meta-item">
+                        <span className="dellyman-meta-k">Fulfillment Stage</span>
+                        <span className="dellyman-meta-v stage-badge">
+                          {delivery?.status || selectedOrder.order_status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+
+                      {delivery?.rider_name && (
+                        <div className="dellyman-meta-item">
+                          <span className="dellyman-meta-k">Assigned Rider</span>
+                          <span className="dellyman-meta-v">{delivery.rider_name}</span>
+                        </div>
+                      )}
+
+                      {delivery?.rider_phone && (
+                        <div className="dellyman-meta-item">
+                          <span className="dellyman-meta-k">Rider Phone</span>
+                          <span className="dellyman-meta-v">{delivery.rider_phone}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="dellyman-instructions">
+                      <CheckCircle size={15} color="#065F46" />
+                      <span>
+                        Garment is ready. Print the waybill and attach to your package. The Dellyman bike/van rider will scan the barcode upon studio arrival.
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

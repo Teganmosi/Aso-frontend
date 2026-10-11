@@ -862,17 +862,29 @@ export const ProfilePage: React.FC = () => {
                       {/* Delivery Logistics Details if available */}
                       {deliveryLoading ? (
                         <div className="delivery-loading-box">
-                          <Loader size={16} className="spin" /> Checking logistics status...
+                          <Loader size={16} className="spin" /> Checking live courier status...
                         </div>
                       ) : delivery ? (
                         <div className="delivery-info-card">
-                          <div className="delivery-header">
-                            <Truck size={16} className="text-emerald" />
-                            <span className="delivery-title">{delivery.carrier_name || 'Marketplace Courier'}</span>
+                          <div className="delivery-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <Truck size={16} className="text-emerald" />
+                              <span className="delivery-title">{delivery.carrier_name || 'Dellyman Logistics'}</span>
+                            </div>
+                            <span style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#065F46', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 700 }}>
+                              {delivery.status}
+                            </span>
                           </div>
-                          <p className="delivery-code">Tracking: <strong>{delivery.tracking_number}</strong></p>
+                          <p className="delivery-code" style={{ marginTop: '0.5rem' }}>
+                            Tracking ID: <strong>{delivery.dellyman_tracking_id || delivery.tracking_number}</strong>
+                          </p>
+                          {delivery.rider_name && (
+                            <p style={{ fontSize: '0.82rem', color: '#374151', margin: '0.25rem 0' }}>
+                              🏍️ Assigned Courier: <strong>{delivery.rider_name}</strong> {delivery.rider_phone ? `(${delivery.rider_phone})` : ''}
+                            </p>
+                          )}
                           {delivery.dispatch_notes && (
-                            <p className="delivery-notes text-muted">{delivery.dispatch_notes}</p>
+                            <p className="delivery-notes text-muted" style={{ fontSize: '0.78rem', marginTop: '0.25rem' }}>{delivery.dispatch_notes}</p>
                           )}
                         </div>
                       ) : null}

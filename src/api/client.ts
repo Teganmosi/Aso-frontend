@@ -480,6 +480,36 @@ export const deliveryApi = {
     });
     return res.data.data || res.data;
   },
+
+  getQuote: async (addressId: string, vendorId?: string): Promise<{
+    success: boolean;
+    delivery_fee_naira: number;
+    delivery_fee_kobo: number;
+    eta: string;
+    carrier: string;
+  }> => {
+    const res = await apiClient.post('/deliveries/quote/', {
+      address_id: addressId,
+      vendor_id: vendorId,
+    });
+    return res.data?.data || res.data;
+  },
+
+  getWaybill: async (orderId: string): Promise<{
+    success: boolean;
+    order_number: string;
+    tracking_id: string;
+    order_code?: string;
+    package_label: string;
+  }> => {
+    const res = await apiClient.get(`/orders/${orderId}/waybill/`);
+    return res.data?.data || res.data;
+  },
+
+  getWaybillPdfUrl: (orderId: string): string => {
+    const baseURL = apiClient.defaults.baseURL || '/api/v1';
+    return `${baseURL}/orders/${orderId}/waybill/?format=pdf`;
+  },
 };
 
 // ─── Payout & Ledger API (Sprint 9) ──────────────────────────────────────────

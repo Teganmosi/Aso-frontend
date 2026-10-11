@@ -417,6 +417,15 @@ export interface Delivery {
   carrier_name: string;
   status: DeliveryStatus;
   status_display: string;
+  dellyman_order_id?: string | null;
+  dellyman_order_code?: string | null;
+  dellyman_tracking_id?: string | null;
+  package_label_base64?: string | null;
+  shipping_cost_kobo?: number;
+  shipping_cost_naira?: number;
+  rider_name?: string | null;
+  rider_phone?: string | null;
+  delivery_timeline?: string;
   dispatch_notes: string | null;
   picked_up_at: string | null;
   dispatched_at: string | null;

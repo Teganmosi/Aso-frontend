@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderApi, paymentApi, addressApi } from '../api/client';
+import { orderApi, paymentApi, addressApi, deliveryApi } from '../api/client';
 import type { Order, PaymentRequest, Address } from '../types';
 import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ArrowRight,
   Store, AlertCircle, Loader, Package, Check, MapPin, CreditCard, ShieldCheck, CheckCircle,
-  Scissors, CheckCircle2
+  Scissors, CheckCircle2, Truck
 } from 'lucide-react';
 import './CartPage.css';
 
@@ -45,6 +45,17 @@ export const CartPage: React.FC = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
+  const [shippingQuote, setShippingQuote] = useState<{
+    fee: number;
+    eta: string;
+    carrier: string;
+    loading: boolean;
+  }>({
+    fee: 0,
+    eta: 'Standard Courier Dispatch',
+    carrier: 'Dellyman Logistics',
+    loading: false
+  });
 
   // Inline address form States
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -64,6 +75,31 @@ export const CartPage: React.FC = () => {
       setSelectedAddressId(def ? def.id : addresses[0].id);
     }
   }, [addresses, selectedAddressId]);
+
+  // Fetch dynamic Dellyman shipping quote on address selection
+  useEffect(() => {
+    if (!selectedAddressId) return;
+    setShippingQuote(prev => ({ ...prev, loading: true }));
+    const firstItem = cart?.items?.[0] as any;
+    const vendorId = firstItem?.product?.vendor_id || firstItem?.product?.vendor?.id || undefined;
+    deliveryApi.getQuote(selectedAddressId, vendorId)
+      .then(q => {
+        if (q && q.success) {
+          setShippingQuote({
+            fee: q.delivery_fee_naira || 0,
+            eta: q.eta || 'Same-Day / Next-Day Delivery',
+            carrier: q.carrier || 'Dellyman Logistics',
+            loading: false
+          });
+        } else {
+          setShippingQuote(prev => ({ ...prev, loading: false }));
+        }
+      })
+      .catch(err => {
+        console.warn('Dellyman quote calculation error', err);
+        setShippingQuote(prev => ({ ...prev, loading: false }));
+      });
+  }, [selectedAddressId, cart?.items]);
 
   if (authLoading || cartLoading) {
     return (
@@ -581,15 +617,25 @@ export const CartPage: React.FC = () => {
                   <span>Subtotal</span>
                   <span>₦{cart.subtotal_naira.toLocaleString()}</span>
                 </div>
-                <div className="cart-summary-line">
-                  <span>Delivery</span>
-                  <span>Free</span>
+                <div className="cart-summary-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 600 }}>Delivery ({shippingQuote.carrier})</span>
+                    <span style={{ fontSize: '0.75rem', color: '#047857', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <Truck size={12} />
+                      {shippingQuote.loading ? 'Calculating live rate...' : shippingQuote.eta}
+                    </span>
+                  </div>
+                  <span style={{ fontWeight: 600 }}>
+                    {shippingQuote.loading ? '...' : (shippingQuote.fee === 0 ? 'Free' : `₦${shippingQuote.fee.toLocaleString()}`)}
+                  </span>
                 </div>
               </div>
 
               <div className="cart-summary-total-row">
                 <span>Grand Total</span>
-                <span className="cart-summary-total-price">₦{cart.subtotal_naira.toLocaleString()}</span>
+                <span className="cart-summary-total-price">
+                  ₦{(cart.subtotal_naira + shippingQuote.fee).toLocaleString()}
+                </span>
               </div>
 
               <button
