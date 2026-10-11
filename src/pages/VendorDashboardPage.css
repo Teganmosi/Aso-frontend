@@ -4112,3 +4112,42 @@
   color: #FFFFFF;
   border-color: #0C3B2E;
 }
+
+/* Orders Management Split Grid Mobile Stacking */
+@media (max-width: 1024px) {
+  .orders-management-split {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  .order-detail-column {
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .detail-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .order-progression-bar {
+    flex-direction: column;
+  }
+
+  .btn-progress-action {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  .order-detail-tab-switcher {
+    flex-direction: row;
+    padding: 0.25rem;
+  }
+
+  .tab-switch-btn {
+    font-size: 0.75rem !important;
+    padding: 0.45rem 0.5rem !important;
+  }
+}

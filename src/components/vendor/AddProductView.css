@@ -1361,3 +1361,32 @@
   color: #64748B;
   font-weight: 500;
 }
+
+/* Mobile & Tablet Optimizations for Studio Add Piece */
+@media (max-width: 640px) {
+  .bespoke-enable-card {
+    padding: 0.85rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .photo-guidance-bar {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .photo-guidance-chips {
+    gap: 0.35rem;
+  }
+
+  .p-guidance-pill {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .designer-payout-card {
+    padding: 0.85rem 1rem;
+  }
+
+  .payout-highlight strong {
+    font-size: 1.05rem;
+  }
+}

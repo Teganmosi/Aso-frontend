@@ -49,17 +49,49 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
   const [resolveValue, setResolveValue] = useState('');
   const [resolveLoading, setResolveLoading] = useState(false);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const feedContainerRef = useRef<HTMLDivElement>(null);
+  const isInitialLoadRef = useRef(true);
+  const isNearBottomRef = useRef(true);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Internal container scroll only - NEVER scrolls parent page or window
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (feedContainerRef.current) {
+      feedContainerRef.current.scrollTo({
+        top: feedContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
+  };
+
+  // Track if user is currently scrolled near the bottom
+  const handleFeedScroll = () => {
+    if (!feedContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = feedContainerRef.current;
+    isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
   };
 
   const loadMessages = async (quiet = false) => {
     if (!quiet) setLoading(true);
     try {
       const data = await orderChatApi.getMessages(orderId);
-      setMessages(data);
+      setMessages((prev) => {
+        // Deep compare to prevent unnecessary re-renders and auto-scroll jumps
+        if (
+          prev.length === data.length &&
+          prev.length > 0 &&
+          prev[prev.length - 1].id === data[data.length - 1]?.id
+        ) {
+          return prev; // Identical: keep same object reference
+        }
+
+        // If new message arrived and user is near bottom, smoothly scroll
+        const hasNewMessages = data.length > prev.length;
+        if (hasNewMessages && isNearBottomRef.current && !isInitialLoadRef.current) {
+          setTimeout(() => scrollToBottom('smooth'), 50);
+        }
+
+        return data;
+      });
     } catch (err) {
       console.error('Failed to load order messages', err);
     } finally {
@@ -68,16 +100,20 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
   };
 
   useEffect(() => {
-    loadMessages();
+    isInitialLoadRef.current = true;
+    loadMessages().then(() => {
+      // Instant scroll on initial load without animation jerk
+      setTimeout(() => {
+        scrollToBottom('auto');
+        isInitialLoadRef.current = false;
+      }, 60);
+    });
+
     const interval = setInterval(() => {
       loadMessages(true);
     }, 8000);
     return () => clearInterval(interval);
   }, [orderId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,6 +125,7 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
       const newMsg = await orderChatApi.sendMessage(orderId, text);
       setMessages((prev) => [...prev, newMsg]);
       setInputText('');
+      setTimeout(() => scrollToBottom('smooth'), 50);
     } catch (err) {
       console.error('Failed to send message', err);
     } finally {
@@ -251,7 +288,11 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
       )}
 
       {/* Messages Scroll Area */}
-      <div className="workspace-messages-feed">
+      <div 
+        ref={feedContainerRef} 
+        className="workspace-messages-feed"
+        onScroll={handleFeedScroll}
+      >
         {loading ? (
           <div className="chat-loading-state">
             <RefreshCw size={24} className="spin-icon" />
@@ -388,7 +429,6 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Recheck Modal for Designer */}
