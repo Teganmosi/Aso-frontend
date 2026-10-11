@@ -372,6 +372,47 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                         <p>
                           Size: {item.variant_size_snapshot || 'Standard'} • Color: {item.variant_color_snapshot || 'Bespoke'} • Qty: {item.quantity}
                         </p>
+                        {item.custom_measurements && Object.keys(item.custom_measurements).length > 0 && (
+                          <div className="tailor-cut-card" style={{ background: '#FFFDF5', border: '1px solid #D4AF37', borderRadius: '8px', padding: '0.65rem 0.85rem', marginTop: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.35rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 700, color: '#0C3B2E', textTransform: 'uppercase' }}>
+                                <Scissors size={13} color="#D4AF37" />
+                                <span>Atelier Tailoring Cut Spec ({item.custom_measurements.unit || 'IN'}):</span>
+                              </div>
+                              {item.custom_measurements.fit_source === 'smart_estimator_v1.2' && (
+                                <span style={{ fontSize: '0.7rem', fontWeight: 600, background: '#FEF3C7', color: '#92400E', padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
+                                  ✨ Smart Fit Spec ({item.custom_measurements.size_snapshot || 'L'} • {item.custom_measurements.height_snapshot || "5'10\""})
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.4rem', fontSize: '0.78rem' }}>
+                              {Object.entries(item.custom_measurements)
+                                .filter(([k]) => !['unit', 'category_type', 'notes', 'estimated_ranges', 'fit_source', 'height_snapshot', 'size_snapshot'].includes(k))
+                                .map(([k, v]) => {
+                                  const rangeInfo = item.custom_measurements?.estimated_ranges?.[k];
+                                  const bracketStr = typeof rangeInfo === 'object' && rangeInfo !== null ? rangeInfo.bracket : rangeInfo;
+                                  return (
+                                    <div key={k} style={{ background: '#FFFFFF', padding: '0.35rem 0.55rem', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
+                                      <div style={{ color: '#6B7280', textTransform: 'capitalize', fontSize: '0.72rem' }}>{k.replace(/_/g, ' ')}:</div>
+                                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+                                        <strong style={{ color: '#0C3B2E', fontSize: '0.85rem' }}>{String(v)} {item.custom_measurements?.unit?.toLowerCase() || 'in'}</strong>
+                                      </div>
+                                      {bracketStr && (
+                                        <div style={{ fontSize: '0.68rem', color: '#065F46', fontWeight: 600 }}>
+                                          Bracket: {bracketStr} in
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                            {item.custom_measurements.notes && (
+                              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#92400E', background: '#FEF3C7', padding: '0.35rem 0.55rem', borderRadius: '6px' }}>
+                                <strong>Drape Notes:</strong> {item.custom_measurements.notes}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <span className="detail-item-price">
                           ₦ {itemAmount.toLocaleString()}
                         </span>

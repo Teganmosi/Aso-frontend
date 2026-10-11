@@ -12,6 +12,8 @@ import {
   Ruler, Scissors
 } from 'lucide-react';
 import { SizeGuideModal } from '../components/common/SizeGuideModal';
+import { BespokeFitModal } from '../components/common/BespokeFitModal';
+import type { BespokeMeasurements } from '../types';
 import './ProductDetailPage.css';
 
 export const ProductDetailPage: React.FC = () => {
@@ -32,6 +34,9 @@ export const ProductDetailPage: React.FC = () => {
   const [cartMessage, setCartMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [showBespokeModal, setShowBespokeModal] = useState(false);
+  const [bespokeMeasurements, setBespokeMeasurements] = useState<BespokeMeasurements | null>(null);
+  const [isBespokeMode, setIsBespokeMode] = useState(false);
 
   useEffect(() => {
     if (identifier) {
@@ -79,10 +84,19 @@ export const ProductDetailPage: React.FC = () => {
       setCartMessage({ type: 'error', text: 'Please select a size/variant before adding to cart.' });
       return;
     }
+
+    const hasBespokeMeasurements = Boolean(bespokeMeasurements && Object.keys(bespokeMeasurements).length > 0);
+    const isBespoke = isBespokeMode || hasBespokeMeasurements || selectedVariant.size.toLowerCase().includes('bespoke') || selectedVariant.size.toLowerCase().includes('custom');
+    if (isBespoke && !hasBespokeMeasurements) {
+      setShowBespokeModal(true);
+      setCartMessage({ type: 'error', text: 'Please enter your custom body measurements for this bespoke piece.' });
+      return;
+    }
+
     setAddingToCart(true);
     setCartMessage(null);
     try {
-      await addToCart(selectedVariant.id, quantity);
+      await addToCart(selectedVariant.id, quantity, (isBespoke && hasBespokeMeasurements) ? bespokeMeasurements : undefined);
       setCartMessage({ type: 'success', text: 'Added to cart successfully!' });
       setTimeout(() => setCartMessage(null), 3000);
     } catch (err: any) {
@@ -262,36 +276,71 @@ export const ProductDetailPage: React.FC = () => {
 
             return (
               <div className="pdp-variants-section">
-                <div className="pdp-size-header-row">
-                  <p className="pdp-variant-label" style={{ margin: 0 }}>
-                    Size:
-                    {selectedVariant && (
-                      <strong> {selectedVariant.size}{selectedVariant.color && selectedVariant.color !== 'Standard' ? ` / ${selectedVariant.color}` : ''}</strong>
-                    )}
-                  </p>
+                {/* Sizing Track Mode Selector Tabs */}
+                <div className="pdp-track-mode-tabs">
                   <button
-                    className="pdp-size-guide-btn"
-                    onClick={() => setShowSizeGuide(true)}
                     type="button"
+                    className={`pdp-track-tab ${!isBespokeMode ? 'active' : ''}`}
+                    onClick={() => setIsBespokeMode(false)}
                   >
-                    <Ruler size={13} color="#0C3B2E" />
-                    <span>Size Guide</span>
+                    Standard Ready-To-Wear
+                  </button>
+                  <button
+                    type="button"
+                    className={`pdp-track-tab pdp-track-tab--bespoke ${isBespokeMode ? 'active' : ''}`}
+                    onClick={() => {
+                      setIsBespokeMode(true);
+                      if (!bespokeMeasurements) setShowBespokeModal(true);
+                    }}
+                  >
+                    <Scissors size={13} />
+                    <span>Custom Made-to-Measure</span>
                   </button>
                 </div>
 
+                <div className="pdp-size-header-row">
+                  <p className="pdp-variant-label" style={{ margin: 0 }}>
+                    {isBespokeMode ? (
+                      <span style={{ color: '#0C3B2E', fontWeight: 700 }}>
+                        <Scissors size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                        Bespoke Custom Fit
+                      </span>
+                    ) : (
+                      <>
+                        Size:
+                        {selectedVariant && (
+                          <strong> {selectedVariant.size}{selectedVariant.color && selectedVariant.color !== 'Standard' ? ` / ${selectedVariant.color}` : ''}</strong>
+                        )}
+                      </>
+                    )}
+                  </p>
+                  {!isBespokeMode && (
+                    <button
+                      className="pdp-size-guide-btn"
+                      onClick={() => setShowSizeGuide(true)}
+                      type="button"
+                    >
+                      <Ruler size={13} color="#0C3B2E" />
+                      <span>Size Guide</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Size Chips */}
                 <div className="pdp-variant-chips">
                   {sortedVariants.map((v) => {
-                    const isSelected = selectedVariant?.id === v.id;
-                    const isBespoke = v.size.toLowerCase().includes('bespoke');
+                    const isSelected = !isBespokeMode && selectedVariant?.id === v.id;
                     return (
                       <button
                         key={v.id}
                         className={`pdp-variant-chip ${isSelected ? 'active' : ''} ${v.stock_quantity === 0 ? 'out-of-stock' : ''}`}
-                        onClick={() => { setSelectedVariant(v); setQuantity(1); }}
+                        onClick={() => {
+                          setSelectedVariant(v);
+                          setQuantity(1);
+                        }}
                         title={v.stock_quantity === 0 ? 'Out of stock' : `${v.stock_quantity} in stock`}
                         disabled={!v.is_active}
                       >
-                        {isBespoke && <Scissors size={12} className="chip-scissors-icon" />}
                         <span>{v.size}</span>
                         {v.color && v.color !== 'Standard' && (
                           <span className="variant-color-dot" style={{ backgroundColor: v.color.toLowerCase() }} />
@@ -300,12 +349,96 @@ export const ProductDetailPage: React.FC = () => {
                       </button>
                     );
                   })}
+
+                  {/* Dedicated Bespoke Chip */}
+                  <button
+                    type="button"
+                    className={`pdp-variant-chip pdp-bespoke-chip ${isBespokeMode ? 'active' : ''}`}
+                    onClick={() => {
+                      setIsBespokeMode(true);
+                      if (!bespokeMeasurements) setShowBespokeModal(true);
+                    }}
+                  >
+                    <Scissors size={12} className="chip-scissors-icon" />
+                    <span>Bespoke Fit</span>
+                  </button>
                 </div>
 
                 {stockStatus && (
                   <div className="pdp-stock-status" style={{ color: stockStatus.color }}>
                     <Package size={14} />
                     <span>{stockStatus.label}</span>
+                  </div>
+                )}
+
+                {/* Bespoke Fit Configuration Card */}
+                {(isBespokeMode || (selectedVariant && (selectedVariant.size.toLowerCase().includes('bespoke') || selectedVariant.size.toLowerCase().includes('custom')))) && (
+                  <div className="pdp-bespoke-spec-card">
+                    <div className="bespoke-card-header">
+                      <div className="bespoke-card-icon">
+                        <Scissors size={16} color="#D4AF37" />
+                      </div>
+                      <div className="bespoke-card-text">
+                        <strong>Bespoke Made-to-Measure</strong>
+                        <span>Tailored specifically to your unique silhouette</span>
+                      </div>
+                    </div>
+
+                    {bespokeMeasurements && Object.keys(bespokeMeasurements).length > 0 ? (() => {
+                      const isSmartEstimated = bespokeMeasurements.fit_source === 'smart_estimator_v1.2';
+                      const sizeSnap = bespokeMeasurements.size_snapshot;
+                      const heightSnap = bespokeMeasurements.height_snapshot;
+                      const unit = bespokeMeasurements.unit || 'IN';
+
+                      // Filter out internal metadata keys & non-scalar object maps
+                      const metaKeys = ['unit', 'category_type', 'notes', 'estimated_ranges', 'fit_source', 'height_snapshot', 'size_snapshot'];
+                      const keyMeasurements = Object.entries(bespokeMeasurements)
+                        .filter(([k, v]) => !metaKeys.includes(k) && typeof v !== 'object' && v !== undefined && v !== '' && !isNaN(Number(v)))
+                        .map(([k, v]) => ({
+                          label: k.replace(/_/g, ' '),
+                          value: `${v} ${unit.toLowerCase()}`
+                        }));
+
+                      const primaryPills = keyMeasurements.slice(0, 3);
+
+                      return (
+                        <div className="bespoke-spec-active-box">
+                          <div className="bespoke-spec-summary">
+                            <CheckCircle2 size={16} color="#10B981" style={{ flexShrink: 0 }} />
+                            <div>
+                              <div style={{ fontWeight: 700, color: '#0C3B2E', fontSize: '0.85rem' }}>
+                                {isSmartEstimated ? (
+                                  <>✨ Smart Fit Calibrated {sizeSnap ? `(Size ${sizeSnap}` : ''}{heightSnap ? ` • ${heightSnap})` : ')'}</>
+                                ) : (
+                                  <>Atelier Fit Configured ({unit})</>
+                                )}
+                              </div>
+                              {primaryPills.length > 0 && (
+                                <div style={{ fontSize: '0.78rem', color: '#4B5563', marginTop: '0.15rem' }}>
+                                  {primaryPills.map(p => `${p.label}: ${p.value}`).join(' · ')}
+                                  {keyMeasurements.length > 3 && ` · +${keyMeasurements.length - 3} more`}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn-edit-bespoke-spec"
+                            onClick={() => setShowBespokeModal(true)}
+                          >
+                            Edit Spec
+                          </button>
+                        </div>
+                      );
+                    })() : (
+                      <button
+                        type="button"
+                        className="btn-launch-bespoke-spec"
+                        onClick={() => setShowBespokeModal(true)}
+                      >
+                        <Scissors size={14} /> Set Custom Measurements (Required)
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -467,6 +600,20 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Bespoke Fit Modal */}
+      {product && (
+        <BespokeFitModal
+          isOpen={showBespokeModal}
+          onClose={() => setShowBespokeModal(false)}
+          productTitle={product.title}
+          categoryName={product.category?.name}
+          categorySlug={product.category?.slug}
+          garmentTypeHint={product.size_chart?.garment_type}
+          currentMeasurements={bespokeMeasurements}
+          onApplyMeasurements={(m) => { setBespokeMeasurements(m); setIsBespokeMode(true); }}
+        />
+      )}
 
       {/* Temu-Style Interactive Size Guide Modal */}
       {product && (

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { addressApi, orderApi, paymentApi, deliveryApi, reviewApi } from '../api/client';
+import { addressApi, orderApi, paymentApi, deliveryApi, reviewApi, measurementsApi } from '../api/client';
+import type { BespokeMeasurements } from '../types';
 import type { Address, Order, Delivery, OrderItem } from '../types';
 import {
-  User as UserIcon, MapPin, Plus, Trash2, CheckCircle, Star,
+  User as UserIcon, MapPin, Plus, Trash2, CheckCircle, Star, Scissors, Save,
   AlertCircle, Loader, ShoppingBag, ChevronRight,
   ArrowLeft, Truck, X, CreditCard, ShieldCheck, Copy,
   ExternalLink, Sparkles, Clock, Check, RefreshCw, Edit3, ArrowUpRight
@@ -39,12 +40,56 @@ export const ProfilePage: React.FC = () => {
   // Determine initial tab from URL search param
   const searchParams = new URLSearchParams(location.search);
   const initialTab = searchParams.get('tab') as any;
-  const [activeTab, setActiveTab] = useState<'orders' | 'addresses' | 'details'>(
-    ['orders', 'addresses', 'details'].includes(initialTab) ? initialTab : 'orders'
+  const [activeTab, setActiveTab] = useState<'orders' | 'measurements' | 'addresses' | 'details'>(
+    ['orders', 'measurements', 'addresses', 'details'].includes(initialTab) ? initialTab : 'orders'
   );
 
   // Status Filter for orders
   const [orderStatusFilter, setOrderStatusFilter] = useState<OrderFilterType>('ALL');
+
+  // My Aso Fit Atelier State
+  const [savedFitUnit, setSavedFitUnit] = useState<'IN' | 'CM'>('IN');
+  const [savedFitData, setSavedFitData] = useState<Record<string, string>>({});
+  const [savedFitNotes, setSavedFitNotes] = useState('');
+  const [fitSaving, setFitSaving] = useState(false);
+  const [fitFeedback, setFitFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.saved_measurements && Object.keys(user.saved_measurements).length > 0) {
+      const sm = user.saved_measurements;
+      setSavedFitUnit(sm.unit || 'IN');
+      const loaded: Record<string, string> = {};
+      Object.keys(sm).forEach(k => {
+        if (!['unit', 'notes', 'category_type', 'gender'].includes(k)) {
+          loaded[k] = String(sm[k] ?? '');
+        }
+      });
+      setSavedFitData(loaded);
+      if (sm.notes) setSavedFitNotes(sm.notes);
+    }
+  }, [user]);
+
+  const handleSaveAtelierFit = async () => {
+    setFitSaving(true);
+    setFitFeedback(null);
+    try {
+      const payload: BespokeMeasurements = {
+        unit: savedFitUnit,
+        notes: savedFitNotes.trim() || undefined,
+        ...savedFitData,
+      };
+      await measurementsApi.saveMeasurements(payload);
+      if (user) {
+        user.saved_measurements = payload;
+      }
+      setFitFeedback('Your My Aso Fit atelier profile has been saved successfully!');
+      setTimeout(() => setFitFeedback(null), 4000);
+    } catch (e) {
+      setFitFeedback('Failed to save measurements. Please try again.');
+    } finally {
+      setFitSaving(false);
+    }
+  };
 
   // Customer orders states
   const [orders, setOrders] = useState<Order[]>([]);
@@ -1027,6 +1072,101 @@ export const ProfilePage: React.FC = () => {
         )}
 
         {/* Tab 2: Delivery Addresses */}
+        {activeTab === 'measurements' && (
+          <div className="profile-tab-content">
+            <div className="tab-header-flex" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <Scissors size={20} color="#D4AF37" />
+                  <span>My Aso Fit Atelier Profile</span>
+                </h3>
+                <p className="section-desc" style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#6B7280' }}>
+                  Save your precise measurements once. Apply with 1 click across any designer collection on Aso.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#6B7280' }}>Unit:</span>
+                <button
+                  type="button"
+                  style={{ padding: '0.35rem 0.8rem', borderRadius: '20px', border: '1px solid #D1D5DB', background: savedFitUnit === 'IN' ? '#0C3B2E' : '#FFFFFF', color: savedFitUnit === 'IN' ? '#FFFFFF' : '#374151', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                  onClick={() => setSavedFitUnit('IN')}
+                >
+                  Inches (in)
+                </button>
+                <button
+                  type="button"
+                  style={{ padding: '0.35rem 0.8rem', borderRadius: '20px', border: '1px solid #D1D5DB', background: savedFitUnit === 'CM' ? '#0C3B2E' : '#FFFFFF', color: savedFitUnit === 'CM' ? '#FFFFFF' : '#374151', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                  onClick={() => setSavedFitUnit('CM')}
+                >
+                  Centimeters (cm)
+                </button>
+              </div>
+            </div>
+
+            {fitFeedback && (
+              <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.75rem 1rem', borderRadius: '8px', color: '#065F46', fontSize: '0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CheckCircle size={16} />
+                <span>{fitFeedback}</span>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+              {[
+                { key: 'chest_bust', label: 'Chest / Bust' },
+                { key: 'shoulder', label: 'Shoulder Width' },
+                { key: 'waist', label: 'Waist' },
+                { key: 'hips', label: 'Hips' },
+                { key: 'top_length', label: 'Top / Senator Length' },
+                { key: 'sleeve_length', label: 'Sleeve Length' },
+                { key: 'trouser_length', label: 'Trouser Length' },
+                { key: 'thigh', label: 'Thigh Circumference' },
+                { key: 'neck_collar', label: 'Neck / Collar' },
+                { key: 'underbust', label: 'Underbust (Gowns)' },
+              ].map(f => (
+                <div key={f.key} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '0.75rem 0.9rem' }}>
+                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>
+                    <span>{f.label}</span>
+                    <span style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>{savedFitUnit}</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="—"
+                    value={savedFitData[f.key] || ''}
+                    onChange={(e) => setSavedFitData(prev => ({ ...prev, [f.key]: e.target.value }))}
+                    style={{ width: '100%', border: '1px solid #D1D5DB', borderRadius: '6px', padding: '0.45rem 0.6rem', fontSize: '0.9rem', fontWeight: 600, outline: 'none', background: '#FFFFFF', boxSizing: 'border-box' }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: '0.4rem' }}>
+                Default Tailoring & Drape Notes (Optional):
+              </label>
+              <textarea
+                rows={2}
+                placeholder="e.g. Prefer relaxed fit in the armholes, extra length for tall silhouettes..."
+                value={savedFitNotes}
+                onChange={(e) => setSavedFitNotes(e.target.value)}
+                style={{ width: '100%', border: '1px solid #D1D5DB', borderRadius: '8px', padding: '0.6rem 0.8rem', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={handleSaveAtelierFit}
+                disabled={fitSaving}
+                style={{ background: '#0C3B2E', color: '#FFFFFF', border: 'none', padding: '0.75rem 1.75rem', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+              >
+                <Save size={16} /> {fitSaving ? 'Saving Atelier Profile...' : 'Save My Aso Fit Profile'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'addresses' && (
           <div className="profile-tab-pane">
             <div className="addresses-canvas">

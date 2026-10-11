@@ -25,6 +25,7 @@ import type {
   Review,
   CreateReviewPayload,
   AdminVendorApplication,
+  BespokeMeasurements,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -302,9 +303,13 @@ export const cartApi = {
     return res.data.data || res.data;
   },
 
-  addItem: async (variant_id: string, quantity: number = 1): Promise<Cart> => {
+  addItem: async (variant_id: string, quantity: number = 1, custom_measurements?: any): Promise<Cart> => {
     await fetchCsrfToken();
-    const res = await apiClient.post('/cart/items/', { variant_id, quantity });
+    const payload: any = { variant_id, quantity };
+    if (custom_measurements && Object.keys(custom_measurements).length > 0) {
+      payload.custom_measurements = custom_measurements;
+    }
+    const res = await apiClient.post('/cart/items/', payload);
     return res.data.data || res.data;
   },
 
@@ -597,3 +602,55 @@ export const adminApi = {
   },
 };
 
+
+// ─── Measurements / My Aso Fit API ─────────────────────────────────────────
+
+export const measurementsApi = {
+  getSavedMeasurements: async (): Promise<BespokeMeasurements> => {
+    const res = await apiClient.get('/auth/profile/measurements/');
+    return res.data?.saved_measurements || {};
+  },
+
+  saveMeasurements: async (measurements: BespokeMeasurements): Promise<BespokeMeasurements> => {
+    await fetchCsrfToken();
+    const res = await apiClient.put('/auth/profile/measurements/', { measurements });
+    return res.data?.saved_measurements || {};
+  },
+};
+
+// ─── Fit Intelligence API (PRD v2.0) ────────────────────────────────────────
+
+export const fitApi = {
+  estimate: async (payload: {
+    category?: string;
+    rtw_size?: string;
+    height_inches?: number;
+    build?: string;
+    usual_size_fit?: string;
+    garment_fit?: string;
+    style?: string;
+    known_measurements?: Record<string, any>;
+    text_description?: string;
+  }) => {
+    try {
+      const res = await apiClient.post('/fit/estimate/', payload);
+      return res.data?.data || res.data;
+    } catch (e) {
+      console.warn('Backend fit intelligence offline, using local fallback', e);
+      return null;
+    }
+  },
+
+  submitFeedback: async (payload: {
+    fit_estimate_id?: string;
+    order_item_id?: string;
+    estimated_measurements: Record<string, any>;
+    final_measurements: Record<string, any>;
+    tailor_feedback?: string;
+    notes?: string;
+  }) => {
+    await fetchCsrfToken();
+    const res = await apiClient.post('/fit/feedback/', payload);
+    return res.data;
+  },
+};

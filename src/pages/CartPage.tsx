@@ -6,7 +6,8 @@ import { orderApi, paymentApi, addressApi } from '../api/client';
 import type { Order, PaymentRequest, Address } from '../types';
 import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ArrowRight,
-  Store, AlertCircle, Loader, Package, Check, MapPin, CreditCard, ShieldCheck, CheckCircle
+  Store, AlertCircle, Loader, Package, Check, MapPin, CreditCard, ShieldCheck, CheckCircle,
+  Scissors, CheckCircle2
 } from 'lucide-react';
 import './CartPage.css';
 
@@ -30,6 +31,16 @@ export const CartPage: React.FC = () => {
 
   // Checkout-specific States
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+  const [expandedCutSheets, setExpandedCutSheets] = useState<Set<string>>(new Set());
+
+  const toggleCutSheet = (id: string) => {
+    setExpandedCutSheets(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
@@ -274,7 +285,12 @@ export const CartPage: React.FC = () => {
                     <div key={item.id} className="conf-item-row">
                       <div>
                         <p className="conf-item-name">{item.product_title_snapshot}</p>
-                        <p className="conf-item-spec">{item.variant_size_snapshot} {item.variant_color_snapshot ? `/ ${item.variant_color_snapshot}` : ''} • Qty: {item.quantity}</p>
+                        <p className="conf-item-spec">
+                          {item.custom_measurements && Object.keys(item.custom_measurements).length > 0 && (
+                            <span className="conf-bespoke-tag" style={{ color: '#0C3B2E', fontWeight: 600, marginRight: '0.35rem' }}>✂️ Bespoke Custom Fit ·</span>
+                          )}
+                          {item.variant_size_snapshot} {item.variant_color_snapshot ? `/ ${item.variant_color_snapshot}` : ''} • Qty: {item.quantity}
+                        </p>
                       </div>
                       <span className="conf-item-price">₦{item.total_price_naira.toLocaleString()}</span>
                     </div>
@@ -537,15 +553,27 @@ export const CartPage: React.FC = () => {
               <h2 className="cart-summary-title">Checkout Summary</h2>
 
               <div className="checkout-sidebar-items">
-                {cart.items.map(item => (
-                  <div key={item.id} className="checkout-item-preview">
-                    <div className="preview-info">
-                      <p className="preview-title">{item.product_title}</p>
-                      <p className="preview-meta">{item.size} • Qty: {item.quantity}</p>
+                {cart.items.map(item => {
+                  const m = item.custom_measurements;
+                  const hasBespoke = Boolean(m && Object.keys(m).length > 0);
+                  return (
+                    <div key={item.id} className="checkout-item-preview">
+                      <div className="preview-info">
+                        <p className="preview-title">{item.product_title}</p>
+                        <p className="preview-meta">
+                          {hasBespoke ? (
+                            <span style={{ color: '#0C3B2E', fontWeight: 600 }}>
+                              ✂️ Bespoke Fit ({item.size}{m?.height_snapshot ? ` • ${m.height_snapshot}` : ''})
+                            </span>
+                          ) : (
+                            `${item.size}${item.color ? ` / ${item.color}` : ''}`
+                          )} • Qty: {item.quantity}
+                        </p>
+                      </div>
+                      <span className="preview-price">₦{item.total_price_naira.toLocaleString()}</span>
                     </div>
-                    <span className="preview-price">₦{item.total_price_naira.toLocaleString()}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="cart-summary-lines">
@@ -635,6 +663,100 @@ export const CartPage: React.FC = () => {
                     </span>
                     <span className="cart-item-sku">SKU: {item.sku}</span>
                   </div>
+
+                  {/* Bespoke Fit & Smart Estimator Spec Card */}
+                  {item.custom_measurements && Object.keys(item.custom_measurements).length > 0 && (() => {
+                    const m = item.custom_measurements;
+                    const isSmartEstimated = m.fit_source === 'smart_estimator_v1.2';
+                    const sizeSnap = m.size_snapshot || item.size;
+                    const heightSnap = m.height_snapshot;
+                    const unit = m.unit || 'IN';
+                    const metaKeys = ['unit', 'category_type', 'notes', 'estimated_ranges', 'fit_source', 'height_snapshot', 'size_snapshot'];
+                    const entries = Object.entries(m).filter(([k, v]) => !metaKeys.includes(k) && typeof v !== 'object' && v !== undefined && v !== '' && !isNaN(Number(v)));
+                    const ranges = m.estimated_ranges || {};
+                    const isExpanded = expandedCutSheets.has(item.id);
+
+                    return (
+                      <div className="cart-item-bespoke-card">
+                        <div className="cart-bespoke-card-header">
+                          <span className="cart-bespoke-tag-pill">
+                            <Scissors size={12} /> Bespoke Tailored Cut
+                          </span>
+                          {isSmartEstimated ? (
+                            <span className="cart-bespoke-source-note">
+                              ✨ Calibrated via Smart Estimator (Size {sizeSnap}{heightSnap ? ` • ${heightSnap}` : ''})
+                            </span>
+                          ) : (
+                            <span className="cart-bespoke-source-note">
+                              📏 Atelier Measurement Profile ({unit})
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Primary Measurement Pills */}
+                        <div className="cart-bespoke-dims-list">
+                          {entries.slice(0, 4).map(([k, v]) => {
+                            const rangeObj = ranges[k];
+                            const bracketStr = typeof rangeObj === 'object' && rangeObj !== null
+                              ? (rangeObj.bracket || `${rangeObj.min} - ${rangeObj.max}`)
+                              : typeof rangeObj === 'string'
+                                ? rangeObj
+                                : null;
+                            return (
+                              <span key={k} className="cart-bespoke-dim-pill">
+                                <span className="dim-pill-key">{k.replace(/_/g, ' ')}:</span>
+                                <span className="dim-pill-val">{v} {unit.toLowerCase()}</span>
+                                {bracketStr && (
+                                  <span className="dim-pill-bracket" title="Estimated safe range bracket">
+                                    ({bracketStr} {unit.toLowerCase()})
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          })}
+                          {entries.length > 4 && (
+                            <button
+                              type="button"
+                              className="cart-bespoke-expand-btn"
+                              onClick={() => toggleCutSheet(item.id)}
+                            >
+                              {isExpanded ? 'Hide Specs' : `+${entries.length - 4} more specs`}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Expanded Full Cut Sheet Grid */}
+                        {isExpanded && entries.length > 4 && (
+                          <div className="cart-bespoke-full-specs">
+                            <div className="cart-cutsheet-grid">
+                              {entries.slice(4).map(([k, v]) => {
+                                const rangeObj = ranges[k];
+                                const bracketStr = typeof rangeObj === 'object' && rangeObj !== null
+                                  ? (rangeObj.bracket || `${rangeObj.min} - ${rangeObj.max}`)
+                                  : typeof rangeObj === 'string'
+                                    ? rangeObj
+                                    : null;
+                                return (
+                                  <div key={k} className="cart-cutsheet-grid-item">
+                                    <span className="dim-pill-key">{k.replace(/_/g, ' ')}:</span>
+                                    <span className="dim-pill-val">{v} {unit.toLowerCase()}</span>
+                                    {bracketStr && (
+                                      <span className="dim-pill-bracket"> ({bracketStr} {unit.toLowerCase()})</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="cart-bespoke-assurance-row">
+                          <CheckCircle2 size={13} color="#10B981" />
+                          <span>Includes 2" tailor's inner seam allowance for custom fitting adjustments.</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {item.stock_quantity <= 5 && item.stock_quantity > 0 && (
                     <div className="cart-item-low-stock">
@@ -731,6 +853,14 @@ export const CartPage: React.FC = () => {
                 </span>
               </div>
             )}
+
+            <div className="cart-escrow-guarantee-pill">
+              <ShieldCheck size={16} color="#0C3B2E" />
+              <div>
+                <strong>Aso Escrow Protected</strong>
+                <p>Funds held safely until your tailored piece is delivered & verified.</p>
+              </div>
+            </div>
 
             <button className="cart-checkout-btn" onClick={() => setIsCheckoutMode(true)}>
               Proceed to Checkout

@@ -571,3 +571,154 @@
   margin-right: 4px;
   color: #D4AF37;
 }
+
+/* Bespoke Fit Card in PDP */
+.pdp-bespoke-spec-card {
+  margin-top: 1rem;
+  background: #FDFBF7;
+  border: 1px solid #D4AF37;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.08);
+}
+
+.bespoke-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.bespoke-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(212, 175, 55, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bespoke-card-text strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #0C3B2E;
+  font-weight: 700;
+}
+
+.bespoke-card-text span {
+  display: block;
+  font-size: 0.75rem;
+  color: #6B7280;
+}
+
+.bespoke-spec-active-box {
+  background: #FFFFFF;
+  border: 1px solid #A7F3D0;
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.bespoke-spec-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #065F46;
+}
+
+.btn-edit-bespoke-spec {
+  background: transparent;
+  border: 1px solid #065F46;
+  color: #065F46;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-edit-bespoke-spec:hover {
+  background: #ECFDF5;
+}
+
+.btn-launch-bespoke-spec {
+  width: 100%;
+  background: linear-gradient(135deg, #0C3B2E 0%, #165B47 100%);
+  color: #FFFFFF;
+  border: 1px solid #D4AF37;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-launch-bespoke-spec:hover {
+  background: #082920;
+  transform: translateY(-1px);
+}
+
+/* Dual Track Sizing Tabs in PDP */
+.pdp-track-mode-tabs {
+  display: flex;
+  background: #F3F4F6;
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 0.85rem;
+  gap: 4px;
+}
+
+.pdp-track-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4B5563;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.2s;
+}
+
+.pdp-track-tab.active {
+  background: #FFFFFF;
+  color: #0C3B2E;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.pdp-track-tab--bespoke.active {
+  background: #0C3B2E;
+  color: #FFFFFF;
+}
+
+.pdp-bespoke-chip {
+  border-color: #D4AF37 !important;
+  color: #0C3B2E !important;
+  background: #FFFDF5 !important;
+}
+
+.pdp-bespoke-chip:hover {
+  background: #FEF9E7 !important;
+}
+
+.pdp-bespoke-chip.active {
+  background: #0C3B2E !important;
+  color: #FFFFFF !important;
+  border-color: #0C3B2E !important;
+}

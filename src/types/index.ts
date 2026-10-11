@@ -1,4 +1,27 @@
 
+export interface BespokeMeasurements {
+  unit: 'IN' | 'CM';
+  gender?: 'men' | 'women' | 'unisex';
+  category_type?: 'tops_senator' | 'trousers' | 'corset_gown' | 'full_set' | 'custom';
+  chest_bust?: number | string;
+  underbust?: number | string;
+  waist?: number | string;
+  hips?: number | string;
+  shoulder?: number | string;
+  sleeve_length?: number | string;
+  sleeve_circumference?: number | string;
+  top_length?: number | string;
+  trouser_length?: number | string;
+  inseam?: number | string;
+  thigh?: number | string;
+  ankle_opening?: number | string;
+  neck_collar?: number | string;
+  shoulder_to_underbust?: number | string;
+  notes?: string;
+  [key: string]: any;
+}
+
+
 export type StretchLevel = 'NON' | 'SLIGHT' | 'MEDIUM' | 'HIGH';
 
 export interface BodyMeasurementRow {
@@ -121,6 +144,7 @@ export interface VendorProfileFull extends PublicVendorProfile {
 
 export interface User {
   id: number;
+  saved_measurements?: BespokeMeasurements | null;
   email: string;
   first_name: string;
   last_name: string;
@@ -274,6 +298,7 @@ export interface DesignerOrder {
   product_image: string;
   customer_name: string;
   size_details: string;
+  custom_measurements?: BespokeMeasurements | null;
   amount: number;
   status: 'Paid' | 'Preparing' | 'Shipped' | 'Delivered' | 'Cancelled';
   created_at: string;
@@ -297,6 +322,7 @@ export interface CartItem {
   total_price_kobo: number;
   total_price_naira: number;
   primary_image_url: string | null;
+  custom_measurements?: BespokeMeasurements | null;
   created_at: string;
   updated_at: string;
 }
@@ -373,6 +399,7 @@ export interface OrderItem {
   variant_size_snapshot: string;
   variant_color_snapshot: string | null;
   sku_snapshot: string;
+  custom_measurements?: BespokeMeasurements | null;
   unit_price_kobo: number;
   unit_price_naira: number;
   quantity: number;
