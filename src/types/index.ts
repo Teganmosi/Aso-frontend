@@ -2,7 +2,7 @@
 export interface BespokeMeasurements {
   unit: 'IN' | 'CM';
   gender?: 'men' | 'women' | 'unisex';
-  category_type?: 'tops_senator' | 'trousers' | 'corset_gown' | 'full_set' | 'custom';
+  category_type?: 'tops_senator' | 'trousers' | 'corset_gown' | 'full_set' | 'boubou' | 'custom';
   chest_bust?: number | string;
   underbust?: number | string;
   waist?: number | string;
