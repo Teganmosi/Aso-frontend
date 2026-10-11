@@ -9,12 +9,74 @@ import type { Product, ProductVariant, Review } from '../types';
 import {
   ArrowLeft, ShoppingBag, MapPin, Clock, CheckCircle2, Star,
   ChevronLeft, ChevronRight, AlertCircle, Loader, Package, MessageSquare, ShieldCheck,
-  Ruler, Scissors
+  Ruler, Scissors, Check
 } from 'lucide-react';
 import { SizeGuideModal } from '../components/common/SizeGuideModal';
 import { BespokeFitModal } from '../components/common/BespokeFitModal';
 import type { BespokeMeasurements } from '../types';
 import './ProductDetailPage.css';
+
+
+const COLOR_HEX_MAP: Record<string, string> = {
+  'black': '#111827',
+  'midnight black': '#0F172A',
+  'white': '#FFFFFF',
+  'off-white': '#FAF9F6',
+  'cream': '#FDFBF7',
+  'gold': '#D4AF37',
+  'champagne': '#F7E7CE',
+  'champagne gold': '#F7E7CE',
+  'emerald': '#064E3B',
+  'emerald green': '#064E3B',
+  'green': '#15803D',
+  'forest green': '#0C3B2E',
+  'olive': '#3F6212',
+  'olive green': '#3F6212',
+  'burgundy': '#7F1D1D',
+  'wine': '#831843',
+  'wine red': '#780016',
+  'navy': '#1E3A8A',
+  'navy blue': '#1E3A8A',
+  'royal blue': '#1D4ED8',
+  'blue': '#2563EB',
+  'sky blue': '#38BDF8',
+  'purple': '#6B21A8',
+  'royal purple': '#581C87',
+  'lilac': '#C084FC',
+  'orange': '#EA580C',
+  'burnt orange': '#C2410C',
+  'terracotta': '#C86D51',
+  'peach': '#FDBA74',
+  'coral': '#F43F5E',
+  'yellow': '#EAB308',
+  'mustard': '#CA8A04',
+  'mustard yellow': '#CA8A04',
+  'brown': '#78350F',
+  'chocolate': '#451A03',
+  'bronze': '#A16207',
+  'silver': '#94A3B8',
+  'grey': '#64748B',
+  'gray': '#64748B',
+  'charcoal': '#334155',
+  'teal': '#0F766E',
+  'turquoise': '#0D9488',
+  'red': '#DC2626',
+  'pink': '#DB2777',
+  'dusty pink': '#BE185D',
+  'rose gold': '#B76E79',
+  'beige': '#E5D3B3',
+};
+
+const getSwatchHex = (colorName?: string | null): string => {
+  if (!colorName) return '#0C3B2E';
+  const clean = colorName.trim().toLowerCase();
+  if (clean.startsWith('#') || clean.startsWith('rgb')) return clean;
+  if (COLOR_HEX_MAP[clean]) return COLOR_HEX_MAP[clean];
+  for (const [key, hex] of Object.entries(COLOR_HEX_MAP)) {
+    if (clean.includes(key)) return hex;
+  }
+  return '#0C3B2E';
+};
 
 export const ProductDetailPage: React.FC = () => {
   const { identifier } = useParams<{ identifier: string }>();
@@ -29,6 +91,8 @@ export const ProductDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -51,8 +115,12 @@ export const ProductDetailPage: React.FC = () => {
       const data = await productApi.getPublicProductDetail(id);
       setProduct(data);
       if (data.variants && data.variants.length > 0) {
-        const firstAvailable = data.variants.find(v => v.stock_quantity > 0 && v.is_active);
-        setSelectedVariant(firstAvailable || data.variants[0]);
+        const firstAvailable = data.variants.find(v => v.stock_quantity > 0 && v.is_active) || data.variants[0];
+        setSelectedVariant(firstAvailable);
+        if (firstAvailable.color && firstAvailable.color !== 'Standard' && firstAvailable.color.toLowerCase() !== 'default') {
+          setSelectedColor(firstAvailable.color);
+        }
+        setSelectedSize(firstAvailable.size);
       }
       // Load reviews for this product
       loadReviews(data.id);
@@ -61,6 +129,50 @@ export const ProductDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+
+  const handleSelectColor = (colorName: string) => {
+    setSelectedColor(colorName);
+    if (!product?.variants) return;
+
+    // Try finding variant with current size in the newly selected color
+    const exact = product.variants.find(
+      v => v.color?.toLowerCase() === colorName.toLowerCase() && v.size === selectedSize && v.is_active
+    );
+    if (exact) {
+      setSelectedVariant(exact);
+    } else {
+      // Fallback: pick first in-stock variant of that color, or any active variant of that color
+      const fallback = product.variants.find(
+        v => v.color?.toLowerCase() === colorName.toLowerCase() && v.stock_quantity > 0 && v.is_active
+      ) || product.variants.find(
+        v => v.color?.toLowerCase() === colorName.toLowerCase() && v.is_active
+      );
+      if (fallback) {
+        setSelectedSize(fallback.size);
+        setSelectedVariant(fallback);
+      }
+    }
+  };
+
+  const handleSelectSize = (sz: string) => {
+    setIsBespokeMode(false);
+    setSelectedSize(sz);
+    if (!product?.variants) return;
+
+    const exact = product.variants.find(
+      v => v.size === sz && (!selectedColor || v.color?.toLowerCase() === selectedColor.toLowerCase()) && v.is_active
+    ) || product.variants.find(
+      v => v.size === sz && v.is_active
+    );
+    if (exact) {
+      setSelectedVariant(exact);
+      if (exact.color && exact.color !== 'Standard' && exact.color.toLowerCase() !== 'default') {
+        setSelectedColor(exact.color);
+      }
+    }
+    setQuantity(1);
   };
 
   const loadReviews = async (productId: string) => {
@@ -260,19 +372,34 @@ export const ProductDetailPage: React.FC = () => {
             )}
           </div>
 
-          {/* Temu-Style Size & Sizing Variant Selector */}
+          {/* Decoupled Color & Size Sizing Engine */}
           {(() => {
-            const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size', 'Bespoke Fit'];
-            const sortedVariants = [...(product.variants || [])].sort((a, b) => {
-              const indexA = sizeOrder.indexOf(a.size);
-              const indexB = sizeOrder.indexOf(b.size);
+            const variants = product.variants || [];
+            if (variants.length === 0) return null;
+
+            // 1. Extract Unique Colorways (excluding empty or 'Standard')
+            const rawColors = variants
+              .map(v => v.color?.trim())
+              .filter((c): c is string => Boolean(c && c !== 'Standard' && c.toLowerCase() !== 'default'));
+            const uniqueColors = Array.from(new Set(rawColors));
+
+            // 2. Extract Unique Sizes (ordered naturally)
+            const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', '4XL', 'Free Size'];
+            const rawSizes = variants
+              .map(v => v.size?.trim())
+              .filter((sz): sz is string => Boolean(sz && !sz.toLowerCase().includes('bespoke')));
+            const uniqueSizes = Array.from(new Set(rawSizes)).sort((a, b) => {
+              const indexA = sizeOrder.indexOf(a);
+              const indexB = sizeOrder.indexOf(b);
               if (indexA !== -1 && indexB !== -1) return indexA - indexB;
               if (indexA !== -1) return -1;
               if (indexB !== -1) return 1;
-              return a.size.localeCompare(b.size);
+              return a.localeCompare(b);
             });
 
-            if (sortedVariants.length === 0) return null;
+            // Active display values
+            const currentColor = selectedColor || (selectedVariant?.color && selectedVariant.color !== 'Standard' ? selectedVariant.color : '');
+            const currentSize = selectedSize || selectedVariant?.size || '';
 
             return (
               <div className="pdp-variants-section">
@@ -298,70 +425,114 @@ export const ProductDetailPage: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="pdp-size-header-row">
-                  <p className="pdp-variant-label" style={{ margin: 0 }}>
-                    {isBespokeMode ? (
-                      <span style={{ color: '#0C3B2E', fontWeight: 700 }}>
-                        <Scissors size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-                        Bespoke Custom Fit
-                      </span>
-                    ) : (
-                      <>
-                        Size:
-                        {selectedVariant && (
-                          <strong> {selectedVariant.size}{selectedVariant.color && selectedVariant.color !== 'Standard' ? ` / ${selectedVariant.color}` : ''}</strong>
-                        )}
-                      </>
-                    )}
-                  </p>
-                  {!isBespokeMode && (
-                    <button
-                      className="pdp-size-guide-btn"
-                      onClick={() => setShowSizeGuide(true)}
-                      type="button"
-                    >
-                      <Ruler size={13} color="#0C3B2E" />
-                      <span>Size Guide</span>
-                    </button>
-                  )}
-                </div>
+                {/* TIER 1: Color Palette Selector (Only shown if vendor offered multiple colors) */}
+                {uniqueColors.length > 1 && !isBespokeMode && (
+                  <div className="pdp-color-tier">
+                    <div className="pdp-tier-header">
+                      <span className="pdp-tier-label">Color:</span>
+                      <strong className="pdp-tier-value">{currentColor || 'Select Color'}</strong>
+                    </div>
+                    <div className="pdp-color-swatches-row">
+                      {uniqueColors.map((colorName) => {
+                        const isColorActive = currentColor.toLowerCase() === colorName.toLowerCase();
+                        const hex = getSwatchHex(colorName);
+                        const isLight = ['#ffffff', '#faf9f6', '#fdfbf7', '#f7e7ce', '#e5d3b3'].includes(hex.toLowerCase());
 
-                {/* Size Chips */}
-                <div className="pdp-variant-chips">
-                  {sortedVariants.map((v) => {
-                    const isSelected = !isBespokeMode && selectedVariant?.id === v.id;
-                    return (
+                        // Check if ANY size in this color has available stock
+                        const hasStock = variants.some(
+                          v => v.color?.toLowerCase() === colorName.toLowerCase() && v.stock_quantity > 0 && v.is_active
+                        );
+
+                        return (
+                          <button
+                            key={colorName}
+                            type="button"
+                            className={`pdp-color-pill ${isColorActive ? 'active' : ''} ${!hasStock ? 'out-of-stock' : ''}`}
+                            onClick={() => handleSelectColor(colorName)}
+                            title={hasStock ? colorName : `${colorName} (Sold Out)`}
+                          >
+                            <span
+                              className="pdp-color-dot"
+                              style={{
+                                backgroundColor: hex,
+                                border: isLight ? '1px solid #D1D5DB' : 'none'
+                              }}
+                            />
+                            <span className="pdp-color-pill-label">{colorName}</span>
+                            {isColorActive && <Check size={12} className="pdp-color-check-icon" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* TIER 2: Sizing & Fit Selector */}
+                <div className="pdp-size-tier">
+                  <div className="pdp-size-header-row">
+                    <p className="pdp-variant-label" style={{ margin: 0 }}>
+                      {isBespokeMode ? (
+                        <span style={{ color: '#0C3B2E', fontWeight: 700 }}>
+                          <Scissors size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                          Bespoke Custom Fit
+                        </span>
+                      ) : (
+                        <>
+                          <span className="pdp-tier-label">Size:</span>
+                          <strong className="pdp-tier-value"> {currentSize || 'Select Size'}</strong>
+                        </>
+                      )}
+                    </p>
+                    {!isBespokeMode && (
                       <button
-                        key={v.id}
-                        className={`pdp-variant-chip ${isSelected ? 'active' : ''} ${v.stock_quantity === 0 ? 'out-of-stock' : ''}`}
-                        onClick={() => {
-                          setSelectedVariant(v);
-                          setQuantity(1);
-                        }}
-                        title={v.stock_quantity === 0 ? 'Out of stock' : `${v.stock_quantity} in stock`}
-                        disabled={!v.is_active}
+                        className="pdp-size-guide-btn"
+                        onClick={() => setShowSizeGuide(true)}
+                        type="button"
                       >
-                        <span>{v.size}</span>
-                        {v.color && v.color !== 'Standard' && (
-                          <span className="variant-color-dot" style={{ backgroundColor: v.color.toLowerCase() }} />
-                        )}
-                        {v.stock_quantity === 0 && <span className="chip-oos-line" />}
+                        <Ruler size={13} color="#0C3B2E" />
+                        <span>Size Guide</span>
                       </button>
-                    );
-                  })}
+                    )}
+                  </div>
 
-                  {/* Dedicated Bespoke Chip */}
-                  <button
-                    type="button"
-                    className={`pdp-variant-chip pdp-bespoke-chip ${isBespokeMode ? 'active' : ''}`}
-                    onClick={() => {
-                      setIsBespokeMode(true);
-                      if (!bespokeMeasurements) setShowBespokeModal(true);
-                    }}
-                  >
-                    <Scissors size={12} className="chip-scissors-icon" />
-                    <span>Bespoke Fit</span>
-                  </button>
+                  {/* Size Chips */}
+                  <div className="pdp-variant-chips">
+                    {uniqueSizes.map((sz) => {
+                      const matching = variants.find(
+                        v => v.size === sz && (!currentColor || v.color?.toLowerCase() === currentColor.toLowerCase())
+                      ) || variants.find(v => v.size === sz);
+
+                      const isSelected = !isBespokeMode && currentSize === sz;
+                      const isOos = !matching || matching.stock_quantity === 0 || !matching.is_active;
+
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          className={`pdp-variant-chip ${isSelected ? 'active' : ''} ${isOos ? 'out-of-stock' : ''}`}
+                          onClick={() => handleSelectSize(sz)}
+                          title={isOos ? `${sz} is Out of stock` : `${sz} in stock`}
+                          disabled={!matching?.is_active}
+                        >
+                          <span>{sz}</span>
+                          {isOos && <span className="chip-oos-line" />}
+                        </button>
+                      );
+                    })}
+
+                    {/* Dedicated Bespoke Chip */}
+                    <button
+                      type="button"
+                      className={`pdp-variant-chip pdp-bespoke-chip ${isBespokeMode ? 'active' : ''}`}
+                      onClick={() => {
+                        setIsBespokeMode(true);
+                        if (!bespokeMeasurements) setShowBespokeModal(true);
+                      }}
+                    >
+                      <Scissors size={12} className="chip-scissors-icon" />
+                      <span>Bespoke Fit</span>
+                    </button>
+                  </div>
                 </div>
 
                 {stockStatus && (

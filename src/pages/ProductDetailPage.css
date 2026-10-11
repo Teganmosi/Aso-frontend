@@ -722,3 +722,92 @@
   color: #FFFFFF !important;
   border-color: #0C3B2E !important;
 }
+
+/* Decoupled Color & Size Selection Architecture */
+.pdp-color-tier {
+  margin-bottom: 1.25rem;
+}
+
+.pdp-size-tier {
+  margin-bottom: 1rem;
+}
+
+.pdp-tier-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.pdp-tier-label {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #6B7280);
+  font-weight: 500;
+}
+
+.pdp-tier-value {
+  font-size: 0.88rem;
+  color: #0C3B2E;
+  font-weight: 700;
+}
+
+.pdp-color-swatches-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pdp-color-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.42rem 0.85rem;
+  background: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1F2937;
+  user-select: none;
+}
+
+.pdp-color-pill:hover:not(:disabled) {
+  border-color: #0C3B2E;
+  background: #F9FAFB;
+  transform: translateY(-1px);
+}
+
+.pdp-color-pill.active {
+  border-color: #0C3B2E;
+  background: #F0FDF4;
+  color: #0C3B2E;
+  box-shadow: 0 0 0 1px #0C3B2E, 0 2px 4px rgba(12, 59, 46, 0.1);
+}
+
+.pdp-color-pill.out-of-stock {
+  opacity: 0.45;
+  text-decoration: line-through;
+  background: #F3F4F6;
+  border-color: #E5E7EB;
+  cursor: not-allowed;
+}
+
+.pdp-color-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.pdp-color-pill-label {
+  line-height: 1;
+}
+
+.pdp-color-check-icon {
+  color: #0C3B2E;
+  margin-left: 0.1rem;
+}
