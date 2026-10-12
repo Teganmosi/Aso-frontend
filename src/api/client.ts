@@ -29,7 +29,18 @@ import type {
   OrderMessage,
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+const getApiBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  // Prevent browser Mixed Content blocking when page is accessed over HTTPS
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    if (!envUrl || envUrl.startsWith('http://')) {
+      return '/api/v1';
+    }
+  }
+  return envUrl || '/api/v1';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
