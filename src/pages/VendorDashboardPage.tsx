@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { vendorApi, payoutApi } from '../api/client';
 import type { BankAccount, VendorBalance, PayoutRequest, LedgerEntry, ProductItem } from '../types';
 import { 
-  Landmark, 
+  Landmark,
+  Lock, 
   CheckCircle2, 
   Store, 
   AlertCircle, 
@@ -188,6 +189,11 @@ export const VendorDashboardPage: React.FC = () => {
     e.preventDefault();
     setWithdrawModalError('');
     setWithdrawModalSuccess('');
+
+    if (!user?.vendor_profile?.is_verified) {
+      setWithdrawModalError('Identity verification (NIN or CAC) is required before requesting withdrawals.');
+      return;
+    }
 
     const val = parseFloat(withdrawAmount);
     if (isNaN(val) || val <= 0) {
@@ -602,10 +608,21 @@ export const VendorDashboardPage: React.FC = () => {
                 className="btn-primary"
                 onClick={() => setShowWithdrawModal(true)}
                 disabled={availableNaira <= 0}
-                style={{ backgroundColor: '#064E3B', color: '#FFF', padding: '0.75rem 1.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}
+                style={{
+                  backgroundColor: !user?.vendor_profile?.is_verified ? '#374151' : '#064E3B',
+                  color: '#FFF',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: availableNaira <= 0 ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontWeight: 600
+                }}
               >
-                <Landmark size={18} />
-                <span>Withdraw to Bank</span>
+                {!user?.vendor_profile?.is_verified ? <Lock size={16} /> : <Landmark size={18} />}
+                <span>{!user?.vendor_profile?.is_verified ? 'Verify Identity to Withdraw' : 'Withdraw to Bank'}</span>
               </button>
             </div>
 
@@ -931,6 +948,50 @@ export const VendorDashboardPage: React.FC = () => {
                     </div>
                   )}
 
+                  {!user?.vendor_profile?.is_verified ? (
+                    <div style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', padding: '1.25rem', borderRadius: '8px', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#92400E', fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.4rem' }}>
+                        <ShieldCheck size={20} color="#D97706" />
+                        <span>Identity Verification Required</span>
+                      </div>
+                      <p style={{ margin: '0 0 0.85rem', fontSize: '0.85rem', color: '#92400E', lineHeight: 1.45 }}>
+                        To withdraw order settlements to your bank account, Nigerian financial regulations require identity verification (NIN or CAC). You can sell immediately and verify to unlock payouts.
+                      </p>
+                      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => setShowWithdrawModal(false)}
+                          style={{ padding: '0.55rem 1rem', borderRadius: '6px', cursor: 'pointer', border: '1px solid #D1D5DB', background: '#FFF', fontSize: '0.825rem' }}
+                        >
+                          Close
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowWithdrawModal(false);
+                            setActiveTab('profile');
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.55rem 1.15rem',
+                            backgroundColor: '#004B44',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '0.825rem',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <span>Complete Verification in Profile</span>
+                          <ArrowRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
                   <form onSubmit={handleWithdrawalFromEarnings}>
                     <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                       <label className="form-label">WITHDRAWAL AMOUNT (₦)</label>
@@ -983,6 +1044,7 @@ export const VendorDashboardPage: React.FC = () => {
                       </button>
                     </div>
                   </form>
+                  )}
                 </div>
               </div>
             )}

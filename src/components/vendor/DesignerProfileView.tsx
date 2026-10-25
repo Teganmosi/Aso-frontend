@@ -24,8 +24,8 @@ import {
   LogOut,
   User as UserIcon,
   Clock,
-  Info,
-  Building
+  Lock,
+  Building,
 } from 'lucide-react';
 
 interface DesignerProfileViewProps {
@@ -52,7 +52,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   const { user, refreshMe, logout } = useAuth();
   const navigate = useNavigate();
   const [activeSubTab, setActiveSubTab] = useState<'general' | 'location' | 'kyc' | 'payout' | 'social'>('general');
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
 
   const handleLogout = async () => {
     try {
@@ -113,9 +113,10 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   const [publicState, setPublicState] = useState(user?.vendor_profile?.state || 'Lagos State');
   const [workshopAddress, setWorkshopAddress] = useState(user?.vendor_profile?.workshop_address || '');
   const [landmark, setLandmark] = useState(user?.vendor_profile?.landmark || '');
-  const [dispatchHub, setDispatchHub] = useState('Lagos Central Logistics Terminal (GIGL / DHL / Fez)');
+  const dispatchHub = 'Dellyman Logistics Dispatch Terminal';
 
-  // Section 3: Verification & KYC (Private)
+  // Section 3: Verification & KYC (Withdrawal Requirement)
+  const [kycMethod, setKycMethod] = useState<'nin' | 'cac'>('nin');
   const [cacNumber, setCacNumber] = useState(user?.vendor_profile?.cac_number || '');
   const [nin, setNin] = useState(user?.vendor_profile?.nin_number || '');
   const [isVerified, setIsVerified] = useState(user?.vendor_profile?.is_verified ?? false);
@@ -133,7 +134,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   const [bankCode, setBankCode] = useState('033');
   const [editingBank, setEditingBank] = useState(false);
 
-  // Section 5: Social & Contact Links (Public)
+  // Section 5: Social & Contact Links
   const [instagram, setInstagram] = useState('');
   const [whatsapp, setWhatsapp] = useState(user?.phone_number || '');
   const [website, setWebsite] = useState('');
@@ -224,6 +225,13 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           if (user.vendor_profile?.slug && !slug) {
             setSlug(user.vendor_profile.slug);
           }
+          if (user.vendor_profile?.nin_number) {
+            setNin(user.vendor_profile.nin_number);
+            setKycMethod('nin');
+          } else if (user.vendor_profile?.cac_number) {
+            setCacNumber(user.vendor_profile.cac_number);
+            setKycMethod('cac');
+          }
         }
 
         // Fetch live bank account
@@ -245,7 +253,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   }, [user]);
 
   const handleCopyLink = () => {
-    const fullUrl = `https://asomarketplace.ng/store/${slug}`;
+    const fullUrl = `https://asomarketplace.com.ng/store/${slug}`;
     navigator.clipboard.writeText(fullUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -274,7 +282,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
       const first_name = nameParts[0] || '';
       const last_name = nameParts.slice(1).join(' ') || '';
 
-      // 1. Update Core Vendor Storefront Profile in DB
+      // 1. Update Core Vendor Storefront Profile
       const updatedProfile = await vendorApi.updateProfile({
         store_name: storeName.trim(),
         description: biography.trim(),
@@ -296,7 +304,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
         setSlug(updatedProfile.slug);
       }
 
-      // 2. Persist payout bank account to DB if provided
+      // 2. Persist payout bank account if provided
       if (accountNumber && bankName && accountName) {
         await vendorApi.saveBankAccount({
           account_name: accountName,
@@ -319,10 +327,10 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
 
       await refreshMe();
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 4000);
+      setTimeout(() => setSaveSuccess(false), 3500);
     } catch (err: any) {
       console.error('Save profile error', err);
-      const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to save changes to the database.';
+      const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to save profile changes.';
       setSaveError(msg);
     } finally {
       setSaving(false);
@@ -349,28 +357,26 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   };
 
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem 5rem' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem 1.25rem 5rem' }}>
       
-      {/* ---------------------------------------------------------------
-          PAGE TITLE & HEADER ACTIONS
-         --------------------------------------------------------------- */}
+      {/* PAGE HEADER */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
               <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#004B44', fontWeight: 700 }}>
                 Designer Studio
               </span>
-              <span style={{ color: '#C4C7C5' }}>•</span>
+              <span style={{ color: '#C4C7C5' }}>|</span>
               <span style={{ fontSize: '0.75rem', color: '#535F5C', fontWeight: 500 }}>
-                Profile &amp; Storefront Management
+                Profile &amp; Settings
               </span>
             </div>
-            <h1 style={{ margin: 0, fontSize: '1.85rem', fontFamily: 'serif', fontWeight: 600, color: '#1C1B1B', letterSpacing: '-0.01em' }}>
+            <h1 style={{ margin: 0, fontSize: '1.65rem', fontFamily: 'serif', fontWeight: 600, color: '#1C1B1B' }}>
               {storeName || 'Designer Profile'}
             </h1>
-            <p style={{ margin: '0.35rem 0 0', fontSize: '0.9rem', color: '#535F5C' }}>
-              Manage your brand identity, approved story, location, verification, and payout details. Designer Studio is the source of truth for your public storefront.
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: '#535F5C' }}>
+              Manage your brand identity, workshop pickup location, identity verification, and payout details.
             </p>
           </div>
 
@@ -385,19 +391,18 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.45rem',
-                  padding: '0.65rem 1rem',
+                  padding: '0.6rem 0.95rem',
                   fontSize: '0.85rem',
                   fontWeight: 600,
                   color: '#004B44',
                   backgroundColor: '#E8F5F1',
                   border: '1px solid #B1EEE4',
                   borderRadius: '6px',
-                  textDecoration: 'none',
-                  transition: 'background 0.2s'
+                  textDecoration: 'none'
                 }}
               >
-                <ExternalLink size={15} />
-                <span>View Public Storefront</span>
+                <ExternalLink size={14} />
+                <span>View Storefront</span>
               </a>
             )}
 
@@ -409,7 +414,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '0.65rem 1.35rem',
+                padding: '0.6rem 1.25rem',
                 fontSize: '0.875rem',
                 fontWeight: 600,
                 color: '#FFFFFF',
@@ -417,11 +422,10 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                 border: 'none',
                 borderRadius: '6px',
                 cursor: saving ? 'not-allowed' : 'pointer',
-                boxShadow: '0 2px 4px rgba(0, 75, 68, 0.15)',
-                transition: 'all 0.2s'
+                boxShadow: '0 1px 3px rgba(0, 75, 68, 0.15)'
               }}
             >
-              {saving ? <Loader size={16} className="cart-spinner" /> : <Save size={16} />}
+              {saving ? <Loader size={15} className="cart-spinner" /> : <Save size={15} />}
               <span>{saving ? 'Saving...' : 'Save Profile Changes'}</span>
             </button>
           </div>
@@ -429,31 +433,29 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
 
         {/* Feedback alerts */}
         {saveSuccess && (
-          <div style={{ backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.85rem 1.15rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#065F46', fontSize: '0.875rem' }}>
-            <CheckCircle2 size={18} />
-            <span>Profile and storefront settings successfully updated in the database.</span>
+          <div style={{ backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.75rem 1rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#065F46', fontSize: '0.85rem' }}>
+            <CheckCircle2 size={16} />
+            <span>Profile saved successfully.</span>
           </div>
         )}
 
         {saveError && (
-          <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', padding: '0.85rem 1.15rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#DC2626', fontSize: '0.875rem' }}>
-            <AlertCircle size={18} />
+          <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', padding: '0.75rem 1rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#DC2626', fontSize: '0.85rem' }}>
+            <AlertCircle size={16} />
             <span>{saveError}</span>
           </div>
         )}
       </div>
 
-      {/* ---------------------------------------------------------------
-          NAVIGATION ANCHOR TABS
-         --------------------------------------------------------------- */}
-      <div style={{ display: 'flex', overflowX: 'auto', borderBottom: '1px solid #E5E2E1', gap: '1.75rem', marginBottom: '2rem', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>
+      {/* NAVIGATION TABS */}
+      <div style={{ display: 'flex', overflowX: 'auto', borderBottom: '1px solid #E5E2E1', gap: '1.5rem', marginBottom: '1.75rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
         <button
           type="button"
           onClick={() => scrollToSection('general')}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.45rem',
             paddingBottom: '0.75rem',
             border: 'none',
             background: 'none',
@@ -463,8 +465,8 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             borderBottom: activeSubTab === 'general' ? '2px solid #004B44' : '2px solid transparent'
           }}
         >
-          <Bookmark size={16} />
-          <span>General Info &amp; Branding (Public)</span>
+          <Bookmark size={15} />
+          <span>Brand &amp; Storefront</span>
         </button>
 
         <button
@@ -473,7 +475,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.45rem',
             paddingBottom: '0.75rem',
             border: 'none',
             background: 'none',
@@ -483,8 +485,8 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             borderBottom: activeSubTab === 'location' ? '2px solid #004B44' : '2px solid transparent'
           }}
         >
-          <MapPin size={16} />
-          <span>Location &amp; Fulfillment</span>
+          <MapPin size={15} />
+          <span>Location &amp; Pickup</span>
         </button>
 
         <button
@@ -493,7 +495,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.45rem',
             paddingBottom: '0.75rem',
             border: 'none',
             background: 'none',
@@ -503,8 +505,8 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             borderBottom: activeSubTab === 'kyc' ? '2px solid #004B44' : '2px solid transparent'
           }}
         >
-          <ShieldCheck size={16} />
-          <span>Verification &amp; Legal (Private)</span>
+          <ShieldCheck size={15} />
+          <span>Identity &amp; Withdrawals</span>
         </button>
 
         <button
@@ -513,7 +515,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.45rem',
             paddingBottom: '0.75rem',
             border: 'none',
             background: 'none',
@@ -523,8 +525,8 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             borderBottom: activeSubTab === 'payout' ? '2px solid #004B44' : '2px solid transparent'
           }}
         >
-          <LandmarkIcon size={16} />
-          <span>Payout Details (Private)</span>
+          <LandmarkIcon size={15} />
+          <span>Payout Account</span>
         </button>
 
         <button
@@ -533,7 +535,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.45rem',
             paddingBottom: '0.75rem',
             border: 'none',
             background: 'none',
@@ -543,43 +545,30 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             borderBottom: activeSubTab === 'social' ? '2px solid #004B44' : '2px solid transparent'
           }}
         >
-          <Phone size={16} />
-          <span>Social &amp; Contact Links (Public)</span>
+          <Phone size={15} />
+          <span>Contacts &amp; Links</span>
         </button>
       </div>
 
-      {/* Loading state indicator */}
-      {loading && (
-        <div style={{ padding: '0.9rem 1.25rem', backgroundColor: '#F0EDED', borderRadius: '6px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#004B44', fontSize: '0.85rem' }}>
-          <Loader size={16} className="cart-spinner" />
-          <span>Synchronizing profile settings with database...</span>
-        </div>
-      )}
-
-      {/* ---------------------------------------------------------------
-          MAIN 2:1 SPLIT CONTENT GRID
-         --------------------------------------------------------------- */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+      {/* MAIN TWO-COLUMN LAYOUT */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '1.75rem', alignItems: 'start' }}>
         
-        {/* --- LEFT COLUMN (Brand Assets, Store Info, Location, KYC, Payout) --- */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', gridColumn: 'span 2' }}>
+        {/* LEFT COLUMN: EDITABLE FORMS */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          {/* 1. BRAND ASSETS & GENERAL INFO (PUBLIC) */}
-          <div id="section-general" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+          {/* 1. BRAND IDENTITY & STOREFRONT */}
+          <div id="section-general" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#004B44', backgroundColor: '#E8F5F1', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                  Public Information
-                </span>
-                <h2 style={{ margin: '0.5rem 0 0', fontSize: '1.25rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
-                  Store Identity &amp; Brand Assets
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
+                  Brand Identity &amp; Assets
                 </h2>
-                <p style={{ margin: '0.2rem 0 0', fontSize: '0.825rem', color: '#535F5C' }}>
-                  Visual assets and store identity visible on your public storefront.
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
+                  Visual assets and store identity displayed on your public storefront.
                 </p>
               </div>
-              <span style={{ fontSize: '0.75rem', color: '#535F5C', backgroundColor: '#F0EDED', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 500 }}>
-                Recommended Banner: 1200 × 360 px
+              <span style={{ fontSize: '0.72rem', color: '#535F5C' }}>
+                Recommended: Landscape banner (3:1 ratio)
               </span>
             </div>
 
@@ -591,24 +580,24 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             <div
               style={{
                 position: 'relative',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 overflow: 'hidden',
                 border: '1px solid #E5E2E1',
-                height: '180px',
+                height: '160px',
                 backgroundColor: '#F6F3F2',
-                marginBottom: '1.5rem',
+                marginBottom: '1rem',
                 backgroundImage: coverBannerUrl ? `url("${coverBannerUrl}")` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 display: 'flex',
                 alignItems: 'flex-end',
-                padding: '1rem'
+                padding: '0.85rem'
               }}
             >
               {!coverBannerUrl && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#707977' }}>
-                  <Camera size={28} />
-                  <span style={{ fontSize: '0.8rem', marginTop: '0.4rem', fontWeight: 500 }}>Upload Store Cover Banner</span>
+                  <Camera size={24} />
+                  <span style={{ fontSize: '0.8rem', marginTop: '0.35rem', fontWeight: 500 }}>Upload Store Cover Banner</span>
                 </div>
               )}
               <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', display: 'flex', gap: '0.5rem' }}>
@@ -619,37 +608,36 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     backgroundColor: 'rgba(255,255,255,0.92)',
                     border: '1px solid #E5E2E1',
                     borderRadius: '4px',
-                    padding: '0.35rem 0.75rem',
+                    padding: '0.35rem 0.7rem',
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     color: '#004B44',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.35rem',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    gap: '0.35rem'
                   }}
                 >
-                  <Camera size={14} />
+                  <Camera size={13} />
                   <span>{coverBannerUrl ? 'Change Banner' : 'Upload Banner'}</span>
                 </button>
               </div>
 
-              {/* Logo / Badge Overlap */}
+              {/* Logo / Badge */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 2 }}>
                 <div
                   style={{
-                    width: '64px',
-                    height: '64px',
+                    width: '56px',
+                    height: '56px',
                     borderRadius: '50%',
                     backgroundColor: '#004B44',
                     border: '3px solid #FFFFFF',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#B1EEE4',
-                    fontSize: '1.25rem',
+                    fontSize: '1.15rem',
                     fontWeight: 700,
                     overflow: 'hidden',
                     position: 'relative'
@@ -678,7 +666,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; }}
                   >
-                    <Camera size={18} color="#FFFFFF" />
+                    <Camera size={16} color="#FFFFFF" />
                   </button>
                 </div>
                 <div>
@@ -707,8 +695,8 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             </div>
 
             {/* Store Information Form Fields */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
                     Store / Brand Name *
@@ -717,8 +705,8 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     type="text"
                     value={storeName}
                     onChange={(e) => setStoreName(e.target.value)}
-                    placeholder="e.g. VYCE DESIGNS"
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
+                    placeholder="e.g. Vyce Designs"
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', fontSize: '0.875rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
                   />
                 </div>
 
@@ -730,11 +718,11 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     type="text"
                     value={leadDesigner}
                     onChange={(e) => setLeadDesigner(e.target.value)}
-                    placeholder="e.g. Adeyemi Alabi"
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
+                    placeholder="e.g. Seyi Vodi or Lanre da Silva"
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', fontSize: '0.875rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
                   />
                   <span style={{ fontSize: '0.7rem', color: '#707977', display: 'block', marginTop: '0.2rem' }}>
-                    Entered value is displayed as the designer name. No inflated titles applied.
+                    Displayed on your public storefront alongside your brand name.
                   </span>
                 </div>
               </div>
@@ -745,27 +733,28 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                   Storefront URL Handle
                 </label>
                 <div style={{ display: 'flex', borderRadius: '4px', border: '1px solid #E5E2E1', backgroundColor: '#F0EDED', overflow: 'hidden' }}>
-                  <span style={{ padding: '0.65rem 0.85rem', fontSize: '0.85rem', color: '#535F5C', backgroundColor: '#E5E2E1' }}>
-                    asomarketplace.ng/store/
+                  <span style={{ padding: '0.6rem 0.8rem', fontSize: '0.825rem', color: '#535F5C', backgroundColor: '#E5E2E1' }}>
+                    asomarketplace.com.ng/store/
                   </span>
                   <input
                     type="text"
-                    readOnly
-                    value={slug || 'store-handle'}
-                    style={{ width: '100%', border: 'none', background: 'transparent', padding: '0.65rem 0.85rem', fontSize: '0.85rem', color: '#004B44', fontWeight: 600, outline: 'none' }}
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    placeholder="brand-name"
+                    style={{ width: '100%', border: 'none', background: 'transparent', padding: '0.6rem 0.8rem', fontSize: '0.875rem', outline: 'none', color: '#1C1B1B' }}
                   />
                   <button
                     type="button"
                     onClick={handleCopyLink}
-                    style={{ border: 'none', background: '#E5E2E1', padding: '0 0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: '#004B44', fontWeight: 600 }}
+                    style={{ padding: '0.6rem 0.85rem', backgroundColor: '#004B44', border: 'none', color: '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', fontWeight: 600 }}
                   >
-                    {copied ? <Check size={14} color="#004B44" /> : <Copy size={14} />}
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
                     <span>{copied ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
               </div>
 
-              {/* Tagline / Short Bio */}
+              {/* Tagline / Bio */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
                   Tagline / Short Bio
@@ -774,18 +763,19 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                   type="text"
                   value={tagline}
                   onChange={(e) => setTagline(e.target.value)}
-                  placeholder="e.g. Modern Nigerian silhouettes, bespoke tailoring & ready-to-wear pieces"
-                  style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
+                  placeholder="e.g. Contemporary bespoke menswear and authentic ceremonial wear."
+                  maxLength={120}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', fontSize: '0.875rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
                 />
               </div>
 
-              {/* Detailed Designer Story */}
+              {/* Detailed Brand Story */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
                   <label style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947' }}>
-                    Detailed Designer Story
+                    Brand Story &amp; Craftsmanship
                   </label>
-                  <span style={{ fontSize: '0.75rem', color: wordCount > 500 ? '#DC2626' : '#707977' }}>
+                  <span style={{ fontSize: '0.7rem', color: wordCount > 500 ? '#DC2626' : '#707977' }}>
                     {wordCount} / 500 words
                   </span>
                 </div>
@@ -793,11 +783,11 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                   rows={4}
                   value={biography}
                   onChange={(e) => setBiography(e.target.value)}
-                  placeholder="Share your brand story, craftsmanship values, and design philosophy. This approved text is displayed on your public storefront About section."
-                  style={{ width: '100%', padding: '0.75rem 0.85rem', fontSize: '0.9rem', lineHeight: '1.6', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B', resize: 'vertical' }}
+                  placeholder="Tell buyers about your craftsmanship, inspiration, and signature tailoring..."
+                  style={{ width: '100%', padding: '0.65rem 0.8rem', fontSize: '0.875rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B', resize: 'vertical' }}
                 />
                 <span style={{ fontSize: '0.7rem', color: '#707977', display: 'block', marginTop: '0.2rem' }}>
-                  The frontend displays your submitted story directly. No biographical text is fabricated by the platform.
+                  Share your background, craftsmanship, and what defines your tailoring.
                 </span>
               </div>
 
@@ -806,17 +796,17 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.5rem' }}>
                   Specialties &amp; Categories
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', alignItems: 'center', marginBottom: '0.65rem' }}>
                   {tags.map((tag) => (
                     <span
                       key={tag}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.35rem 0.75rem',
+                        gap: '0.35rem',
+                        padding: '0.3rem 0.7rem',
                         backgroundColor: '#E8F5F1',
-                        borderRadius: '20px',
+                        borderRadius: '16px',
                         fontSize: '0.8rem',
                         color: '#004B44',
                         border: '1px solid #B1EEE4',
@@ -829,7 +819,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                         onClick={() => handleRemoveTag(tag)}
                         style={{ border: 'none', background: 'none', color: '#004B44', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
                       >
-                        <X size={13} />
+                        <X size={12} />
                       </button>
                     </span>
                   ))}
@@ -858,7 +848,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                         Add
                       </button>
                       <button type="button" onClick={() => setShowAddTag(false)} style={{ background: 'none', border: 'none', color: '#707977', cursor: 'pointer' }}>
-                        <X size={14} />
+                        <X size={13} />
                       </button>
                     </div>
                   ) : (
@@ -869,17 +859,17 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.3rem',
-                        padding: '0.35rem 0.75rem',
+                        padding: '0.3rem 0.7rem',
                         border: '1px dashed #004B44',
                         color: '#004B44',
-                        borderRadius: '20px',
+                        borderRadius: '16px',
                         fontSize: '0.8rem',
                         backgroundColor: 'transparent',
                         cursor: 'pointer',
                         fontWeight: 600
                       }}
                     >
-                      <Plus size={13} />
+                      <Plus size={12} />
                       <span>Add Specialty</span>
                     </button>
                   )}
@@ -887,7 +877,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
 
                 {/* Quick Add Taxonomy Chips */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#707977', marginRight: '0.25rem' }}>Popular:</span>
+                  <span style={{ fontSize: '0.72rem', color: '#707977', marginRight: '0.2rem' }}>Popular:</span>
                   {STANDARD_SPECIALTIES.map((spec) => {
                     const isAdded = tags.includes(spec);
                     return (
@@ -900,14 +890,14 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                           border: isAdded ? '1px solid #E5E2E1' : '1px solid #D0D5DD',
                           background: isAdded ? '#F9FAFB' : '#FFFFFF',
                           color: isAdded ? '#9CA3AF' : '#374151',
-                          padding: '0.2rem 0.55rem',
+                          padding: '0.2rem 0.5rem',
                           borderRadius: '12px',
                           fontSize: '0.72rem',
                           cursor: isAdded ? 'default' : 'pointer',
                           fontWeight: 500
                         }}
                       >
-                        {isAdded ? `✓ ${spec}` : `+ ${spec}`}
+                        {isAdded ? spec : `+ ${spec}`}
                       </button>
                     );
                   })}
@@ -916,54 +906,54 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             </div>
           </div>
 
-          {/* 2. LOCATION & FULFILLMENT (PUBLIC VS PRIVATE) */}
-          <div id="section-location" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          {/* 2. LOCATION & FULFILLMENT */}
+          <div id="section-location" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.25rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
-                  Location &amp; Fulfillment
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
+                  Location &amp; Courier Pickup
                 </h2>
-                <p style={{ margin: '0.2rem 0 0', fontSize: '0.825rem', color: '#535F5C' }}>
-                  Separation of authoritative public location and confidential courier fulfillment address.
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
+                  Your city is visible to buyers. Your workshop address is confidential and only used for courier pickups.
                 </p>
               </div>
-              <Truck size={22} color="#004B44" />
+              <Truck size={20} color="#004B44" />
             </div>
 
             {/* Public Location Box */}
-            <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '6px', padding: '1.15rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.65rem' }}>
-                <Globe size={16} color="#166534" />
+            <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '6px', padding: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                <Globe size={15} color="#166534" />
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#166534' }}>
                   Public Location (Customer Facing)
                 </span>
               </div>
-              <p style={{ margin: '0 0 0.85rem', fontSize: '0.8rem', color: '#166534' }}>
-                Displayed publicly on your storefront header and about section (e.g. <strong>{publicCity}, {publicState}</strong>). Full residential or workshop addresses are never exposed to customers.
+              <p style={{ margin: '0 0 0.75rem', fontSize: '0.785rem', color: '#166534' }}>
+                Displayed on your public storefront header (e.g. <strong>{publicCity}, {publicState}</strong>). Your street address is never shown to customers.
               </p>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#166534', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#166534', marginBottom: '0.3rem' }}>
                     Public City *
                   </label>
                   <input
                     type="text"
                     value={publicCity}
                     onChange={(e) => setPublicCity(e.target.value)}
-                    placeholder="e.g. Lagos, Aba, Abuja"
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #86EFAC', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
+                    placeholder="e.g. Ikeja, Lekki, or Yaba"
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #86EFAC', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#166534', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#166534', marginBottom: '0.3rem' }}>
                     Public State *
                   </label>
                   <select
                     value={publicState}
                     onChange={(e) => setPublicState(e.target.value)}
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #86EFAC', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #86EFAC', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
                   >
                     {NIGERIAN_STATES.map((st) => (
                       <option key={st} value={st}>{st}</option>
@@ -973,55 +963,55 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
               </div>
             </div>
 
-            {/* Private Workshop Address Box */}
-            <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '1.15rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.65rem' }}>
-                <Building size={16} color="#475569" />
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#475569' }}>
-                  Private Workshop Address &amp; Courier Hub (Confidential)
+            {/* Private Workshop Pickup Address */}
+            <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                <MapPin size={15} color="#334155" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#334155' }}>
+                  Workshop Pickup Address (Confidential)
                 </span>
               </div>
-              <p style={{ margin: '0 0 0.85rem', fontSize: '0.8rem', color: '#64748B' }}>
-                Operational fulfillment details used solely for courier pickups (GIGL / DHL / Fez) and Aso verification. Strictly private.
+              <p style={{ margin: '0 0 0.75rem', fontSize: '0.785rem', color: '#475569' }}>
+                Used strictly for automated courier dispatch (Dellyman) to pick up ready parcels.
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#334155', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#334155', marginBottom: '0.3rem' }}>
                     Physical Workshop / Studio Address
                   </label>
                   <input
                     type="text"
                     value={workshopAddress}
                     onChange={(e) => setWorkshopAddress(e.target.value)}
-                    placeholder="e.g. 92 Lateef Adegboyega Street, Ago Palace, Okota"
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #CBD5E1', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
+                    placeholder="e.g. 14 Commercial Avenue, Sabo, Yaba"
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #CBD5E1', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#334155', marginBottom: '0.35rem' }}>
-                      Landmark / Pickup Note (Private)
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#334155', marginBottom: '0.3rem' }}>
+                      Nearest Landmark (Private)
                     </label>
                     <input
                       type="text"
                       value={landmark}
                       onChange={(e) => setLandmark(e.target.value)}
-                      placeholder="e.g. Near Ago Roundabout / Behind Zenith Bank"
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #CBD5E1', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
+                      placeholder="e.g. Opposite Ozone Cinemas, near Total station"
+                      style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #CBD5E1', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#334155', marginBottom: '0.35rem' }}>
-                      Operational Dispatch Hub
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#334155', marginBottom: '0.3rem' }}>
+                      Logistics Dispatch Partner
                     </label>
                     <input
                       type="text"
+                      readOnly
                       value={dispatchHub}
-                      onChange={(e) => setDispatchHub(e.target.value)}
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #CBD5E1', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
+                      style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #CBD5E1', borderRadius: '4px', backgroundColor: '#F1F5F9', color: '#64748B' }}
                     />
                   </div>
                 </div>
@@ -1029,119 +1019,185 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             </div>
           </div>
 
-          {/* 3. VERIFICATION & LEGAL (KYC) (PRIVATE) */}
-          <div id="section-kyc" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          {/* 3. IDENTITY VERIFICATION & WITHDRAWALS */}
+          <div id="section-kyc" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#7C2D12', backgroundColor: '#FFEDD5', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                  Private Operational Data
-                </span>
-                <h2 style={{ margin: '0.5rem 0 0', fontSize: '1.25rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
-                  Verification &amp; Legal (KYC)
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
+                  Identity Verification &amp; Bank Withdrawals
                 </h2>
-                <p style={{ margin: '0.2rem 0 0', fontSize: '0.825rem', color: '#535F5C' }}>
-                  Compliance documents are private and never exposed to customers on the public storefront.
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
+                  To withdraw earnings to your bank account, Nigerian financial regulations require identity verification. You can list products and make sales immediately.
                 </p>
               </div>
-              <ShieldCheck size={22} color="#004B44" />
+              <ShieldCheck size={20} color="#004B44" />
             </div>
 
             {/* Status Banner */}
             <div style={{
-              backgroundColor: isVerified ? '#ECFDF5' : '#FFFBEB',
-              border: `1px solid ${isVerified ? '#A7F3D0' : '#FDE68A'}`,
+              backgroundColor: isVerified ? '#ECFDF5' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#FFFBEB' : '#F8FAFC'),
+              border: `1px solid ${isVerified ? '#A7F3D0' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#FDE68A' : '#E2E8F0')}`,
               borderRadius: '6px',
-              padding: '1rem 1.15rem',
+              padding: '0.9rem 1rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '1rem'
+              gap: '1rem',
+              flexWrap: 'wrap'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <CheckCircle2 size={20} color={isVerified ? '#059669' : '#D97706'} />
+                {isVerified ? (
+                  <CheckCircle2 size={18} color="#059669" />
+                ) : (verificationStatus === 'PENDING' && (nin || cacNumber)) ? (
+                  <Clock size={18} color="#D97706" />
+                ) : (
+                  <Lock size={18} color="#64748B" />
+                )}
                 <div>
-                  <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: isVerified ? '#065F46' : '#92400E' }}>
-                    {isVerified ? 'Verified Designer' : (verificationStatus === 'PENDING' ? 'Verification in Progress' : 'Pending Verification')}
+                  <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 700, color: isVerified ? '#065F46' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#92400E' : '#1E293B') }}>
+                    {isVerified ? 'Verified Designer • Bank Withdrawals Active' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? 'Verification in Progress' : 'Action Required to Enable Withdrawals')}
                   </p>
-                  <p style={{ margin: '0.15rem 0 0', fontSize: '0.775rem', color: isVerified ? '#047857' : '#B45309' }}>
+                  <p style={{ margin: '0.15rem 0 0', fontSize: '0.775rem', color: isVerified ? '#047857' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#B45309' : '#64748B') }}>
                     {isVerified
-                      ? 'Your business has completed verification. The Verified Designer badge is live on your public storefront.'
-                      : 'Your documents have been submitted and are under review. Public storefront reflects Verification in Progress.'}
+                      ? 'Your identity has been verified. Withdrawals to your bank account are fully unlocked.'
+                      : (verificationStatus === 'PENDING' && (nin || cacNumber))
+                      ? 'Your verification details have been submitted and are under review. You can continue uploading garments.'
+                      : 'You can sell immediately. Submit either your NIN or CAC registration below to enable bank withdrawals when you make sales.'}
                   </p>
                 </div>
               </div>
               <span style={{
-                backgroundColor: isVerified ? '#004B44' : '#D97706',
+                backgroundColor: isVerified ? '#004B44' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#D97706' : '#64748B'),
                 color: '#FFFFFF',
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontWeight: 700,
-                padding: '0.25rem 0.65rem',
+                padding: '0.25rem 0.6rem',
                 borderRadius: '12px'
               }}>
-                {isVerified ? 'VERIFIED' : 'UNDER REVIEW'}
+                {isVerified ? 'VERIFIED' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? 'UNDER REVIEW' : 'WITHDRAWALS LOCKED')}
               </span>
             </div>
 
-            {/* Legal Document Inputs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                  CAC Business Registration Number (Private)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. RC-1849204 or BN-3920194"
-                  value={cacNumber}
-                  onChange={(e) => setCacNumber(e.target.value)}
-                  style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
-                />
+            {/* Verification Method Toggle */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.5rem' }}>
+                Choose Verification Document
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setKycMethod('nin')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '6px',
+                    border: kycMethod === 'nin' ? '2px solid #004B44' : '1px solid #D1D5DB',
+                    backgroundColor: kycMethod === 'nin' ? '#E8F5F1' : '#FFFFFF',
+                    color: kycMethod === 'nin' ? '#004B44' : '#374151',
+                    fontWeight: 600,
+                    fontSize: '0.825rem',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  <UserIcon size={16} />
+                  <div>
+                    <div>NIN (National ID)</div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 400, color: '#535F5C' }}>For Individual Tailors &amp; Designers</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setKycMethod('cac')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '6px',
+                    border: kycMethod === 'cac' ? '2px solid #004B44' : '1px solid #D1D5DB',
+                    backgroundColor: kycMethod === 'cac' ? '#E8F5F1' : '#FFFFFF',
+                    color: kycMethod === 'cac' ? '#004B44' : '#374151',
+                    fontWeight: 600,
+                    fontSize: '0.825rem',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  <Building size={16} />
+                  <div>
+                    <div>CAC Business Number</div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 400, color: '#535F5C' }}>For Registered Business Names &amp; Ltd</div>
+                  </div>
+                </button>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                  National Identification Number (NIN) (Private)
-                </label>
-                <input
-                  type="text"
-                  placeholder="11-digit NIN"
-                  maxLength={11}
-                  value={nin}
-                  onChange={(e) => setNin(e.target.value)}
-                  style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
-                />
-              </div>
+              {kycMethod === 'nin' ? (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
+                    11-Digit National Identification Number (NIN)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter 11-digit NIN"
+                    maxLength={11}
+                    value={nin}
+                    onChange={(e) => setNin(e.target.value.replace(/\D/g, ''))}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', fontSize: '0.875rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: '#707977', display: 'block', marginTop: '0.25rem' }}>
+                    Used solely for one-time identity verification. Never displayed publicly.
+                  </span>
+                </div>
+              ) : (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
+                    CAC Business Registration Number
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. BN-2938102 or RC-1928374"
+                    value={cacNumber}
+                    onChange={(e) => setCacNumber(e.target.value)}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', fontSize: '0.875rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: '#707977', display: 'block', marginTop: '0.25rem' }}>
+                    Corporate Affairs Commission registration number for your brand.
+                  </span>
+                </div>
+              )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: '#535F5C', backgroundColor: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '4px', border: '1px solid #E2E8F0' }}>
-              <Info size={14} color="#004B44" />
-              <span>Identity and registration details are encrypted and strictly protected under Aso Marketplace data privacy governance.</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: '#535F5C', backgroundColor: '#F8FAFC', padding: '0.6rem 0.8rem', borderRadius: '4px', border: '1px solid #E2E8F0' }}>
+              <Lock size={13} color="#004B44" />
+              <span>Identity information is encrypted and strictly protected under Nigerian data privacy regulations.</span>
             </div>
           </div>
 
-          {/* 4. PAYOUT DETAILS (PRIVATE) */}
-          <div id="section-payout" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          {/* 4. PAYOUT DETAILS */}
+          <div id="section-payout" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#7C2D12', backgroundColor: '#FFEDD5', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                  Private Financial Data
-                </span>
-                <h2 style={{ margin: '0.5rem 0 0', fontSize: '1.25rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
-                  Payout Details
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
+                  Settlement Bank Account
                 </h2>
-                <p style={{ margin: '0.2rem 0 0', fontSize: '0.825rem', color: '#535F5C' }}>
-                  Bank account for receiving customer order settlements in Naira. Confidential and never exposed on public storefronts.
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
+                  Bank account for receiving customer order settlements in Naira. Confidential and never exposed publicly.
                 </p>
               </div>
-              <LandmarkIcon size={22} color="#004B44" />
+              <LandmarkIcon size={20} color="#004B44" />
             </div>
 
             {/* Current Bank Card */}
             {accountNumber ? (
-              <div style={{ backgroundColor: '#FCF9F8', padding: '1.25rem', borderRadius: '6px', border: '1px solid #E5E2E1' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+              <div style={{ backgroundColor: '#FCF9F8', padding: '1.15rem', borderRadius: '6px', border: '1px solid #E5E2E1' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
                   <div>
-                    <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#535F5C', fontWeight: 600 }}>Active Settlement Account</span>
-                    <p style={{ margin: '0.2rem 0 0', fontSize: '1.05rem', fontWeight: 700, color: '#1C1B1B' }}>{bankName || 'Nigerian Commercial Bank'}</p>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#535F5C', fontWeight: 600 }}>Active Settlement Account</span>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: '#1C1B1B' }}>{bankName || 'Commercial Bank'}</p>
                   </div>
                   <button
                     type="button"
@@ -1151,38 +1207,38 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     {editingBank ? 'Close' : 'Update Account'}
                   </button>
                 </div>
-                <p style={{ margin: '0.2rem 0', fontFamily: 'monospace', fontSize: '1.2rem', fontWeight: 700, color: '#004B44', letterSpacing: '0.12em' }}>
+                <p style={{ margin: '0.2rem 0', fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: '#004B44', letterSpacing: '0.1em' }}>
                   •••• •••• {accountNumber.slice(-4)}
                 </p>
-                <p style={{ margin: '0.35rem 0 0', fontSize: '0.825rem', color: '#535F5C' }}>
-                  Beneficiary Name: <strong>{accountName}</strong>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
+                  Beneficiary: <strong>{accountName}</strong>
                 </p>
               </div>
             ) : (
-              <div style={{ backgroundColor: '#F8FAFC', padding: '1.25rem', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
-                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>No settlement account connected</p>
-                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#64748B' }}>Add your Nigerian bank details to receive order settlements directly into your account.</p>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '1.15rem', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>No settlement account connected</p>
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#64748B' }}>Add your Nigerian bank details to receive order settlements directly into your account.</p>
               </div>
             )}
 
             {/* Edit / Add Bank Form */}
             {(editingBank || !accountNumber) && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', backgroundColor: '#F9FAFB', padding: '1rem', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', backgroundColor: '#F9FAFB', padding: '1rem', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.3rem' }}>
                     Bank Name *
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Zenith Bank, GTBank, Access Bank"
+                    placeholder="e.g. GTBank, Zenith, Access"
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.3rem' }}>
                     10-Digit NUBAN Account Number *
                   </label>
                   <input
@@ -1191,20 +1247,20 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     maxLength={10}
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.3rem' }}>
                     Account Beneficiary Name *
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Adeyemi Alabi Enterprise"
+                    placeholder="e.g. Adeyemi Alabi"
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.9rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
                   />
                 </div>
               </div>
@@ -1212,35 +1268,35 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           </div>
         </div>
 
-        {/* --- RIGHT COLUMN (Storefront Preview, Social Links, Account Hub) --- */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        {/* RIGHT COLUMN: PREVIEW & CONTACTS */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           
-          {/* 1. PUBLIC STOREFRONT PREVIEW CARD (Real Backend Data) */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+          {/* 1. PUBLIC STOREFRONT PREVIEW CARD */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#004B44' }}>
-                Customer View Preview
+                Storefront Preview
               </span>
-              <span style={{ fontSize: '0.72rem', color: '#535F5C', backgroundColor: '#F0EDED', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                Live Storefront
+              <span style={{ fontSize: '0.7rem', color: '#535F5C', backgroundColor: '#F0EDED', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                Customer View
               </span>
             </div>
 
-            <div style={{ border: '1px solid #E5E2E1', borderRadius: '6px', padding: '1rem', backgroundColor: '#FCF9F8' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#004B44', color: '#B1EEE4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.9rem', overflow: 'hidden' }}>
+            <div style={{ border: '1px solid #E5E2E1', borderRadius: '6px', padding: '0.85rem', backgroundColor: '#FCF9F8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.65rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#004B44', color: '#B1EEE4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem', overflow: 'hidden' }}>
                   {logoUrl ? <img src={logoUrl} alt={storeName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : storeInitials}
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#004B44' }}>{storeName || 'Store Name'}</p>
-                  <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: '#535F5C' }}>
+                  <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: '#004B44' }}>{storeName || 'Brand Name'}</p>
+                  <p style={{ margin: '0.1rem 0 0', fontSize: '0.75rem', color: '#535F5C' }}>
                     {publicCity}, {publicState}
                   </p>
                 </div>
               </div>
 
               {/* Status Badge */}
-              <div style={{ marginBottom: '0.75rem' }}>
+              <div style={{ marginBottom: '0.65rem' }}>
                 {isVerified ? (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', fontWeight: 700, color: '#004B44', backgroundColor: '#E8F5F1', border: '1px solid #B1EEE4', padding: '0.2rem 0.5rem', borderRadius: '12px' }}>
                     <CheckCircle2 size={12} />
@@ -1254,24 +1310,24 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                 )}
               </div>
 
-              {/* Authoritative Metrics */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', padding: '0.65rem 0', borderTop: '1px solid #E5E2E1', borderBottom: '1px solid #E5E2E1', textAlign: 'center', margin: '0.5rem 0' }}>
+              {/* Metrics */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', padding: '0.5rem 0', borderTop: '1px solid #E5E2E1', borderBottom: '1px solid #E5E2E1', textAlign: 'center', margin: '0.5rem 0' }}>
                 <div>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem', color: '#004B44' }}>{productCount}</p>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: '#004B44' }}>{productCount}</p>
                   <p style={{ margin: 0, fontSize: '0.7rem', color: '#535F5C' }}>{productCount === 1 ? 'Product' : 'Products'}</p>
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem', color: '#004B44' }}>
-                    {reviewCount > 0 ? `${averageRating} ★` : 'New'}
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: '#004B44' }}>
+                    {reviewCount > 0 ? averageRating : 'New'}
                   </p>
                   <p style={{ margin: 0, fontSize: '0.7rem', color: '#535F5C' }}>
-                    {reviewCount > 0 ? `${reviewCount} reviews` : 'No reviews yet'}
+                    {reviewCount > 0 ? `${reviewCount} reviews` : 'No reviews'}
                   </p>
                 </div>
               </div>
 
               {tagline && (
-                <p style={{ margin: '0.65rem 0 0', fontSize: '0.775rem', color: '#535F5C', fontStyle: 'italic', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem', color: '#535F5C', fontStyle: 'italic', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                   "{tagline}"
                 </p>
               )}
@@ -1287,8 +1343,8 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     justifyContent: 'center',
                     gap: '0.4rem',
                     width: '100%',
-                    marginTop: '0.85rem',
-                    padding: '0.55rem',
+                    marginTop: '0.75rem',
+                    padding: '0.5rem',
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     color: '#004B44',
@@ -1305,55 +1361,52 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             </div>
           </div>
 
-          {/* 2. SOCIAL & CONTACT LINKS (PUBLIC) */}
-          <div id="section-social" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* 2. CHANNELS & PRIVATE NOTIFICATIONS */}
+          <div id="section-social" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#004B44', backgroundColor: '#E8F5F1', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                Public Channels
-              </span>
-              <h3 style={{ margin: '0.4rem 0 0', fontSize: '1.1rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
-                Social &amp; Contact Links
+              <h3 style={{ margin: 0, fontSize: '1rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
+                Contact &amp; Notification Channels
               </h3>
-              <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
-                Public channels displayed on your storefront for customer enquiries.
+              <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#535F5C' }}>
+                Public social handles and private order alert details.
               </p>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: '#3F4947', marginBottom: '0.3rem', fontWeight: 600 }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', color: '#3F4947', marginBottom: '0.25rem', fontWeight: 600 }}>
                 Instagram Handle
               </label>
               <div style={{ display: 'flex', borderRadius: '4px', border: '1px solid #E5E2E1', backgroundColor: '#FCF9F8', overflow: 'hidden' }}>
-                <span style={{ padding: '0.55rem 0.75rem', fontSize: '0.8rem', color: '#535F5C', backgroundColor: '#F0EDED', borderRight: '1px solid #E5E2E1' }}>@</span>
+                <span style={{ padding: '0.5rem 0.7rem', fontSize: '0.785rem', color: '#535F5C', backgroundColor: '#F0EDED', borderRight: '1px solid #E5E2E1' }}>@</span>
                 <input
                   type="text"
                   value={instagram}
                   onChange={(e) => setInstagram(e.target.value)}
                   placeholder="brandhandle"
-                  style={{ width: '100%', border: 'none', background: 'transparent', padding: '0.55rem 0.75rem', fontSize: '0.85rem', outline: 'none', color: '#1C1B1B' }}
+                  style={{ width: '100%', border: 'none', background: 'transparent', padding: '0.5rem 0.7rem', fontSize: '0.825rem', outline: 'none', color: '#1C1B1B' }}
                 />
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: '#3F4947', marginBottom: '0.3rem', fontWeight: 600 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.72rem', color: '#3F4947', marginBottom: '0.25rem', fontWeight: 600 }}>
                 <Phone size={12} />
-                <span>WhatsApp Business Number</span>
+                <span>Order Alert Phone / WhatsApp (Private)</span>
               </label>
               <input
                 type="text"
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 placeholder="+2348012345678"
-                style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
+                style={{ width: '100%', padding: '0.5rem 0.7rem', fontSize: '0.825rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
               />
-              <span style={{ fontSize: '0.7rem', color: '#707977', display: 'block', marginTop: '0.2rem' }}>
-                Powers the "Contact Designer on WhatsApp" button on your storefront.
+              <span style={{ fontSize: '0.68rem', color: '#707977', display: 'block', marginTop: '0.2rem' }}>
+                Used privately by Aso to send you urgent order updates and courier pickup alerts. Never exposed on your public storefront.
               </span>
             </div>
 
             <div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: '#3F4947', marginBottom: '0.3rem', fontWeight: 600 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.72rem', color: '#3F4947', marginBottom: '0.25rem', fontWeight: 600 }}>
                 <Globe size={12} />
                 <span>Official Website (Optional)</span>
               </label>
@@ -1362,27 +1415,27 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
                 placeholder="https://yourbrand.com"
-                style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
+                style={{ width: '100%', padding: '0.5rem 0.7rem', fontSize: '0.825rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
               />
             </div>
           </div>
 
           {/* 3. DESIGNER STUDIO SESSION */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: '#004B44' }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: '#004B44' }}>
                 Studio Session
               </h3>
-              <UserIcon size={18} color="#004B44" />
+              <UserIcon size={16} color="#004B44" />
             </div>
 
-            <div style={{ backgroundColor: '#F6F3F2', padding: '0.85rem', borderRadius: '4px', border: '1px solid #E5E2E1' }}>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#535F5C' }}>Authenticated Designer:</p>
-              <p style={{ margin: '0.2rem 0 0', fontSize: '0.875rem', fontWeight: 600, color: '#1C1B1B' }}>
-                {user?.email || 'designer@asomarketplace.ng'}
+            <div style={{ backgroundColor: '#F6F3F2', padding: '0.75rem', borderRadius: '4px', border: '1px solid #E5E2E1' }}>
+              <p style={{ margin: 0, fontSize: '0.72rem', color: '#535F5C' }}>Authenticated Designer:</p>
+              <p style={{ margin: '0.15rem 0 0', fontSize: '0.825rem', fontWeight: 600, color: '#1C1B1B' }}>
+                {user?.email || 'designer@asomarketplace.com.ng'}
               </p>
-              <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#065F46', fontWeight: 600 }}>
-                Role: {isVerified ? 'Verified Designer' : 'Registered Designer'}
+              <p style={{ margin: '0.15rem 0 0', fontSize: '0.72rem', color: '#065F46', fontWeight: 600 }}>
+                Status: {isVerified ? 'Verified Designer' : 'Registered Designer'}
               </p>
             </div>
 
@@ -1393,28 +1446,19 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem',
+                gap: '0.4rem',
                 width: '100%',
-                padding: '0.65rem 1rem',
+                padding: '0.55rem 0.85rem',
                 backgroundColor: '#FEE2E2',
                 color: '#991B1B',
                 border: '1px solid #FECACA',
                 borderRadius: '4px',
-                fontSize: '0.875rem',
+                fontSize: '0.75rem',
                 fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#FECACA';
-                e.currentTarget.style.color = '#7F1D1D';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#FEE2E2';
-                e.currentTarget.style.color = '#991B1B';
+                cursor: 'pointer'
               }}
             >
-              <LogOut size={16} />
+              <LogOut size={13} />
               <span>Sign Out of Designer Studio</span>
             </button>
           </div>
