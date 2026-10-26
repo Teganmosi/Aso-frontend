@@ -8,16 +8,32 @@ import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { AuthModal } from './components/auth/AuthModal';
 import { HomePage } from './pages/HomePage';
-import { MensCollectionPage } from './pages/MensCollectionPage';
-import { WomensCollectionPage } from './pages/WomensCollectionPage';
-import { TraditionalCollectionPage } from './pages/TraditionalCollectionPage';
-import { DesignersPage } from './pages/DesignersPage';
-import { VendorDashboardPage } from './pages/VendorDashboardPage';
-import { VendorStorefrontPage } from './pages/VendorStorefrontPage';
-import { ProductDetailPage } from './pages/ProductDetailPage';
-import { CartPage } from './pages/CartPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { AdminPortalPage } from './pages/AdminPortalPage';
+import { Suspense, lazy } from 'react';
+
+// Lazy-loaded route bundles for optimal initial load speed
+const MensCollectionPage = lazy(() => import('./pages/MensCollectionPage').then(m => ({ default: m.MensCollectionPage })));
+const WomensCollectionPage = lazy(() => import('./pages/WomensCollectionPage').then(m => ({ default: m.WomensCollectionPage })));
+const TraditionalCollectionPage = lazy(() => import('./pages/TraditionalCollectionPage').then(m => ({ default: m.TraditionalCollectionPage })));
+const DesignersPage = lazy(() => import('./pages/DesignersPage').then(m => ({ default: m.DesignersPage })));
+const VendorDashboardPage = lazy(() => import('./pages/VendorDashboardPage').then(m => ({ default: m.VendorDashboardPage })));
+const VendorStorefrontPage = lazy(() => import('./pages/VendorStorefrontPage').then(m => ({ default: m.VendorStorefrontPage })));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then(m => ({ default: m.ProductDetailPage })));
+const CartPage = lazy(() => import('./pages/CartPage').then(m => ({ default: m.CartPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const AdminPortalPage = lazy(() => import('./pages/AdminPortalPage').then(m => ({ default: m.AdminPortalPage })));
+
+const RouteFallback: React.FC = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+    <div style={{
+      width: '32px',
+      height: '32px',
+      border: '3px solid rgba(6,78,59,0.15)',
+      borderTopColor: '#064E3B',
+      borderRadius: '50%',
+      animation: 'spin 0.7s linear infinite'
+    }} />
+  </div>
+);
 import './styles/global.css';
 
 const AppContent: React.FC = () => {
@@ -37,6 +53,7 @@ const AppContent: React.FC = () => {
       )}
 
       <main className="app-content">
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           {/* Marketplace & Customer Discovery */}
           <Route path="/" element={<HomePage onOpenVendorRegister={handleOpenDesignerRegister} />} />
@@ -87,6 +104,7 @@ const AppContent: React.FC = () => {
           <Route path="/admin" element={<AdminPortalPage />} />
           <Route path="/admin-portal" element={<AdminPortalPage />} />
         </Routes>
+        </Suspense>
       </main>
 
       {!isVendorRoute && !isAdminRoute && (

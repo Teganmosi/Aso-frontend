@@ -67,7 +67,11 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-export const fetchCsrfToken = async () => {
+export const fetchCsrfToken = async (force: boolean = false) => {
+  const existingCookie = getCookie('csrftoken');
+  if (!force && (existingCookie || memoryCsrfToken)) {
+    return existingCookie || memoryCsrfToken;
+  }
   try {
     const res = await apiClient.get('/auth/csrf/');
     const token = res.data?.csrfToken || res.data?.csrf_token || null;
