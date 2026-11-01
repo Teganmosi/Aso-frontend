@@ -253,6 +253,7 @@ export interface Product {
   review_count: number;
   primary_image_url?: string | null;
   available_sizes?: string[];
+  allow_custom_measurements?: boolean;
   vendor?: PublicVendorProfile;
   category?: CategorySimple;
   created_at: string;

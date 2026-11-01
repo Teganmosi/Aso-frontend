@@ -20,11 +20,12 @@ interface CategoryOption {
 }
 
 const CATEGORY_OPTIONS: CategoryOption[] = [
-  { id: 'all', label: 'All', slug: '' },
-  { id: 'senator', label: 'Senator', slug: 'senator-suits' },
-  { id: 'agbada', label: 'Agbada', slug: 'agbada' },
-  { id: 'two-piece', label: 'Kaftans & Two-Piece', slug: 'two-piece-sets' },
-  { id: 'shirts', label: 'Shirts', slug: 'shirts' },
+  { id: 'all', label: 'All Pieces', slug: '' },
+  { id: 'senator', label: 'Senator Suits', slug: 'senator-suits' },
+  { id: 'agbada', label: 'Agbada Sets', slug: 'agbada' },
+  { id: 'two-piece', label: 'Kaftans & Sets', slug: 'two-piece-sets' },
+  { id: 'couples', label: 'Couples & Matching', slug: 'couples' },
+  { id: 'shirts', label: 'Luxury Shirts', slug: 'shirts' },
 ];
 
 // Price filter tiers (Converted to Kobo for backend contract: N1 = 100 Kobo)

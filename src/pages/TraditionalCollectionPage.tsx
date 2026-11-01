@@ -579,6 +579,13 @@ export const TraditionalCollectionPage: React.FC = () => {
                           <div className="product-details-container">
                             <p className="product-artisan-brand">{storeName}</p>
                             <h3 className="product-item-title">{product.title}</h3>
+                            <div className="trad-card-delivery-badge">
+                              <span>Arrives by <strong>{(() => {
+                                const target = new Date();
+                                target.setDate(target.getDate() + (prepDays > 0 ? prepDays : 3) + 2);
+                                return target.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                              })()}</strong></span>
+                            </div>
                             <p className="product-item-price">₦ {priceNaira.toLocaleString()}</p>
                           </div>
                         </Link>

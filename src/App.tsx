@@ -21,6 +21,7 @@ const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then(m 
 const CartPage = lazy(() => import('./pages/CartPage').then(m => ({ default: m.CartPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const AdminPortalPage = lazy(() => import('./pages/AdminPortalPage').then(m => ({ default: m.AdminPortalPage })));
+const PolicyPage = lazy(() => import('./pages/PolicyPage').then(m => ({ default: m.PolicyPage })));
 
 const RouteFallback: React.FC = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -103,6 +104,25 @@ const AppContent: React.FC = () => {
           {/* Platform Staff & Admin Desk */}
           <Route path="/admin" element={<AdminPortalPage />} />
           <Route path="/admin-portal" element={<AdminPortalPage />} />
+
+          {/* Trust, Legal, FAQ & Support Pages */}
+          <Route path="/terms" element={<PolicyPage initialSection="terms" />} />
+          <Route path="/terms-of-service" element={<PolicyPage initialSection="terms" />} />
+          <Route path="/privacy" element={<PolicyPage initialSection="privacy" />} />
+          <Route path="/privacy-policy" element={<PolicyPage initialSection="privacy" />} />
+          <Route path="/escrow" element={<PolicyPage initialSection="escrow" />} />
+          <Route path="/escrow-policy" element={<PolicyPage initialSection="escrow" />} />
+          <Route path="/buyer-protection" element={<PolicyPage initialSection="escrow" />} />
+          <Route path="/shipping" element={<PolicyPage initialSection="shipping" />} />
+          <Route path="/shipping-returns" element={<PolicyPage initialSection="shipping" />} />
+          <Route path="/returns" element={<PolicyPage initialSection="shipping" />} />
+          <Route path="/about" element={<PolicyPage initialSection="about" />} />
+          <Route path="/about-us" element={<PolicyPage initialSection="about" />} />
+          <Route path="/faq" element={<PolicyPage initialSection="faq" />} />
+          <Route path="/faqs" element={<PolicyPage initialSection="faq" />} />
+          <Route path="/help" element={<PolicyPage initialSection="faq" />} />
+          <Route path="/contact" element={<PolicyPage initialSection="contact" />} />
+          <Route path="/contact-us" element={<PolicyPage initialSection="contact" />} />
         </Routes>
         </Suspense>
       </main>

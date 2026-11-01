@@ -626,6 +626,14 @@ export const WomensCollectionPage: React.FC = () => {
                             </p>
                           </div>
 
+                          <div className="womens-card-delivery-badge">
+                            <span>Arrives by <strong>{(() => {
+                              const target = new Date();
+                              target.setDate(target.getDate() + (prepDays > 0 ? prepDays : 3) + 2);
+                              return target.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                            })()}</strong></span>
+                          </div>
+
                           <div className="product-price-row">
                             <span className="product-price-naira">
                               ₦ {priceNaira.toLocaleString()}

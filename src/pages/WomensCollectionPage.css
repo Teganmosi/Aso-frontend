@@ -481,13 +481,13 @@
 
 .womens-products-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 0.65rem;
 }
 
-@media (min-width: 576px) {
+@media (min-width: 640px) {
   .womens-products-grid {
-    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 1rem;
   }
 }
 
@@ -585,7 +585,7 @@
 
 /* Product Info Box */
 .product-info-box {
-  padding: 1.15rem;
+  padding: 0.65rem 0.75rem;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -593,17 +593,44 @@
   background: #ffffff;
 }
 
+@media (min-width: 768px) {
+  .product-info-box {
+    padding: 1.15rem;
+  }
+}
+
 .product-title-text {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #00322d;
   line-height: 1.35;
   margin: 0 0 0.35rem 0;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.3em;
+}
+
+@media (min-width: 768px) {
+  .product-title-text {
+    font-size: 1.1rem;
+  }
+}
+
+.womens-card-delivery-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: #064E3B;
+  background: #ECFDF5;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  margin-bottom: 0.45rem;
+  width: fit-content;
 }
 
 .product-vendor-name {

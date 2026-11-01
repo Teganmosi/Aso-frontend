@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Clock, Star } from 'lucide-react';
+import { ShieldCheck, Clock, Star, Truck } from 'lucide-react';
 import type { Product } from '../../types';
 
 interface CollectionProductCardProps {
@@ -13,6 +13,15 @@ export const CollectionProductCard: React.FC<CollectionProductCardProps> = ({ pr
   
   const hasReviews = product.review_count > 0 && parseFloat(String(product.average_rating)) > 0;
   const isVerifiedVendor = Boolean(product.vendor?.is_verified);
+
+  // Concrete Delivery Date Math: (Tailor prep days + 2 days Dellyman dispatch)
+  const estDeliveryText = React.useMemo(() => {
+    const prepDays = product.preparation_time_days > 0 ? product.preparation_time_days : 3;
+    const totalDays = prepDays + 2;
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + totalDays);
+    return targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }, [product.preparation_time_days]);
 
   return (
     <article className="collection-product-card">
@@ -32,10 +41,21 @@ export const CollectionProductCard: React.FC<CollectionProductCardProps> = ({ pr
           )}
 
           {/* Real Preparation SLA Badge */}
-          {product.preparation_time_days > 0 && (
+          {product.preparation_time_days > 0 ? (
             <div className="card-sla-badge">
-              <Clock size={12} />
+              <Clock size={11} />
               <span>{product.preparation_time_days}d tailoring</span>
+            </div>
+          ) : (
+            <div className="card-sla-badge ready-badge">
+              <span>Ready to Ship</span>
+            </div>
+          )}
+
+          {/* Bespoke Pill if custom tailoring permitted */}
+          {product.allow_custom_measurements && (
+            <div className="card-bespoke-badge">
+              <span>✂️ Bespoke</span>
             </div>
           )}
         </div>
@@ -52,20 +72,26 @@ export const CollectionProductCard: React.FC<CollectionProductCardProps> = ({ pr
             <span className="card-designer-name">Independent Designer</span>
           )}
 
-          {/* Strict verification badge: ONLY if vendor.is_verified === true */}
+          {/* Verification badge */}
           {isVerifiedVendor && (
             <span className="card-verified-badge" title="Verified Designer Atelier">
-              <ShieldCheck size={14} color="#D4AF37" />
+              <ShieldCheck size={13} color="#D4AF37" />
             </span>
           )}
         </div>
 
-        {/* Title */}
+        {/* Title (Line clamped to 2 lines for uniform grid alignment) */}
         <h3 className="card-title">
           <Link to={`/products/${product.slug || product.id}`}>
             {product.title}
           </Link>
         </h3>
+
+        {/* Concrete Delivery Date Promise */}
+        <div className="card-delivery-row">
+          <Truck size={11} className="delivery-icon" />
+          <span>Arrives by <strong>{estDeliveryText}</strong></span>
+        </div>
 
         {/* Price & Rating Row */}
         <div className="card-bottom-row">
@@ -73,12 +99,10 @@ export const CollectionProductCard: React.FC<CollectionProductCardProps> = ({ pr
             ₦{product.base_price_naira.toLocaleString()}
           </div>
 
-          {/* Genuine Reviews: ONLY displayed if review_count > 0 */}
           {hasReviews && (
             <div className="card-rating">
-              <Star size={13} fill="#D4AF37" color="#D4AF37" />
+              <Star size={11} fill="#D4AF37" color="#D4AF37" />
               <span>{parseFloat(String(product.average_rating)).toFixed(1)}</span>
-              <span className="card-review-count">({product.review_count})</span>
             </div>
           )}
         </div>

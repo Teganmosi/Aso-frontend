@@ -65,7 +65,6 @@ export const VendorDashboardPage: React.FC = () => {
   }, [location.pathname, location.search]);
   const [activeTab, setActiveTab] = useState<DesignerPortalTab>('dashboard');
   const [productToEdit, setProductToEdit] = useState<ProductItem | null>(null);
-  const [previewDemo, setPreviewDemo] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -286,8 +285,10 @@ export const VendorDashboardPage: React.FC = () => {
     }
   };
 
-  // LOGGED OUT GATE SCREEN
-  if (!user && !previewDemo) {
+  const isVendor = Boolean(user?.is_vendor || user?.vendor_profile);
+
+  // 1. UNTHENTICATED GUEST GATE SCREEN
+  if (!user) {
     return (
       <div className="designer-portal-gate-wrapper">
         <div className="designer-gate-card">
@@ -345,9 +346,89 @@ export const VendorDashboardPage: React.FC = () => {
 
             <button
               className="btn-secondary-dark"
-              onClick={() => setPreviewDemo(true)}
+              onClick={() => openAuthModal('register', 'designer')}
             >
-              <span>Preview Demo Portal</span>
+              <span>Apply to Sell on Aso</span>
+            </button>
+          </div>
+
+          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <Link
+              to="/"
+              style={{
+                fontSize: '0.875rem',
+                color: '#4B5563',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontWeight: 500
+              }}
+            >
+              <Home size={15} />
+              <span>← Back to Aso Customer Marketplace</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. AUTHENTICATED CUSTOMER UPGRADE GATE SCREEN (Non-Vendor User)
+  if (!isVendor) {
+    return (
+      <div className="designer-portal-gate-wrapper">
+        <div className="designer-gate-card">
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+            <Logo option={2} variant="dark" showTagline={true} />
+          </div>
+
+          <div className="gate-badge">
+            <Sparkles size={15} color="#D4AF37" />
+            <span>STUDIO UPGRADE REQUIRED</span>
+          </div>
+
+          <h1 className="gate-serif-headline">
+            Start Selling Your Designs on Aso
+          </h1>
+
+          <p className="gate-subtitle">
+            You are signed in with customer account <strong>{user.email}</strong>. To access the Designer Studio, manage your collections, and accept orders, complete your atelier storefront setup below.
+          </p>
+
+          <div className="gate-pillars-grid">
+            <div className="pillar-item">
+              <div className="pillar-icon-box">
+                <Store size={22} color="#064E3B" />
+              </div>
+              <h4 className="pillar-title">Digital Storefront</h4>
+              <p className="pillar-desc">Custom luxury storefront showcasing your craft to thousands of fashion lovers nationwide.</p>
+            </div>
+
+            <div className="pillar-item">
+              <div className="pillar-icon-box">
+                <ShoppingBag size={22} color="#064E3B" />
+              </div>
+              <h4 className="pillar-title">Bespoke SLA Orders</h4>
+              <p className="pillar-desc">48-hour order acceptance, real-time tailoring status tracker, and nationwide courier dispatch.</p>
+            </div>
+
+            <div className="pillar-item">
+              <div className="pillar-icon-box">
+                <Landmark size={22} color="#064E3B" />
+              </div>
+              <h4 className="pillar-title">Automated Payouts</h4>
+              <p className="pillar-desc">Clear financial ledger accounting with direct settlements to your registered bank account.</p>
+            </div>
+          </div>
+
+          <div className="gate-actions-row">
+            <button
+              className="btn-primary-emerald"
+              onClick={() => openAuthModal('register', 'designer')}
+            >
+              <span>Open Your Designer Studio</span>
+              <ArrowRight size={18} />
             </button>
           </div>
 
@@ -454,9 +535,6 @@ export const VendorDashboardPage: React.FC = () => {
               <ExternalLink size={13} />
             </a>
 
-            {previewDemo && (
-              <span className="demo-mode-pill">DEMO MODE</span>
-            )}
 
             {/* Notifications Button */}
             <button className="heritage-round-icon-btn" title="Notifications">

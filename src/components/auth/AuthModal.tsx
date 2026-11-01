@@ -5,7 +5,7 @@ import { X, AlertCircle, Sparkles, ArrowRight, Store, User as UserIcon } from 'l
 import './AuthModal.css';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, closeAuthModal, authModalTab, authModalUserType, login, register, refreshMe } = useAuth();
+  const { user, isAuthModalOpen, closeAuthModal, authModalTab, authModalUserType, login, register, refreshMe } = useAuth();
   
   const [tab, setTab] = useState<'login' | 'register'>(authModalTab);
   const [userType, setUserType] = useState<UserTypeMode>(authModalUserType || 'customer');
@@ -32,9 +32,17 @@ export const AuthModal: React.FC = () => {
   React.useEffect(() => {
     setTab(authModalTab);
     setUserType(authModalUserType || 'customer');
-    setDesignerStep(1);
+    if (user && authModalUserType === 'designer') {
+      setDesignerStep(2);
+      if (user.first_name) setFirstName(user.first_name);
+      if (user.last_name) setLastName(user.last_name);
+      if (user.email) setEmail(user.email);
+      if (user.phone_number) setPhone(user.phone_number);
+    } else {
+      setDesignerStep(1);
+    }
     setErrorMessage('');
-  }, [authModalTab, authModalUserType, isAuthModalOpen]);
+  }, [authModalTab, authModalUserType, isAuthModalOpen, user]);
 
   if (!isAuthModalOpen) return null;
 
@@ -90,14 +98,16 @@ export const AuthModal: React.FC = () => {
     setLoading(true);
 
     try {
-      // 1. Create User Account
-      await register({
-        email,
-        password,
-        first_name: firstName,
-        last_name: lastName,
-        phone_number: phone,
-      });
+      if (!user) {
+        // 1. Create User Account if not already logged in
+        await register({
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: phone,
+        });
+      }
 
       // 2. Register Designer Storefront
       await vendorApi.registerVendor({
@@ -143,27 +153,34 @@ export const AuthModal: React.FC = () => {
         )}
 
         <div className="auth-header-tabs">
-          <div className="tab-buttons">
-            <button
-              className={`auth-tab-btn ${tab === 'login' ? 'active' : ''}`}
-              onClick={() => {
-                setTab('login');
-                setErrorMessage('');
-              }}
-            >
-              {userType === 'designer' ? 'Designer Sign In' : 'Customer Sign In'}
-            </button>
-            <button
-              className={`auth-tab-btn ${tab === 'register' ? 'active' : ''}`}
-              onClick={() => {
-                setTab('register');
-                setDesignerStep(1);
-                setErrorMessage('');
-              }}
-            >
-              {userType === 'designer' ? 'Designer Register' : 'Customer Register'}
-            </button>
-          </div>
+          {user && userType === 'designer' ? (
+            <div style={{ padding: '0.85rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.95rem', color: '#064E3B' }}>
+              <Store size={18} color="#D4AF37" />
+              <span>Upgrade to Designer Studio</span>
+            </div>
+          ) : (
+            <div className="tab-buttons">
+              <button
+                className={`auth-tab-btn ${tab === 'login' ? 'active' : ''}`}
+                onClick={() => {
+                  setTab('login');
+                  setErrorMessage('');
+                }}
+              >
+                {userType === 'designer' ? 'Designer Sign In' : 'Customer Sign In'}
+              </button>
+              <button
+                className={`auth-tab-btn ${tab === 'register' ? 'active' : ''}`}
+                onClick={() => {
+                  setTab('register');
+                  setDesignerStep(1);
+                  setErrorMessage('');
+                }}
+              >
+                {userType === 'designer' ? 'Designer Register' : 'Customer Register'}
+              </button>
+            </div>
+          )}
           <button className="auth-close-btn" onClick={closeAuthModal} aria-label="Close modal">
             <X size={20} />
           </button>
@@ -344,9 +361,13 @@ export const AuthModal: React.FC = () => {
                 /* DESIGNER REGISTRATION FORM (2-STEP) */
                 <form onSubmit={handleDesignerRegisterSubmit} className="auth-form">
                   <div className="auth-title-container">
-                    <h2 className="auth-serif-title">Register as a Designer</h2>
+                    <h2 className="auth-serif-title">
+                      {user ? 'Open Your Designer Studio' : 'Register as a Designer'}
+                    </h2>
                     <p className="auth-subtitle">
-                      Step {designerStep} of 2: {designerStep === 1 ? 'Account Credentials' : 'Fashion House Storefront Setup'}
+                      {user
+                        ? `Signed in as ${user.email}. Complete your studio details below to start selling on Aso.`
+                        : `Step ${designerStep} of 2: ${designerStep === 1 ? 'Account Credentials' : 'Fashion House Storefront Setup'}`}
                     </p>
                   </div>
 
@@ -494,35 +515,39 @@ export const AuthModal: React.FC = () => {
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
-                        <button
-                          type="button"
-                          className="btn-secondary-light"
-                          style={{ padding: '0.75rem 1.25rem' }}
-                          onClick={() => setDesignerStep(1)}
-                        >
-                          BACK
-                        </button>
+                        {!user && (
+                          <button
+                            type="button"
+                            className="btn-secondary-light"
+                            style={{ padding: '0.75rem 1.25rem' }}
+                            onClick={() => setDesignerStep(1)}
+                          >
+                            BACK
+                          </button>
+                        )}
                         <button type="submit" className="btn-primary auth-submit-btn" style={{ flex: 1 }} disabled={loading}>
-                          {loading ? 'SUBMITTING DESIGNER REGISTRATION...' : 'REGISTER & OPEN STOREFRONT'}
+                          {loading ? 'SUBMITTING DESIGNER REGISTRATION...' : (user ? 'CREATE STUDIO & OPEN DASHBOARD' : 'REGISTER & OPEN STOREFRONT')}
                         </button>
                       </div>
                     </div>
                   )}
 
-                  <div className="auth-role-switch-banner">
-                    <button
-                      type="button"
-                      className="role-switch-btn"
-                      onClick={() => {
-                        setUserType('customer');
-                        setErrorMessage('');
-                      }}
-                    >
-                      <UserIcon size={15} />
-                      <span>Shopping for fashion? Register as a Customer</span>
-                      <ArrowRight size={14} />
-                    </button>
-                  </div>
+                  {!user && (
+                    <div className="auth-role-switch-banner">
+                      <button
+                        type="button"
+                        className="role-switch-btn"
+                        onClick={() => {
+                          setUserType('customer');
+                          setErrorMessage('');
+                        }}
+                      >
+                        <UserIcon size={15} />
+                        <span>Shopping for fashion? Register as a Customer</span>
+                        <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  )}
                 </form>
               )}
             </div>
