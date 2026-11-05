@@ -1,0 +1,561 @@
+/* Aso Luxury Categories Page Styling */
+
+.categories-page-layout {
+  background-color: #FAF9F6;
+  color: #111827;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding-bottom: 5rem;
+}
+
+/* Hero Header Banner */
+.categories-hero-banner {
+  background: linear-gradient(135deg, #064E3B 0%, #022c22 100%);
+  color: #FFFFFF;
+  padding: 3rem 1.25rem 2.25rem 1.25rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .categories-hero-banner {
+    padding: 3.75rem 2rem 2.75rem 2rem;
+  }
+}
+
+.categories-hero-banner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+.categories-hero-inner {
+  max-width: 820px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.categories-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #D4AF37;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+
+.categories-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.15rem;
+  font-weight: 700;
+  margin: 0 0 0.65rem 0;
+  line-height: 1.25;
+}
+
+@media (min-width: 768px) {
+  .categories-title {
+    font-size: 2.85rem;
+  }
+}
+
+.categories-subtitle {
+  font-size: 0.95rem;
+  color: #D1D5DB;
+  line-height: 1.6;
+  margin: 0 auto 1.5rem auto;
+  max-width: 620px;
+}
+
+/* Category Search Bar */
+.categories-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #FFFFFF;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  max-width: 480px;
+  margin: 0 auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.categories-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.categories-search-input::placeholder {
+  color: #9CA3AF;
+}
+
+/* Sticky Department Switcher */
+.categories-dept-nav-wrapper {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid #E5E7EB;
+  position: sticky;
+  top: 54px; /* Offset for sticky mobile navbar */
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 641px) {
+  .categories-dept-nav-wrapper {
+    top: 68px; /* Offset for desktop navbar */
+  }
+}
+
+.categories-dept-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.75rem 1.25rem;
+  scrollbar-width: none;
+}
+
+.categories-dept-container::-webkit-scrollbar {
+  display: none;
+}
+
+.dept-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.15rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #4B5563;
+  white-space: nowrap;
+  background: #F3F4F6;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dept-pill-btn:hover {
+  background: #E5E7EB;
+  color: #064E3B;
+}
+
+.dept-pill-btn.active {
+  background: #064E3B;
+  color: #FFFFFF;
+  border-color: #064E3B;
+}
+
+/* Main Grid Layout */
+.categories-main-container {
+  max-width: 1240px;
+  margin: 2rem auto 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* Category Department Section */
+.category-dept-section {
+  margin-bottom: 3.5rem;
+}
+
+.dept-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 1px solid #E5E7EB;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.dept-title-group h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #064E3B;
+  margin: 0 0 0.25rem 0;
+}
+
+.dept-title-group p {
+  font-size: 0.85rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+.dept-view-all-link {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #064E3B;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: gap 0.2s ease;
+}
+
+.dept-view-all-link:hover {
+  gap: 0.5rem;
+  text-decoration: underline;
+}
+
+/* 2-Column Mobile Grid, 3-Column Tablet, 4-Column Desktop */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+@media (min-width: 640px) {
+  .categories-grid {
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .categories-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .categories-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* Category Card */
+.category-page-card {
+  background: #FFFFFF;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
+}
+
+.category-page-card:hover {
+  transform: translateY(-3px);
+  border-color: #064E3B;
+  box-shadow: 0 8px 24px rgba(6, 78, 59, 0.1);
+}
+
+.category-card-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: #F3F4F6;
+  overflow: hidden;
+}
+
+.category-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.category-page-card:hover .category-card-img {
+  transform: scale(1.05);
+}
+
+.category-card-badge {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.65rem;
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(4px);
+  color: #FFFFFF;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.25rem 0.55rem;
+  border-radius: 4px;
+}
+
+.category-card-body {
+  padding: 0.85rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+@media (min-width: 768px) {
+  .category-card-body {
+    padding: 1.15rem;
+  }
+}
+
+.category-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.35rem 0;
+  line-height: 1.3;
+}
+
+@media (min-width: 768px) {
+  .category-card-title {
+    font-size: 1.05rem;
+  }
+}
+
+.category-card-desc {
+  font-size: 0.78rem;
+  color: #6B7280;
+  line-height: 1.45;
+  margin: 0 0 0.65rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.category-card-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.4rem;
+  border-top: 1px solid #F3F4F6;
+}
+
+.category-price-from {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #064E3B;
+}
+
+.category-explore-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #8B500A;
+}
+
+/* Clear Search Button */
+.categories-search-clear {
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+}
+
+.categories-search-clear:hover {
+  color: #374151;
+}
+
+/* Contextual "Shop by Event" Sub-Filter Bar (Non-Competing) */
+.categories-event-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #E5E7EB;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.categories-event-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.event-bar-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.event-chips-scroll {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.event-chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.event-chip-btn {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  color: #4B5563;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.event-chip-btn:hover {
+  border-color: #064E3B;
+  color: #064E3B;
+  background: #F0FDF4;
+}
+
+.event-chip-btn.active {
+  background: #064E3B;
+  color: #FFFFFF;
+  border-color: #064E3B;
+  font-weight: 700;
+}
+
+/* Empty State */
+.categories-empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px dashed #D1D5DB;
+  margin: 1.5rem 0;
+}
+
+.categories-empty-state p {
+  color: #6B7280;
+  font-size: 0.95rem;
+  margin: 0 0 1rem 0;
+}
+
+.categories-reset-btn {
+  background: #064E3B;
+  color: #FFFFFF;
+  border: none;
+  padding: 0.55rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.categories-reset-btn:hover {
+  background: #04382a;
+}
+
+/* Mobile Header Tightening & Above-the-Fold Optimization (< 640px) */
+@media (max-width: 639px) {
+  .categories-hero-banner {
+    padding: 1.25rem 1rem 0.85rem 1rem;
+  }
+
+  .categories-title {
+    font-size: 1.55rem;
+    margin-bottom: 0.15rem;
+  }
+
+  /* Hide 2-line subtitle on mobile to pull actual garment tiles above the fold */
+  .categories-subtitle {
+    display: none !important;
+  }
+
+  .categories-search-box {
+    padding: 0.4rem 0.85rem;
+    margin-top: 0.5rem;
+  }
+
+  .categories-main-container {
+    margin-top: 0.75rem;
+    padding: 0 0.85rem;
+  }
+
+  .categories-event-bar {
+    margin-bottom: 0.85rem;
+    padding: 0.3rem 0;
+  }
+
+  .event-bar-label {
+    font-size: 0.72rem;
+  }
+
+  .event-chip-btn {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.65rem;
+  }
+
+  .dept-section-header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+  }
+
+  .dept-title-group h2 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Mobile Responsiveness & Copy Stripping (PM Recommendation) */
+@media (max-width: 767px) {
+  .categories-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+  }
+
+  /* Strip verbose copy on mobile to eliminate scroll fatigue */
+  .category-card-desc {
+    display: none !important;
+  }
+
+  .category-card-body {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .category-card-title {
+    font-size: 0.825rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .category-card-footer {
+    padding-top: 0.25rem;
+  }
+
+  .category-price-from {
+    font-size: 0.7rem;
+  }
+
+  .category-explore-cta span {
+    display: none;
+  }
+
+  /* Suppress desktop corporate footer on mobile Categories page to prevent clutter with bottom nav */
+  body:has(.categories-page-layout) .stitch-footer,
+  .stitch-footer.categories-footer-hidden-mobile {
+    display: none !important;
+  }
+}
+
+

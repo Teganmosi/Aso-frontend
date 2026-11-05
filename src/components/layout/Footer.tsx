@@ -7,9 +7,10 @@ import './Footer.css';
 interface FooterProps {
   logoOption?: LogoOption;
   onOpenVendorRegister?: () => void;
+  className?: string;
 }
 
-export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegister }) => {
+export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegister, className = '' }) => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -34,7 +35,7 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
   };
 
   return (
-    <footer className="stitch-footer">
+    <footer className={`stitch-footer ${className}`.trim()}>
       <div className="footer-container">
         
         {/* Brand Info */}

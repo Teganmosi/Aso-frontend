@@ -95,11 +95,10 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
           </div>
                   <div className="mobile-hero-content">
           <h1 className="mobile-hero-title">
-            Authentic Nigerian Fashion.<br />
-            <em>Made by People Who Know Their Craft.</em>
+            Authentic Nigerian Fashion
           </h1>
           <p className="mobile-hero-sub">
-            Shop ready-to-wear, traditional pieces, bespoke designs, and statement looks from verified independent Nigerian designers.
+            Bespoke tailoring and ready-to-wear from verified independent designers.
           </p>
             <div className="mobile-hero-actions">
               <button

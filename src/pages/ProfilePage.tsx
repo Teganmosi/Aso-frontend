@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { addressApi, orderApi, paymentApi, deliveryApi, reviewApi, measurementsApi } from '../api/client';
 import type { BespokeMeasurements } from '../types';
@@ -398,19 +398,40 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // Auth gate
+  // Auth gate (Ultra-minimalist, high-luxury mobile focus)
   if (!user) {
     return (
-      <div className="profile-gate-container">
-        <div className="profile-gate-card">
-          <div className="profile-gate-icon-ring">
-            <UserIcon size={36} className="text-emerald" />
+      <div className="profile-gate-minimal-wrapper">
+        <div className="profile-gate-minimal-card">
+          <span className="gate-eyebrow">ACCOUNT</span>
+          <h1 className="gate-title">Sign In to Aso Marketplace</h1>
+          <p className="gate-subtitle">
+            Track orders, saved measurements, and dispatches.
+          </p>
+
+          <div className="gate-actions">
+            <button
+              type="button"
+              className="gate-btn-primary"
+              onClick={() => openAuthModal('login')}
+            >
+              Sign In to Account
+            </button>
+            <button
+              type="button"
+              className="gate-btn-secondary"
+              onClick={() => openAuthModal('register')}
+            >
+              Create an Account
+            </button>
           </div>
-          <h2>Customer Account Portal</h2>
-          <p>Sign in to view your marketplace orders, track dispatches, and manage delivery addresses.</p>
-          <button className="aso-btn-primary" onClick={() => openAuthModal('login')}>
-            Sign In to Account
-          </button>
+
+          <div className="gate-vendor-footnote">
+            <span>Are you a fashion house? </span>
+            <Link to="/vendor/dashboard" className="gate-vendor-link">
+              Access Designer Studio →
+            </Link>
+          </div>
         </div>
       </div>
     );

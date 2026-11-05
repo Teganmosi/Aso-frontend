@@ -322,3 +322,49 @@
 .font-bold {
   font-weight: 700 !important;
 }
+
+/* Quick 1-Tap Category Pills */
+.sheet-quick-pills {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid #F1F5F9;
+  scrollbar-width: none;
+}
+
+.sheet-quick-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.sheet-pill {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sheet-pill:active {
+  background: #00322D;
+  color: #FFFFFF;
+  border-color: #00322D;
+}
+
+.category-card-icon.couples-icon {
+  background-color: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+.category-card-icon.bespoke-icon {
+  background-color: #FFFBEB;
+  color: #B45309;
+  border-color: #FDE68A;
+}

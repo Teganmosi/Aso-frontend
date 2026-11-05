@@ -283,3 +283,10 @@
   line-height: 1.5;
   margin: 0;
 }
+
+/* Hide desktop footer completely on mobile screens (< 768px) */
+@media (max-width: 768px) {
+  .stitch-footer {
+    display: none !important;
+  }
+}

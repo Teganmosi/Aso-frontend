@@ -57,6 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
 
         {/* Desktop Nav Links */}
         <nav className="stitch-nav-links">
+          <Link to="/categories" className="stitch-nav-link">Categories</Link>
           <Link to="/men" className="stitch-nav-link">Men</Link>
           <Link to="/women" className="stitch-nav-link">Women</Link>
           <Link to="/traditional" className="stitch-nav-link">Traditional</Link>

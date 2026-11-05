@@ -57,12 +57,11 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
 
         <div className="desktop-hero-content">
           <h1 className="desktop-hero-headline">
-            Authentic Nigerian Fashion.<br />
-            <span>Made by People Who Know Their Craft.</span>
+            Authentic Nigerian Fashion
           </h1>
 
           <p className="desktop-hero-subtitle">
-            Shop ready-to-wear, traditional pieces, bespoke designs, and statement looks from verified independent Nigerian designers.
+            Bespoke tailoring and ready-to-wear from verified independent designers.
           </p>
 
           <div className="desktop-hero-actions">

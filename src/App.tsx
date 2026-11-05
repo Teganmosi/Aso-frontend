@@ -14,6 +14,7 @@ import { Suspense, lazy } from 'react';
 const MensCollectionPage = lazy(() => import('./pages/MensCollectionPage').then(m => ({ default: m.MensCollectionPage })));
 const WomensCollectionPage = lazy(() => import('./pages/WomensCollectionPage').then(m => ({ default: m.WomensCollectionPage })));
 const TraditionalCollectionPage = lazy(() => import('./pages/TraditionalCollectionPage').then(m => ({ default: m.TraditionalCollectionPage })));
+const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then(m => ({ default: m.CategoriesPage })));
 const DesignersPage = lazy(() => import('./pages/DesignersPage').then(m => ({ default: m.DesignersPage })));
 const VendorDashboardPage = lazy(() => import('./pages/VendorDashboardPage').then(m => ({ default: m.VendorDashboardPage })));
 const VendorStorefrontPage = lazy(() => import('./pages/VendorStorefrontPage').then(m => ({ default: m.VendorStorefrontPage })));
@@ -41,6 +42,7 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const isVendorRoute = location.pathname.startsWith('/vendor');
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isCategoriesRoute = location.pathname.startsWith('/categories') || location.pathname.startsWith('/category');
   const { openAuthModal } = useAuth();
   const handleOpenDesignerRegister = () => openAuthModal('register', 'designer');
 
@@ -67,11 +69,15 @@ const AppContent: React.FC = () => {
           <Route path="/traditional" element={<TraditionalCollectionPage />} />
           <Route path="/categories/traditional" element={<TraditionalCollectionPage />} />
           <Route path="/products/traditional" element={<TraditionalCollectionPage />} />
+          <Route path="/couples" element={<TraditionalCollectionPage />} />
+          <Route path="/categories/couples" element={<TraditionalCollectionPage />} />
           <Route path="/designers" element={<DesignersPage onOpenVendorRegister={handleOpenDesignerRegister} />} />
           <Route path="/artisans" element={<DesignersPage onOpenVendorRegister={handleOpenDesignerRegister} />} />
           <Route path="/directory" element={<DesignersPage onOpenVendorRegister={handleOpenDesignerRegister} />} />
           <Route path="/products" element={<HomePage onOpenVendorRegister={handleOpenDesignerRegister} />} />
           <Route path="/search" element={<HomePage onOpenVendorRegister={handleOpenDesignerRegister} />} />
+          <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/category" element={<CategoriesPage />} />
           <Route path="/categories/:slug" element={<HomePage onOpenVendorRegister={handleOpenDesignerRegister} />} />
           
           {/* Product Details */}
@@ -128,7 +134,11 @@ const AppContent: React.FC = () => {
       </main>
 
       {!isVendorRoute && !isAdminRoute && (
-        <Footer logoOption={2} onOpenVendorRegister={handleOpenDesignerRegister} />
+        <Footer
+          logoOption={2}
+          onOpenVendorRegister={handleOpenDesignerRegister}
+          className={isCategoriesRoute ? 'categories-footer-hidden-mobile' : ''}
+        />
       )}
 
       {/* Mobile Bottom Navigation Bar (Visible on Mobile) */}
