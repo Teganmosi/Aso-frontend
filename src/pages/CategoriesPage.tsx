@@ -18,7 +18,7 @@ interface DisplayCategory {
   imageUrl: string;
   path: string;
   parentSlug: string;
-  startingPrice: string | null;
+  startingPrice: string;
   productCount: number;
 }
 
@@ -67,126 +67,119 @@ export const CategoriesPage: React.FC = () => {
           return '/adire-3.png';
         };
 
-        // Determine destination URL by parent and child slugs
+        // Strict department routing (checking 'women' first to prevent 'women'.includes('men') bug)
         const resolveCategoryPath = (childSlug: string, parentSlug: string): string => {
           const p = parentSlug.toLowerCase();
-          if (p === 'men' || p.includes('men')) return `/men?category=${childSlug}`;
-          if (p === 'women' || p.includes('women')) return `/women?category=${childSlug}`;
+          if (p === 'women' || p.startsWith('women')) return `/women?category=${childSlug}`;
+          if (p === 'men' || p.startsWith('men')) return `/men?category=${childSlug}`;
           if (p.includes('traditional') || p.includes('heritage')) return `/traditional?category=${childSlug}`;
           return `/products?category=${childSlug}`;
         };
 
         const resolveDepartmentViewAll = (parentSlug: string): string => {
           const p = parentSlug.toLowerCase();
-          if (p === 'men' || p.includes('men')) return '/men';
-          if (p === 'women' || p.includes('women')) return '/women';
+          if (p === 'women' || p.startsWith('women')) return '/women';
+          if (p === 'men' || p.startsWith('men')) return '/men';
           if (p.includes('traditional') || p.includes('heritage')) return '/traditional';
           return `/products?collection=${parentSlug}`;
         };
 
-        // Check if categories are hierarchical (parents with children)
+        // Match product to a category
+        const isProductInCat = (p: Product, catSlug: string, catName: string): boolean => {
+          const pCatSlug = (p.category?.slug || '').toLowerCase().trim();
+          const pCatName = (p.category?.name || '').toLowerCase().trim();
+          const cSlug = catSlug.toLowerCase().trim();
+          const cName = catName.toLowerCase().trim();
+
+          if (pCatSlug === cSlug || pCatName === cName) return true;
+          if (pCatSlug && (pCatSlug.includes(cSlug) || cSlug.includes(pCatSlug))) return true;
+          return false;
+        };
+
+        // Root categories (Men, Women, Traditional, etc.)
         const rootCategories = categoriesList.filter((c) => !c.parent || c.parent === null);
 
         const groups: DepartmentGroup[] = [];
 
-        if (rootCategories.length > 0) {
-          rootCategories.forEach((root) => {
-            // Find children: either nested in root.children or from top-level list referencing this parent id
-            const children: Category[] = (root.children && root.children.length > 0)
-              ? root.children
-              : categoriesList.filter((c) => c.parent === root.id || c.parent_name === root.name);
+        rootCategories.forEach((root) => {
+          const children: Category[] = (root.children && root.children.length > 0)
+            ? root.children
+            : categoriesList.filter((c) => c.parent === root.id || c.parent_name === root.name);
 
-            // If root has child categories, display each child under this department
-            if (children.length > 0) {
-              const displayChildren: DisplayCategory[] = children.map((child) => {
-                const childSlug = child.slug || child.name.toLowerCase().replace(/\s+/g, '-');
-                const matchingProds = productsList.filter((p) => {
-                  const pCatSlug = (p.category?.slug || '').toLowerCase();
-                  const pCatName = (p.category?.name || '').toLowerCase();
-                  return pCatSlug === childSlug.toLowerCase() || pCatName === child.name.toLowerCase();
-                });
+          const displayChildren: DisplayCategory[] = [];
 
-                // Calculate real minimum price from backend products
-                let startingPrice: string | null = null;
-                if (matchingProds.length > 0) {
-                  const prices = matchingProds
-                    .map((p) => p.base_price_naira || (p.base_price_kobo ? p.base_price_kobo / 100 : 0))
-                    .filter((pr) => pr > 0);
-                  if (prices.length > 0) {
-                    startingPrice = `From ₦${Math.min(...prices).toLocaleString()}`;
-                  }
-                }
+          if (children.length > 0) {
+            children.forEach((child) => {
+              const childSlug = child.slug || child.name.toLowerCase().replace(/\s+/g, '-');
+              const matchingProds = productsList.filter((p) => isProductInCat(p, childSlug, child.name));
 
-                // Image resolution: backend category image -> matching product image -> silhouette fallback
-                const firstProdImg = matchingProds[0]?.primary_image_url ||
-                  (matchingProds[0]?.media && matchingProds[0].media.length > 0 ? matchingProds[0].media[0].url : null);
-                const finalImg = child.image_url || firstProdImg || getFallbackImage(child.name, childSlug, root.slug);
+              // ── STRICT DB RULE: ONLY show category if it has published products in DB ──
+              if (matchingProds.length === 0) return;
 
-                return {
-                  id: child.id,
-                  name: child.name,
-                  slug: childSlug,
-                  description: child.description || '',
-                  imageUrl: finalImg,
-                  path: resolveCategoryPath(childSlug, root.slug),
-                  parentSlug: root.slug,
-                  startingPrice,
-                  productCount: matchingProds.length,
-                };
+              const prices = matchingProds
+                .map((p) => p.base_price_naira || (p.base_price_kobo ? p.base_price_kobo / 100 : 0))
+                .filter((pr) => pr > 0);
+              const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+              const startingPrice = minPrice > 0 ? `From ₦${minPrice.toLocaleString()}` : '';
+
+              const firstProdImg = matchingProds[0]?.primary_image_url ||
+                (matchingProds[0]?.media && matchingProds[0].media.length > 0 ? matchingProds[0].media[0].url : null);
+              const finalImg = child.image_url || firstProdImg || getFallbackImage(child.name, childSlug, root.slug);
+
+              displayChildren.push({
+                id: child.id,
+                name: child.name,
+                slug: childSlug,
+                description: child.description || '',
+                imageUrl: finalImg,
+                path: resolveCategoryPath(childSlug, root.slug),
+                parentSlug: root.slug,
+                startingPrice,
+                productCount: matchingProds.length,
               });
+            });
+          } else {
+            // Root category without children (e.g. direct category)
+            const rootSlug = root.slug || root.name.toLowerCase().replace(/\s+/g, '-');
+            const matchingProds = productsList.filter((p) => isProductInCat(p, rootSlug, root.name));
 
-              groups.push({
-                id: root.id,
-                name: root.name,
-                slug: root.slug || root.name.toLowerCase().replace(/\s+/g, '-'),
-                viewAll: resolveDepartmentViewAll(root.slug),
-                categories: displayChildren,
-              });
-            } else {
-              // Root category has no children; treat root as its own category item
-              const rootSlug = root.slug || root.name.toLowerCase().replace(/\s+/g, '-');
-              const matchingProds = productsList.filter((p) => {
-                const pCatSlug = (p.category?.slug || '').toLowerCase();
-                const pCatName = (p.category?.name || '').toLowerCase();
-                return pCatSlug === rootSlug.toLowerCase() || pCatName === root.name.toLowerCase();
-              });
-
-              let startingPrice: string | null = null;
-              if (matchingProds.length > 0) {
-                const prices = matchingProds
-                  .map((p) => p.base_price_naira || (p.base_price_kobo ? p.base_price_kobo / 100 : 0))
-                  .filter((pr) => pr > 0);
-                if (prices.length > 0) {
-                  startingPrice = `From ₦${Math.min(...prices).toLocaleString()}`;
-                }
-              }
+            // Only show if it has published products in DB
+            if (matchingProds.length > 0) {
+              const prices = matchingProds
+                .map((p) => p.base_price_naira || (p.base_price_kobo ? p.base_price_kobo / 100 : 0))
+                .filter((pr) => pr > 0);
+              const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+              const startingPrice = minPrice > 0 ? `From ₦${minPrice.toLocaleString()}` : '';
 
               const firstProdImg = matchingProds[0]?.primary_image_url ||
                 (matchingProds[0]?.media && matchingProds[0].media.length > 0 ? matchingProds[0].media[0].url : null);
               const finalImg = root.image_url || firstProdImg || getFallbackImage(root.name, rootSlug, '');
 
-              groups.push({
+              displayChildren.push({
                 id: root.id,
                 name: root.name,
                 slug: rootSlug,
-                viewAll: resolveDepartmentViewAll(rootSlug),
-                categories: [
-                  {
-                    id: root.id,
-                    name: root.name,
-                    slug: rootSlug,
-                    description: root.description || '',
-                    imageUrl: finalImg,
-                    path: resolveCategoryPath(rootSlug, rootSlug),
-                    parentSlug: rootSlug,
-                    startingPrice,
-                    productCount: matchingProds.length,
-                  },
-                ],
+                description: root.description || '',
+                imageUrl: finalImg,
+                path: resolveCategoryPath(rootSlug, rootSlug),
+                parentSlug: rootSlug,
+                startingPrice,
+                productCount: matchingProds.length,
               });
             }
-          });
-        }
+          }
+
+          // ── ONLY display department if it has at least one active category with products ──
+          if (displayChildren.length > 0) {
+            groups.push({
+              id: root.id,
+              name: root.name,
+              slug: root.slug || root.name.toLowerCase().replace(/\s+/g, '-'),
+              viewAll: resolveDepartmentViewAll(root.slug),
+              categories: displayChildren,
+            });
+          }
+        });
 
         setDepartments(groups);
       } catch (err) {
@@ -203,7 +196,7 @@ export const CategoriesPage: React.FC = () => {
     };
   }, []);
 
-  // Calculate total child categories from backend
+  // Calculate total active child categories with real products
   const allDisplayCategories = useMemo(() => {
     return departments.flatMap((dept) => dept.categories);
   }, [departments]);
@@ -260,7 +253,7 @@ export const CategoriesPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Primary Sticky Department Switcher (Generated strictly from backend categories) */}
+      {/* Primary Sticky Department Switcher (Generated strictly from departments that have active products) */}
       {departments.length > 0 && (
         <nav className="categories-dept-nav-wrapper" aria-label="Department Categories">
           <div className="categories-dept-container">
@@ -294,10 +287,10 @@ export const CategoriesPage: React.FC = () => {
           </div>
         ) : departments.length === 0 ? (
           <div className="categories-empty-state">
-            <p>No categories currently available in the marketplace database.</p>
+            <p>New designer collections dropping soon. No categories currently active.</p>
           </div>
         ) : activeDept === 'all' && searchQuery.trim() === '' ? (
-          /* Structured All-Departments View (Grouped strictly by backend parent categories) */
+          /* Structured All-Departments View */
           departments.map((dept) => {
             if (dept.categories.length === 0) return null;
 
@@ -331,7 +324,7 @@ export const CategoriesPage: React.FC = () => {
                             <span className="category-price-from">{cat.startingPrice}</span>
                           ) : (
                             <span className="category-price-from" style={{ color: '#64748B', fontSize: '0.8rem' }}>
-                              {cat.productCount > 0 ? `${cat.productCount} pieces` : 'Curated Atelier'}
+                              {cat.productCount} {cat.productCount === 1 ? 'piece' : 'pieces'}
                             </span>
                           )}
                           <span className="category-explore-cta">
@@ -400,7 +393,7 @@ export const CategoriesPage: React.FC = () => {
                           <span className="category-price-from">{cat.startingPrice}</span>
                         ) : (
                           <span className="category-price-from" style={{ color: '#64748B', fontSize: '0.8rem' }}>
-                            {cat.productCount > 0 ? `${cat.productCount} pieces` : 'Curated Atelier'}
+                            {cat.productCount} {cat.productCount === 1 ? 'piece' : 'pieces'}
                           </span>
                         )}
                         <span className="category-explore-cta">
