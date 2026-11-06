@@ -11,12 +11,10 @@ import {
   Wallet 
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
 import './MobileBottomNav.css';
 
 export const MobileBottomNav: React.FC = () => {
   const { cartCount } = useCart();
-  const { user } = useAuth();
   const location = useLocation();
 
   // Hide on admin portal routes to avoid clutter

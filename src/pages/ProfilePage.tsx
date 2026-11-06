@@ -5,7 +5,7 @@ import { addressApi, orderApi, paymentApi, deliveryApi, reviewApi, measurementsA
 import type { BespokeMeasurements } from '../types';
 import type { Address, Order, Delivery, OrderItem } from '../types';
 import {
-  User as UserIcon, MapPin, Plus, Trash2, CheckCircle, Star, Scissors, Save,
+  MapPin, Plus, Trash2, CheckCircle, Star, Scissors, Save,
   AlertCircle, Loader, ShoppingBag, ChevronRight,
   ArrowLeft, Truck, X, CreditCard, ShieldCheck, Copy,
   ExternalLink, Sparkles, Clock, Check, RefreshCw, Edit3, ArrowUpRight,
