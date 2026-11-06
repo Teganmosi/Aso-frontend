@@ -4,42 +4,31 @@ import {
   Search,
   ArrowRight,
   ChevronRight,
-  Loader
+  Loader,
+  Clock
 } from 'lucide-react';
 import { categoryApi, productApi } from '../api/client';
 import type { Category, Product } from '../types';
 import './CategoriesPage.css';
 
-interface DisplayCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  imageUrl: string;
-  path: string;
-  parentSlug: string;
-  startingPrice: string;
-  productCount: number;
-}
-
-interface DepartmentGroup {
+interface DepartmentDisplay {
   id: string;
   name: string;
   slug: string;
   viewAll: string;
-  categories: DisplayCategory[];
+  products: Product[];
 }
 
 export const CategoriesPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
-  const [departments, setDepartments] = useState<DepartmentGroup[]>([]);
+  const [departments, setDepartments] = useState<DepartmentDisplay[]>([]);
   const [activeDept, setActiveDept] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadBackendData = async () => {
+    const loadMarketplaceCatalog = async () => {
       setLoading(true);
       try {
         const [rawCategories, rawProducts] = await Promise.all([
@@ -52,173 +41,171 @@ export const CategoriesPage: React.FC = () => {
         const categoriesList: Category[] = Array.isArray(rawCategories) ? rawCategories : [];
         const productsList: Product[] = Array.isArray(rawProducts) ? rawProducts : [];
 
-        // Helper to get fallback images by category name/slug
-        const getFallbackImage = (name: string, slug: string, parentSlug: string): string => {
-          const s = `${name} ${slug} ${parentSlug}`.toLowerCase();
-          if (s.includes('agbada')) return '/traditional-men-2.png';
-          if (s.includes('senator')) return '/traditional-men-1.png';
-          if (s.includes('boubou') || s.includes('kaftan')) return '/adire-1.png';
-          if (s.includes('aso-oke') || s.includes('aso oke')) return '/traditional-men-4.png';
-          if (s.includes('corset') || s.includes('suit') || s.includes('blazer')) return '/female-executive-suit.jpg';
-          if (s.includes('iro') || s.includes('buba') || s.includes('two-piece') || s.includes('co-ord')) return '/adire-2.png';
-          if (s.includes('dress') || s.includes('gown')) return '/adire-4.png';
-          if (s.includes('women')) return '/female-executive-suit.jpg';
-          if (s.includes('men')) return '/traditional-men-1.png';
-          return '/adire-3.png';
-        };
+        // Build a map of category ID & slug to its root department
+        // e.g., 'womens-suits-blazers' -> parent is 'Women'
+        const categoryToDeptMap = new Map<string, { deptName: string; deptSlug: string; viewAll: string }>();
 
-        // Strict department routing (checking 'women' first to prevent 'women'.includes('men') bug)
-        const resolveCategoryPath = (childSlug: string, parentSlug: string): string => {
-          const p = parentSlug.toLowerCase();
-          if (p === 'women' || p.startsWith('women')) return `/women?category=${childSlug}`;
-          if (p === 'men' || p.startsWith('men')) return `/men?category=${childSlug}`;
-          if (p.includes('traditional') || p.includes('heritage')) return `/traditional?category=${childSlug}`;
-          return `/products?category=${childSlug}`;
-        };
-
-        const resolveDepartmentViewAll = (parentSlug: string): string => {
-          const p = parentSlug.toLowerCase();
-          if (p === 'women' || p.startsWith('women')) return '/women';
-          if (p === 'men' || p.startsWith('men')) return '/men';
-          if (p.includes('traditional') || p.includes('heritage')) return '/traditional';
-          return `/products?collection=${parentSlug}`;
-        };
-
-        // Match product to a category
-        const isProductInCat = (p: Product, catSlug: string, catName: string): boolean => {
-          const pCatSlug = (p.category?.slug || '').toLowerCase().trim();
-          const pCatName = (p.category?.name || '').toLowerCase().trim();
-          const cSlug = catSlug.toLowerCase().trim();
-          const cName = catName.toLowerCase().trim();
-
-          if (pCatSlug === cSlug || pCatName === cName) return true;
-          if (pCatSlug && (pCatSlug.includes(cSlug) || cSlug.includes(pCatSlug))) return true;
-          return false;
-        };
-
-        // Root categories (Men, Women, Traditional, etc.)
         const rootCategories = categoriesList.filter((c) => !c.parent || c.parent === null);
 
-        const groups: DepartmentGroup[] = [];
-
         rootCategories.forEach((root) => {
+          const rSlug = (root.slug || root.name).toLowerCase();
+          let viewAll = `/products?collection=${rSlug}`;
+          if (rSlug === 'women' || rSlug.startsWith('women')) viewAll = '/women';
+          else if (rSlug === 'men' || rSlug.startsWith('men')) viewAll = '/men';
+          else if (rSlug.includes('traditional') || rSlug.includes('heritage')) viewAll = '/traditional';
+
+          const deptInfo = {
+            deptName: root.name,
+            deptSlug: rSlug,
+            viewAll,
+          };
+
+          // Register root itself
+          categoryToDeptMap.set(root.id, deptInfo);
+          categoryToDeptMap.set(rSlug, deptInfo);
+
+          // Register all children of this root
           const children: Category[] = (root.children && root.children.length > 0)
             ? root.children
             : categoriesList.filter((c) => c.parent === root.id || c.parent_name === root.name);
 
-          const displayChildren: DisplayCategory[] = [];
+          children.forEach((child) => {
+            const cSlug = (child.slug || child.name).toLowerCase();
+            categoryToDeptMap.set(child.id, deptInfo);
+            categoryToDeptMap.set(cSlug, deptInfo);
+          });
+        });
 
-          if (children.length > 0) {
-            children.forEach((child) => {
-              const childSlug = child.slug || child.name.toLowerCase().replace(/\s+/g, '-');
-              const matchingProds = productsList.filter((p) => isProductInCat(p, childSlug, child.name));
+        // Group actual published products into their strict department
+        const deptGroups = new Map<string, { id: string; name: string; slug: string; viewAll: string; products: Product[] }>();
 
-              // ── STRICT DB RULE: ONLY show category if it has published products in DB ──
-              if (matchingProds.length === 0) return;
+        productsList.forEach((prod) => {
+          const pCatId = prod.category?.id || '';
+          const pCatSlug = (prod.category?.slug || '').toLowerCase().trim();
+          const pTitle = prod.title.toLowerCase();
+          const pDesc = (prod.description || '').toLowerCase();
 
-              const prices = matchingProds
-                .map((p) => p.base_price_naira || (p.base_price_kobo ? p.base_price_kobo / 100 : 0))
-                .filter((pr) => pr > 0);
-              const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-              const startingPrice = minPrice > 0 ? `From ₦${minPrice.toLocaleString()}` : '';
+          // 1. Strict exact lookup in categoryToDeptMap
+          let dept = categoryToDeptMap.get(pCatId) || categoryToDeptMap.get(pCatSlug);
 
-              const firstProdImg = matchingProds[0]?.primary_image_url ||
-                (matchingProds[0]?.media && matchingProds[0].media.length > 0 ? matchingProds[0].media[0].url : null);
-              const finalImg = child.image_url || firstProdImg || getFallbackImage(child.name, childSlug, root.slug);
-
-              displayChildren.push({
-                id: child.id,
-                name: child.name,
-                slug: childSlug,
-                description: child.description || '',
-                imageUrl: finalImg,
-                path: resolveCategoryPath(childSlug, root.slug),
-                parentSlug: root.slug,
-                startingPrice,
-                productCount: matchingProds.length,
-              });
-            });
-          } else {
-            // Root category without children (e.g. direct category)
-            const rootSlug = root.slug || root.name.toLowerCase().replace(/\s+/g, '-');
-            const matchingProds = productsList.filter((p) => isProductInCat(p, rootSlug, root.name));
-
-            // Only show if it has published products in DB
-            if (matchingProds.length > 0) {
-              const prices = matchingProds
-                .map((p) => p.base_price_naira || (p.base_price_kobo ? p.base_price_kobo / 100 : 0))
-                .filter((pr) => pr > 0);
-              const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-              const startingPrice = minPrice > 0 ? `From ₦${minPrice.toLocaleString()}` : '';
-
-              const firstProdImg = matchingProds[0]?.primary_image_url ||
-                (matchingProds[0]?.media && matchingProds[0].media.length > 0 ? matchingProds[0].media[0].url : null);
-              const finalImg = root.image_url || firstProdImg || getFallbackImage(root.name, rootSlug, '');
-
-              displayChildren.push({
-                id: root.id,
-                name: root.name,
-                slug: rootSlug,
-                description: root.description || '',
-                imageUrl: finalImg,
-                path: resolveCategoryPath(rootSlug, rootSlug),
-                parentSlug: rootSlug,
-                startingPrice,
-                productCount: matchingProds.length,
-              });
+          // 2. Fallback heuristic only if not mapped
+          if (!dept) {
+            if (pCatSlug.startsWith('women') || pTitle.includes('female') || pTitle.includes('women') || pDesc.includes('female suit')) {
+              dept = { deptName: 'Women', deptSlug: 'women', viewAll: '/women' };
+            } else if (pCatSlug.includes('traditional') || pTitle.includes('igbo') || pTitle.includes('agbada') || pTitle.includes('aso-oke') || pTitle.includes('aso oke')) {
+              dept = { deptName: 'Traditional & Heritage', deptSlug: 'traditional', viewAll: '/traditional' };
+            } else if (pCatSlug.startsWith('men') || pTitle.includes('senator') || pTitle.includes('men') || pTitle.includes('kaftan')) {
+              dept = { deptName: 'Men', deptSlug: 'men', viewAll: '/men' };
+            } else {
+              dept = { deptName: 'Contemporary Collections', deptSlug: 'contemporary', viewAll: '/products' };
             }
           }
 
-          // ── ONLY display department if it has at least one active category with products ──
-          if (displayChildren.length > 0) {
-            groups.push({
-              id: root.id,
-              name: root.name,
-              slug: root.slug || root.name.toLowerCase().replace(/\s+/g, '-'),
-              viewAll: resolveDepartmentViewAll(root.slug),
-              categories: displayChildren,
+          if (!deptGroups.has(dept.deptSlug)) {
+            deptGroups.set(dept.deptSlug, {
+              id: dept.deptSlug,
+              name: dept.deptName,
+              slug: dept.deptSlug,
+              viewAll: dept.viewAll,
+              products: [],
             });
+          }
+
+          deptGroups.get(dept.deptSlug)!.products.push(prod);
+        });
+
+        // Convert to array in prioritized order: Men, Women, Traditional, Others
+        const prioritizedOrder = ['men', 'women', 'traditional', 'contemporary'];
+        const sortedGroups: DepartmentDisplay[] = [];
+
+        prioritizedOrder.forEach((orderSlug) => {
+          for (const [key, group] of deptGroups.entries()) {
+            if (key.includes(orderSlug) && !sortedGroups.includes(group)) {
+              sortedGroups.push(group);
+            }
           }
         });
 
-        setDepartments(groups);
+        // Append any remaining departments
+        for (const group of deptGroups.values()) {
+          if (!sortedGroups.includes(group)) {
+            sortedGroups.push(group);
+          }
+        }
+
+        setDepartments(sortedGroups);
       } catch (err) {
-        console.error('Failed to load categories from backend API', err);
+        console.error('Failed to load catalog', err);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
-    loadBackendData();
+    loadMarketplaceCatalog();
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // Calculate total active child categories with real products
-  const allDisplayCategories = useMemo(() => {
-    return departments.flatMap((dept) => dept.categories);
+  // Helper for image fallback
+  const getProductImage = (prod: Product): string => {
+    if (prod.primary_image_url && prod.primary_image_url.trim() !== '') {
+      return prod.primary_image_url.startsWith('media/') ? `/${prod.primary_image_url}` : prod.primary_image_url;
+    }
+    if (prod.media && prod.media.length > 0 && prod.media[0].url) {
+      const u = prod.media[0].url;
+      return u.startsWith('media/') ? `/${u}` : u;
+    }
+    const t = prod.title.toLowerCase();
+    if (t.includes('senator')) return '/traditional-men-1.png';
+    if (t.includes('igbo') || t.includes('traditional')) return '/traditional-men-2.png';
+    if (t.includes('suit') || t.includes('female')) return '/female-executive-suit.jpg';
+    return '/traditional-men-3.png';
+  };
+
+  // Helper for price
+  const formatPrice = (prod: Product): string => {
+    const amount = prod.base_price_naira || (prod.base_price_kobo ? prod.base_price_kobo / 100 : 0);
+    return `₦${amount.toLocaleString()}`;
+  };
+
+  // Total published pieces in catalog
+  const totalPieces = useMemo(() => {
+    return departments.reduce((acc, d) => acc + d.products.length, 0);
   }, [departments]);
 
-  // Client-side search and department filter
-  const filteredCategories = useMemo(() => {
-    return allDisplayCategories.filter((cat) => {
-      const matchesDept = activeDept === 'all' || cat.parentSlug === activeDept;
-      const q = searchQuery.trim().toLowerCase();
-      const matchesSearch =
-        q === '' ||
-        cat.name.toLowerCase().includes(q) ||
-        cat.description.toLowerCase().includes(q);
-      return matchesDept && matchesSearch;
-    });
-  }, [allDisplayCategories, activeDept, searchQuery]);
+  // Filtered view based on active tab and search
+  const visibleDepartments = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
 
-  const currentDeptInfo = departments.find((d) => d.slug === activeDept);
+    return departments
+      .map((dept) => {
+        if (activeDept !== 'all' && dept.slug !== activeDept) return null;
+
+        const filteredProds = dept.products.filter((p) => {
+          if (!q) return true;
+          return (
+            p.title.toLowerCase().includes(q) ||
+            (p.description && p.description.toLowerCase().includes(q)) ||
+            (p.vendor?.store_name && p.vendor.store_name.toLowerCase().includes(q)) ||
+            (p.category?.name && p.category.name.toLowerCase().includes(q))
+          );
+        });
+
+        if (filteredProds.length === 0) return null;
+
+        return {
+          ...dept,
+          products: filteredProds,
+        };
+      })
+      .filter(Boolean) as DepartmentDisplay[];
+  }, [departments, activeDept, searchQuery]);
 
   return (
     <div className="categories-page-layout">
-      {/* Hero Banner */}
+      {/* ── 1. Clean Header Banner ── */}
       <section className="categories-hero-banner">
         <div className="categories-hero-inner">
           <h1 className="categories-title">
@@ -226,16 +213,16 @@ export const CategoriesPage: React.FC = () => {
           </h1>
 
           <p className="categories-subtitle">
-            Discover authentic African luxury fashion, tailored pieces, and contemporary native wear from verified designers.
+            Authentic Nigerian luxury pieces, precision tailored by verified master designers.
           </p>
 
-          {/* Search Categories */}
+          {/* Search Input */}
           <div className="categories-search-box">
             <Search size={18} color="#6B7280" />
             <input
               type="text"
               className="categories-search-input"
-              placeholder="Search category (e.g. Agbada, Corset, Aso Oke, Kaftan)..."
+              placeholder="Search pieces, styles, or designers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -253,16 +240,16 @@ export const CategoriesPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Primary Sticky Department Switcher (Generated strictly from departments that have active products) */}
+      {/* ── 2. Department Tabs (Only departments with live pieces in DB) ── */}
       {departments.length > 0 && (
-        <nav className="categories-dept-nav-wrapper" aria-label="Department Categories">
+        <nav className="categories-dept-nav-wrapper" aria-label="Department Navigation">
           <div className="categories-dept-container">
             <button
               type="button"
               className={`dept-pill-btn ${activeDept === 'all' ? 'active' : ''}`}
               onClick={() => setActiveDept('all')}
             >
-              <span>All Categories ({allDisplayCategories.length})</span>
+              <span>All Pieces ({totalPieces})</span>
             </button>
             {departments.map((dept) => (
               <button
@@ -271,133 +258,91 @@ export const CategoriesPage: React.FC = () => {
                 className={`dept-pill-btn ${activeDept === dept.slug ? 'active' : ''}`}
                 onClick={() => setActiveDept(dept.slug)}
               >
-                <span>{dept.name}</span>
+                <span>{dept.name} ({dept.products.length})</span>
               </button>
             ))}
           </div>
         </nav>
       )}
 
-      {/* Main Categories Display */}
+      {/* ── 3. Main Product Grid (Clicking ANY cloth opens the product page directly to buy) ── */}
       <main className="categories-main-container">
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '30vh', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '35vh', gap: '1rem' }}>
             <Loader size={28} className="spin text-emerald" />
-            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>Loading active categories from catalog...</p>
+            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>Loading live marketplace pieces...</p>
           </div>
-        ) : departments.length === 0 ? (
+        ) : visibleDepartments.length === 0 ? (
           <div className="categories-empty-state">
-            <p>New designer collections dropping soon. No categories currently active.</p>
+            <p>
+              {searchQuery
+                ? `No pieces found matching "${searchQuery}".`
+                : 'New designer collections are currently in tailoring. Check back shortly.'}
+            </p>
+            {searchQuery && (
+              <button
+                type="button"
+                className="categories-reset-btn"
+                onClick={() => {
+                  setSearchQuery('');
+                  setActiveDept('all');
+                }}
+              >
+                Clear Search
+              </button>
+            )}
           </div>
-        ) : activeDept === 'all' && searchQuery.trim() === '' ? (
-          /* Structured All-Departments View */
-          departments.map((dept) => {
-            if (dept.categories.length === 0) return null;
-
-            return (
-              <section key={dept.slug} className="category-dept-section">
-                <div className="dept-section-header">
-                  <div className="dept-title-group">
-                    <h2>{dept.name}</h2>
-                    <p>{dept.categories.length} curated categories available</p>
-                  </div>
-                  <Link to={dept.viewAll} className="dept-view-all-link">
-                    <span>View All Pieces</span>
-                    <ArrowRight size={15} />
-                  </Link>
-                </div>
-
-                <div className="categories-grid">
-                  {dept.categories.map((cat) => (
-                    <Link key={cat.id} to={cat.path} className="category-page-card">
-                      <div className="category-card-media">
-                        <img src={cat.imageUrl} alt={cat.name} className="category-card-img" loading="lazy" />
-                      </div>
-
-                      <div className="category-card-body">
-                        <h3 className="category-card-title">{cat.name}</h3>
-                        {cat.description && (
-                          <p className="category-card-desc">{cat.description}</p>
-                        )}
-                        <div className="category-card-footer">
-                          {cat.startingPrice ? (
-                            <span className="category-price-from">{cat.startingPrice}</span>
-                          ) : (
-                            <span className="category-price-from" style={{ color: '#64748B', fontSize: '0.8rem' }}>
-                              {cat.productCount} {cat.productCount === 1 ? 'piece' : 'pieces'}
-                            </span>
-                          )}
-                          <span className="category-explore-cta">
-                            <span>Explore</span>
-                            <ChevronRight size={13} />
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            );
-          })
         ) : (
-          /* Filtered View (e.g. Specific Department or Search Active) */
-          <section className="category-dept-section">
-            <div className="dept-section-header">
-              <div className="dept-title-group">
-                <h2>
-                  {currentDeptInfo
-                    ? currentDeptInfo.name
-                    : searchQuery
-                    ? `Search: "${searchQuery}"`
-                    : 'Curated Categories'}
-                </h2>
-                <p>{filteredCategories.length} curated categories available</p>
-              </div>
-              {currentDeptInfo && (
-                <Link to={currentDeptInfo.viewAll} className="dept-view-all-link">
-                  <span>View All {currentDeptInfo.name} Pieces</span>
+          visibleDepartments.map((dept) => (
+            <section key={dept.slug} className="category-dept-section">
+              {/* Department Header */}
+              <div className="dept-section-header">
+                <div className="dept-title-group">
+                  <h2>{dept.name}</h2>
+                  <p>{dept.products.length} {dept.products.length === 1 ? 'curated piece available' : 'curated pieces available'}</p>
+                </div>
+                <Link to={dept.viewAll} className="dept-view-all-link">
+                  <span>View All {dept.name.split(' ')[0]} Pieces</span>
                   <ArrowRight size={15} />
                 </Link>
-              )}
-            </div>
-
-            {filteredCategories.length === 0 ? (
-              <div className="categories-empty-state">
-                <p>No categories found matching your selection.</p>
-                <button
-                  type="button"
-                  className="categories-reset-btn"
-                  onClick={() => {
-                    setActiveDept('all');
-                    setSearchQuery('');
-                  }}
-                >
-                  Reset Filters
-                </button>
               </div>
-            ) : (
+
+              {/* 2-Column Product Grid (Mobile-First Tap Targets) */}
               <div className="categories-grid">
-                {filteredCategories.map((cat) => (
-                  <Link key={cat.id} to={cat.path} className="category-page-card">
+                {dept.products.map((prod) => (
+                  <Link
+                    key={prod.id}
+                    to={`/products/${prod.slug}`}
+                    className="category-page-card"
+                    title={`View ${prod.title}`}
+                  >
+                    {/* Media Container */}
                     <div className="category-card-media">
-                      <img src={cat.imageUrl} alt={cat.name} className="category-card-img" loading="lazy" />
+                      <img
+                        src={getProductImage(prod)}
+                        alt={prod.title}
+                        className="category-card-img"
+                        loading="lazy"
+                      />
+                      <div className="category-card-badge">
+                        <Clock size={11} />
+                        <span>Made to Order · {prod.preparation_time_days || 5}d</span>
+                      </div>
                     </div>
 
+                    {/* Card Details */}
                     <div className="category-card-body">
-                      <h3 className="category-card-title">{cat.name}</h3>
-                      {cat.description && (
-                        <p className="category-card-desc">{cat.description}</p>
+                      {prod.vendor?.store_name && (
+                        <span className="category-card-vendor">
+                          {prod.vendor.store_name}
+                        </span>
                       )}
+                      <h3 className="category-card-title">{prod.title}</h3>
+                      
                       <div className="category-card-footer">
-                        {cat.startingPrice ? (
-                          <span className="category-price-from">{cat.startingPrice}</span>
-                        ) : (
-                          <span className="category-price-from" style={{ color: '#64748B', fontSize: '0.8rem' }}>
-                            {cat.productCount} {cat.productCount === 1 ? 'piece' : 'pieces'}
-                          </span>
-                        )}
+                        <span className="category-price-from">{formatPrice(prod)}</span>
                         <span className="category-explore-cta">
-                          <span>Explore</span>
+                          <span>Buy Now</span>
                           <ChevronRight size={13} />
                         </span>
                       </div>
@@ -405,8 +350,8 @@ export const CategoriesPage: React.FC = () => {
                   </Link>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          ))
         )}
       </main>
     </div>
