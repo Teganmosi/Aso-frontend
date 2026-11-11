@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { vendorApi, reviewApi, productApi } from '../../api/client';
-import type { BankAccount } from '../../types';
+import type { BankAccount, VerificationStatus } from '../../types';
 import {
   MapPin,
   ShieldCheck,
@@ -120,7 +120,27 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   const [cacNumber, setCacNumber] = useState(user?.vendor_profile?.cac_number || '');
   const [nin, setNin] = useState(user?.vendor_profile?.nin_number || '');
   const [isVerified, setIsVerified] = useState(user?.vendor_profile?.is_verified ?? false);
-  const [verificationStatus, setVerificationStatus] = useState<string>(user?.vendor_profile?.status || 'PENDING');
+  // Identity (KYC) verification has been *submitted and saved* on the server. This is independent of
+  // storefront approval status, and must not be inferred from what is currently typed in the form.
+  const [verificationState, setVerificationState] = useState<VerificationStatus>(
+    user?.vendor_profile?.verification_status
+      || (user?.vendor_profile?.is_verified ? 'VERIFIED' : 'NOT_SUBMITTED')
+  );
+  const [verificationRejectionReason, setVerificationRejectionReason] = useState(
+    user?.vendor_profile?.verification_rejection_reason || ''
+  );
+  const kycSubmitted = !isVerified && verificationState === 'PENDING_REVIEW';
+  const kycRejected = !isVerified && verificationState === 'REJECTED';
+
+  /** Applies the private studio profile: the only source of saved NIN/CAC and the admin's decision. */
+  const applyPrivateProfile = (p: any) => {
+    if (!p) return;
+    if (p.nin_number) { setNin(p.nin_number); setKycMethod('nin'); }
+    else if (p.cac_number) { setCacNumber(p.cac_number); setKycMethod('cac'); }
+    if (p.is_verified !== undefined) setIsVerified(Boolean(p.is_verified));
+    if (p.verification_status) setVerificationState(p.verification_status);
+    if (p.verification_rejection_reason !== undefined) setVerificationRejectionReason(p.verification_rejection_reason || '');
+  };
 
   // Live Metrics (Storefront Preview)
   const [averageRating, setAverageRating] = useState('0.0');
@@ -181,7 +201,6 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           if (profile.landmark) setLandmark(profile.landmark);
           if (profile.instagram_handle) setInstagram(profile.instagram_handle.replace('@', ''));
           if (profile.is_verified !== undefined) setIsVerified(profile.is_verified);
-          if (profile.status) setVerificationStatus(profile.status);
           if (profile.average_rating) setAverageRating(parseFloat(profile.average_rating).toFixed(1));
           if (profile.review_count !== undefined) setReviewCount(profile.review_count);
           if (profile.lead_designer_name) setLeadDesigner(profile.lead_designer_name);
@@ -211,6 +230,11 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             }
           }
         }
+
+        // Private studio profile (NIN/CAC + verification state). Without this the NIN field loads
+        // blank, and saving the form would erase the designer's submitted identity.
+        const mine = await vendorApi.getMyProfile().catch(() => null);
+        if (mine) applyPrivateProfile(mine);
 
         if (user) {
           if ((user.first_name || user.last_name) && !leadDesigner) {
@@ -303,6 +327,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
       if (updatedProfile?.slug) {
         setSlug(updatedProfile.slug);
       }
+      if (updatedProfile?.verification_status) applyPrivateProfile(updatedProfile);
 
       // 2. Persist payout bank account if provided
       if (accountNumber && bankName && accountName) {
@@ -315,14 +340,14 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
         setEditingBank(false);
       }
 
-      // 3. Persist KYC verification details if provided
-      if (nin || cacNumber || workshopAddress) {
-        await vendorApi.verifyKyc({
-          nin: nin.trim(),
-          cac_number: cacNumber.trim(),
-          workshop_address: workshopAddress.trim(),
-          landmark: landmark.trim(),
-        }).catch(() => {});
+      // 3. Send NIN/CAC to the Aso team for review (also re-queues after a rejection).
+      //    This never verifies the designer; only an admin can grant the Verified badge.
+      if (nin.trim() || cacNumber.trim()) {
+        const kycRes = await vendorApi.verifyKyc({
+          nin: nin.trim() || undefined,
+          cac_number: cacNumber.trim() || undefined,
+        });
+        if (kycRes?.vendor) applyPrivateProfile(kycRes.vendor);
       }
 
       await refreshMe();
@@ -330,7 +355,11 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
       setTimeout(() => setSaveSuccess(false), 3500);
     } catch (err: any) {
       console.error('Save profile error', err);
-      const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to save profile changes.';
+      const data = err.response?.data;
+      const fieldErrors = data?.error?.details && typeof data.error.details === 'object'
+        ? Object.values(data.error.details).flat().join(' ')
+        : '';
+      const msg = fieldErrors || data?.error?.message || data?.detail || data?.message || 'Failed to save profile changes.';
       setSaveError(msg);
     } finally {
       setSaving(false);
@@ -1033,50 +1062,55 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
               <ShieldCheck size={20} color="#004B44" />
             </div>
 
-            {/* Status Banner */}
-            <div style={{
-              backgroundColor: isVerified ? '#ECFDF5' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#FFFBEB' : '#F8FAFC'),
-              border: `1px solid ${isVerified ? '#A7F3D0' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#FDE68A' : '#E2E8F0')}`,
-              borderRadius: '6px',
-              padding: '0.9rem 1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              flexWrap: 'wrap'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                {isVerified ? (
-                  <CheckCircle2 size={18} color="#059669" />
-                ) : (verificationStatus === 'PENDING' && (nin || cacNumber)) ? (
-                  <Clock size={18} color="#D97706" />
-                ) : (
-                  <Lock size={18} color="#64748B" />
-                )}
-                <div>
-                  <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 700, color: isVerified ? '#065F46' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#92400E' : '#1E293B') }}>
-                    {isVerified ? 'Verified Designer • Bank Withdrawals Active' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? 'Verification in Progress' : 'Action Required to Enable Withdrawals')}
-                  </p>
-                  <p style={{ margin: '0.15rem 0 0', fontSize: '0.775rem', color: isVerified ? '#047857' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#B45309' : '#64748B') }}>
-                    {isVerified
-                      ? 'Your identity has been verified. Withdrawals to your bank account are fully unlocked.'
-                      : (verificationStatus === 'PENDING' && (nin || cacNumber))
-                      ? 'Your verification details have been submitted and are under review. You can continue uploading garments.'
-                      : 'You can sell immediately. Submit either your NIN or CAC registration below to enable bank withdrawals when you make sales.'}
-                  </p>
+            {/* Status Banner: driven solely by the admin's review decision */}
+            {(() => {
+              const k = isVerified
+                ? { bg: '#ECFDF5', border: '#A7F3D0', icon: <CheckCircle2 size={18} color="#059669" />, titleColor: '#065F46', descColor: '#047857', pillBg: '#004B44',
+                    title: 'Verified Designer • Bank Withdrawals Active', pill: 'VERIFIED',
+                    desc: 'Aso has verified your identity. Your storefront shows the Verified badge and withdrawals are unlocked.' }
+                : kycSubmitted
+                ? { bg: '#FFFBEB', border: '#FDE68A', icon: <Clock size={18} color="#D97706" />, titleColor: '#92400E', descColor: '#B45309', pillBg: '#D97706',
+                    title: 'Verification in Progress', pill: 'UNDER REVIEW',
+                    desc: 'Your details have been sent to the Aso team for review. You can keep selling; withdrawals unlock once you are approved.' }
+                : kycRejected
+                ? { bg: '#FEF2F2', border: '#FECACA', icon: <Lock size={18} color="#DC2626" />, titleColor: '#991B1B', descColor: '#B91C1C', pillBg: '#DC2626',
+                    title: 'Verification Not Approved', pill: 'ACTION NEEDED',
+                    desc: `${verificationRejectionReason || 'We could not confirm the details you submitted.'} Update your NIN or CAC below and save to resubmit.` }
+                : { bg: '#F8FAFC', border: '#E2E8F0', icon: <Lock size={18} color="#64748B" />, titleColor: '#1E293B', descColor: '#64748B', pillBg: '#64748B',
+                    title: 'Action Required to Enable Withdrawals', pill: 'WITHDRAWALS LOCKED',
+                    desc: 'You can sell immediately. Submit your NIN or CAC below; once the Aso team verifies it you get the Verified badge and can withdraw.' };
+              return (
+                <div style={{
+                  backgroundColor: k.bg,
+                  border: `1px solid ${k.border}`,
+                  borderRadius: '6px',
+                  padding: '0.9rem 1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    {k.icon}
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 700, color: k.titleColor }}>{k.title}</p>
+                      <p style={{ margin: '0.15rem 0 0', fontSize: '0.775rem', color: k.descColor }}>{k.desc}</p>
+                    </div>
+                  </div>
+                  <span style={{
+                    backgroundColor: k.pillBg,
+                    color: '#FFFFFF',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    padding: '0.25rem 0.6rem',
+                    borderRadius: '12px'
+                  }}>
+                    {k.pill}
+                  </span>
                 </div>
-              </div>
-              <span style={{
-                backgroundColor: isVerified ? '#004B44' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? '#D97706' : '#64748B'),
-                color: '#FFFFFF',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                padding: '0.25rem 0.6rem',
-                borderRadius: '12px'
-              }}>
-                {isVerified ? 'VERIFIED' : (verificationStatus === 'PENDING' && (nin || cacNumber) ? 'UNDER REVIEW' : 'WITHDRAWALS LOCKED')}
-              </span>
-            </div>
+              );
+            })()}
 
             {/* Verification Method Toggle */}
             <div>
@@ -1302,12 +1336,12 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     <CheckCircle2 size={12} />
                     <span>Verified Designer</span>
                   </span>
-                ) : (
+                ) : kycSubmitted ? (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', fontWeight: 600, color: '#92400E', backgroundColor: '#FEF3C7', border: '1px solid #FDE68A', padding: '0.2rem 0.5rem', borderRadius: '12px' }}>
                     <Clock size={12} />
                     <span>Verification in Progress</span>
                   </span>
-                )}
+                ) : null}
               </div>
 
               {/* Metrics */}

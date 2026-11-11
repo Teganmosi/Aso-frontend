@@ -205,6 +205,12 @@ export const vendorApi = {
     return res.data.vendor || res.data.profile || res.data.data || res.data;
   },
 
+  /** The signed-in designer's private studio profile (includes NIN/CAC and verification review state). */
+  getMyProfile: async (): Promise<any | null> => {
+    const res = await apiClient.get('/vendors/profile/');
+    return res.data.vendor ?? null;
+  },
+
   getBankAccount: async (): Promise<BankAccount> => {
     const res = await apiClient.get('/vendors/bank-account/');
     return res.data.bank_account || res.data.data || res.data;

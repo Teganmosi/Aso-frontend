@@ -88,15 +88,15 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
     setWithdrawLoading(true);
     try {
       await payoutApi.requestWithdrawal(amountKobo);
-      setWithdrawSuccess(`Payout request for ₦${amount.toLocaleString()} submitted successfully!`);
+      setWithdrawSuccess(`Withdrawal request for ₦${amount.toLocaleString()} received. The Aso team will review it and send it to your bank account.`);
       setWithdrawAmountNaira('');
       await loadDashboardData();
       setTimeout(() => {
         setShowWithdrawModal(false);
         setWithdrawSuccess(null);
-      }, 2000);
+      }, 3500);
     } catch (err: any) {
-      const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to submit withdrawal request.';
+      const msg = err.response?.data?.error?.message || err.response?.data?.detail || err.response?.data?.message || 'Failed to submit withdrawal request.';
       setWithdrawError(msg);
     } finally {
       setWithdrawLoading(false);

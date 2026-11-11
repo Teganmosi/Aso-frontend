@@ -83,6 +83,9 @@ export interface SizeChart {
   notes?: string;
 }
 
+/** Admin-reviewed identity (NIN/CAC) verification state. Only an Aso admin can grant VERIFIED. */
+export type VerificationStatus = 'NOT_SUBMITTED' | 'PENDING_REVIEW' | 'VERIFIED' | 'REJECTED';
+
 export interface VendorProfileBrief {
   id: string;
   store_name: string;
@@ -90,6 +93,8 @@ export interface VendorProfileBrief {
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   is_verified: boolean;
   has_started_verification?: boolean;
+  verification_status?: VerificationStatus;
+  verification_rejection_reason?: string;
   city?: string;
   state?: string;
   description?: string;

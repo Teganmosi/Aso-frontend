@@ -190,7 +190,7 @@ export const VendorDashboardPage: React.FC = () => {
     setWithdrawModalSuccess('');
 
     if (!user?.vendor_profile?.is_verified) {
-      setWithdrawModalError('Identity verification (NIN or CAC) is required before requesting withdrawals.');
+      setWithdrawModalError('Withdrawals unlock once the Aso team has verified your NIN or CAC. Submit it in Studio Profile for review.');
       return;
     }
 
@@ -211,15 +211,15 @@ export const VendorDashboardPage: React.FC = () => {
     setWithdrawSubmitting(true);
     try {
       await payoutApi.requestWithdrawal(valKobo);
-      setWithdrawModalSuccess(`Withdrawal of ₦${val.toLocaleString()} submitted!`);
+      setWithdrawModalSuccess(`Withdrawal request for ₦${val.toLocaleString()} received. The Aso team will review it and send it to your bank account.`);
       setWithdrawAmount('');
       await loadFinancialData();
       setTimeout(() => {
         setShowWithdrawModal(false);
         setWithdrawModalSuccess('');
-      }, 2000);
+      }, 3500);
     } catch (err: any) {
-      const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to submit withdrawal request.';
+      const msg = err.response?.data?.error?.message || err.response?.data?.detail || err.response?.data?.message || 'Failed to submit withdrawal request.';
       setWithdrawModalError(msg);
     } finally {
       setWithdrawSubmitting(false);

@@ -122,7 +122,7 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
             <article>
               <h2>1. Introduction &amp; Marketplace Model</h2>
               <p>
-                Welcome to <strong>Aso Marketplace</strong> (accessible at <code>asomarketplace.com.ng</code>). Aso operates as a curated luxury multi-vendor marketplace connecting verified independent African fashion designers, bespoke tailors, and textile artisans with domestic and international fashion buyers.
+                Welcome to <strong>Aso Marketplace</strong> (accessible at <code>asomarketplace.com.ng</code>). Aso operates as a curated luxury multi-vendor marketplace connecting independent African fashion designers, bespoke tailors, and textile artisans with domestic and international fashion buyers.
               </p>
               <p>
                 By creating an account, browsing collections, or transacting on Aso, you enter into a legally binding agreement governed by the Laws of the Federal Republic of Nigeria.
@@ -144,6 +144,19 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
                   <strong>Platform Integrity &amp; Escrow Clause:</strong> All communications, measurement checks, and financial payments must remain within the Aso platform. Attempting to exchange direct bank accounts or off-platform contact details voids all Aso Escrow protections and constitutes grounds for immediate account suspension.
                 </div>
               </div>
+
+              <h2>Designer Verification &amp; the Verified Badge</h2>
+              <p>
+                Any fashion designer may open a studio on Aso and list garments. Designers who display the
+                {' '}<strong>&#10003; Verified</strong> badge have had their identity (National Identification Number or
+                CAC business registration) reviewed and approved by the Aso team.
+              </p>
+              <ul>
+                <li><strong>Every order is protected:</strong> Whether or not a designer is verified, all payments are held under Aso Escrow and are released to the designer only after your order has been delivered.</li>
+                <li><strong>Verification unlocks payouts:</strong> Designers cannot withdraw earnings to a bank account until Aso has verified their identity. Every payout is reviewed by Aso before it is sent.</li>
+                <li><strong>Choosing a designer:</strong> For additional assurance, look for the Verified badge on a designer's storefront and products, or use the &ldquo;Verified designers&rdquo; filter.</li>
+                <li><strong>What the badge means:</strong> The badge confirms identity only; it is not an endorsement of a specific garment. Aso may remove listings or suspend any studio that breaches these Terms.</li>
+              </ul>
 
               <h2>3. Order Lifecycle &amp; Escrow Settlements</h2>
               <p>
@@ -336,7 +349,7 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
                   },
                   {
                     q: "How do I become a verified designer on Aso?",
-                    a: "Fashion designers and tailors can click 'Sell on Aso' in the navigation bar to register their studio storefront. Once you provide your workshop location, contact info, and upload sample collections, our curation team approves your studio within 24 hours."
+                    a: "Click 'Sell on Aso' to open your studio. You can list garments and start selling straight away. To earn the Verified badge and unlock withdrawals, submit your NIN or CAC registration number in Studio Profile. The Aso team reviews every submission and you'll get an email once you're approved (or if we need you to correct something)."
                   },
                   {
                     q: "Can I communicate with the tailor sewing my clothes?",
