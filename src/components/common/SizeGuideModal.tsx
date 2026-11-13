@@ -68,7 +68,7 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
               </div>
             )}
             <div>
-              <span className="size-guide-badge">Atelier Sizing Engine</span>
+              <span className="size-guide-badge">Size guide</span>
               <h3 className="size-guide-title">{productTitle}</h3>
             </div>
           </div>

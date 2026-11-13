@@ -674,7 +674,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             disabled={saving}
           >
             {saving ? <Loader size={16} className="spin-icon" /> : <Sparkles size={16} />}
-            <span>{isEditing ? 'Save & Update Piece' : 'Publish to Storefront'}</span>
+            <span>{isEditing ? 'Save & Update Piece' : 'Submit for Review'}</span>
           </button>
         </div>
       </div>
@@ -750,7 +750,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             <div className="field-group">
               <div className="field-label-row">
                 <label className="field-label">Marketplace Category *</label>
-                <span className="char-counter">{filteredCategories.length} categories in {selectedDepartment}</span>
+                <span className="char-counter">{categories.length === 0 ? 'Loading categories…' : `${filteredCategories.length} categories in ${selectedDepartment}`}</span>
               </div>
               <select
                 className="field-select"
@@ -1289,7 +1289,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             disabled={saving}
           >
             {saving ? <Loader size={16} className="spin-icon" /> : <Sparkles size={16} />}
-            <span>{isEditing ? 'Save & Update Piece' : 'Publish to Storefront'}</span>
+            <span>{isEditing ? 'Save & Update Piece' : 'Submit for Review'}</span>
           </button>
         </div>
       </div>
