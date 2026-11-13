@@ -40,8 +40,11 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
 
       if (rawProducts && rawProducts.length > 0) {
         const mapped: ProductItem[] = rawProducts.map((p) => {
-          let statusStr: 'Active' | 'Out of Stock' | 'Draft' | 'Pending Approval' = 'Active';
-          if (p.approval_status === 'PENDING') {
+          let statusStr: ProductItem['status'] = 'Active';
+          if (p.approval_status === 'REJECTED') {
+            // Not live: the designer must edit and resubmit (was wrongly shown as "Active").
+            statusStr = 'Changes Requested';
+          } else if (p.approval_status === 'PENDING') {
             statusStr = 'Pending Approval';
           } else if (p.status === 'DRAFT') {
             statusStr = 'Draft';
@@ -57,6 +60,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
             price: p.base_price_naira,
             stock_quantity: 10,
             status: statusStr,
+            rejection_reason: p.rejection_reason ?? null,
             image_url: p.primary_image_url || '/placeholder-piece.svg',
             created_at: new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
             description: p.description,
@@ -244,7 +248,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                 const statusClass =
                   p.status === 'Active'
                     ? 'pill-active'
-                    : p.status === 'Pending Approval'
+                    : p.status === 'Pending Approval' || p.status === 'Changes Requested'
                     ? 'pill-pending'
                     : 'pill-draft';
 
@@ -279,6 +283,11 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                       <span className={`inventory-status-pill ${statusClass}`}>
                         {p.status}
                       </span>
+                      {p.status === 'Changes Requested' && p.rejection_reason && (
+                        <div style={{ fontSize: '0.75rem', color: '#92400E', marginTop: '0.35rem', maxWidth: '220px' }}>
+                          {p.rejection_reason}
+                        </div>
+                      )}
                     </td>
                     <td>
                       <div className="table-row-actions">
