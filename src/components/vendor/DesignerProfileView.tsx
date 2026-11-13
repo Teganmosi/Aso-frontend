@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { vendorApi, reviewApi, productApi } from '../../api/client';
+import { vendorApi, reviewApi, productApi, mediaApi, describeUploadError } from '../../api/client';
 import type { BankAccount, VerificationStatus } from '../../types';
 import {
   MapPin,
@@ -82,31 +82,37 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setCoverBannerUrl(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+  // Upload brand images to Aso's media storage (resized server-side), then keep
+  // the returned URL. Saving inline base64 made every designer page megabytes long.
+  const uploadBrandImage = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    kind: 'logo' | 'banner',
+    onUploaded: (url: string) => void
+  ) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setSaveError(`${file.name} is larger than 10 MB. Please choose a smaller photo.`);
+      input.value = '';
+      return;
+    }
+    setSaveError('');
+    try {
+      const uploaded = await mediaApi.uploadImage(file, kind);
+      onUploaded(uploaded.url);
+    } catch (err: any) {
+      setSaveError(describeUploadError(err, file.name));
+    } finally {
+      input.value = '';
     }
   };
 
-  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setLogoUrl(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    uploadBrandImage(e, 'banner', setCoverBannerUrl);
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    uploadBrandImage(e, 'logo', setLogoUrl);
 
   // Section 2: Location & Shipping (Separating Public from Private)
   const [publicCity, setPublicCity] = useState(user?.vendor_profile?.city || 'Lagos');

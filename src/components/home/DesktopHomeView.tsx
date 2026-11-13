@@ -118,9 +118,9 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
             </div>
           ) : products.length === 0 ? (
             <div className="desktop-state-box">
-              <p>No pieces found matching your criteria</p>
+              <p>No pieces in this category yet. New pieces are added every week.</p>
               <button onClick={() => onCategorySelect(null)} className="btn-desktop-reset">
-                Browse Full Catalog
+                Show all pieces
               </button>
             </div>
           ) : (
@@ -133,7 +133,7 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
                   <div key={prod.id} className="desktop-product-card">
                     <Link to={`/products/${prod.slug || prod.id}`} className="desktop-product-media">
                       <img
-                        src={prod.primary_image_url || (prod.media && prod.media[0]?.url) || '/traditional-men-1.png'}
+                        src={prod.primary_image_url || (prod.media && prod.media[0]?.url) || '/placeholder-piece.svg'}
                         alt={prod.title}
                         loading="lazy"
                       />
@@ -303,9 +303,9 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
               <div className="desktop-why-icon-box">
                 <CheckCircle2 size={24} color="#004B44" />
               </div>
-              <h4 className="desktop-why-card-title">Verified Designers</h4>
+              <h4 className="desktop-why-card-title">Reviewed Pieces</h4>
               <p className="desktop-why-card-text">
-                Every designer on Aso goes through a verification process before they can sell on the marketplace.
+                Every piece is reviewed before it goes live. Designers with a Verified badge have also had their identity checked.
               </p>
             </div>
 
@@ -325,9 +325,9 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
               <div className="desktop-why-icon-box">
                 <ShieldCheck size={24} color="#004B44" />
               </div>
-              <h4 className="desktop-why-card-title">72h Buyer Protection</h4>
+              <h4 className="desktop-why-card-title">Buyer Protection</h4>
               <p className="desktop-why-card-text">
-                Your payment remains securely protected while your order is being fulfilled, giving you time to inspect your delivery.
+                Your payment is held until your order is delivered, and you get 48 hours to inspect it before the designer is paid.
               </p>
             </div>
           </div>

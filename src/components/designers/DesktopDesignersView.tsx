@@ -224,7 +224,7 @@ export const DesktopDesignersView: React.FC<DesktopDesignersViewProps> = ({
         <section className="desktop-designer-directory-section" aria-label="Designer Directory">
           <div className="desktop-directory-header">
             <div>
-              <h2 className="desktop-directory-title">Verified Fashion Houses</h2>
+              <h2 className="desktop-directory-title">All designers</h2>
               <p className="desktop-directory-subtitle">Browse designers and independent master tailors on Aso.</p>
             </div>
             <span className="desktop-directory-count">

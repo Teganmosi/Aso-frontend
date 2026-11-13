@@ -60,7 +60,7 @@ export const MobileDesignersView: React.FC<MobileDesignersViewProps> = ({
         <div className="mobile-app-header-top">
           <div>
             <h1 className="mobile-app-title">Designers</h1>
-            <span className="mobile-app-subtitle">{vendors.length} Verified Fashion Houses</span>
+            <span className="mobile-app-subtitle">{vendors.length === 1 ? "1 designer" : `${vendors.length} designers`}</span>
           </div>
           {onOpenVendorRegister && (
             <button 
@@ -266,7 +266,7 @@ export const MobileDesignersView: React.FC<MobileDesignersViewProps> = ({
           <div className="mobile-join-content">
             <span className="mobile-join-tag">FOR FASHION HOUSES</span>
             <h3>Open Your Digital Studio on Aso</h3>
-            <p>Showcase bespoke tailoring and ready-to-wear collections to thousands of clients.</p>
+            <p>Sell bespoke and ready-to-wear pieces with protected payments and automatic delivery. Free to join.</p>
             <button 
               type="button" 
               className="mobile-btn-apply"

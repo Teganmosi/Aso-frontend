@@ -290,3 +290,10 @@
     display: none !important;
   }
 }
+
+/* "Contact us" link that replaced the non-functional newsletter form */
+.footer-help-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  text-decoration: none;
+}

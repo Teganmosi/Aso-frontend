@@ -132,16 +132,9 @@ export const TraditionalCollectionPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // Image URL Resolver & Fallbacks
+  // Image URL Resolver & Fallbacks (neutral placeholder, never a different garment)
   const getTraditionalProductImage = (product: Product, index: number = 0): string => {
-    const fallbacks = [
-      '/traditional-men-1.png',
-      '/adire-1.png',
-      '/traditional-men-3.png',
-      '/traditional-men-2.png',
-      '/adire-3.png',
-      '/traditional-men-4.png',
-    ];
+    const fallbacks = ['/placeholder-piece.svg'];
     const fallback = fallbacks[index % fallbacks.length];
 
     let raw = product.primary_image_url || (product.media && product.media.length > 0 ? product.media[0].url : null);
@@ -516,11 +509,23 @@ export const TraditionalCollectionPage: React.FC = () => {
               /* Empty State */
               <div className="traditional-empty-box">
                 <Package size={44} color="#00322d" />
-                <h3>No Pieces Found Matching Your Filters</h3>
-                <p>Try clearing some filters or changing your price range to discover more authentic attire.</p>
-                <button onClick={clearAllFilters} className="btn-retry">
-                  Reset All Filters
-                </button>
+                {hasActiveFilters ? (
+                  <>
+                    <h3>No pieces match your filters</h3>
+                    <p>Try clearing a filter or widening your price range.</p>
+                    <button onClick={clearAllFilters} className="btn-retry">
+                      Clear filters
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <h3>New pieces are on the way</h3>
+                    <p>Our designers are adding traditional and bridal pieces. Check back soon, or browse the full catalogue.</p>
+                    <Link to="/categories" className="btn-retry">
+                      Browse all pieces
+                    </Link>
+                  </>
+                )}
               </div>
             ) : (
               /* Connected Product Cards */
@@ -529,7 +534,7 @@ export const TraditionalCollectionPage: React.FC = () => {
                   {paginatedProducts.map((product, idx) => {
                     const priceNaira = product.base_price_naira || (product.base_price_kobo ? product.base_price_kobo / 100 : 0);
                     const isVerified = Boolean(product.vendor?.is_verified);
-                    const storeName = product.vendor?.store_name || 'House of Aso';
+                    const storeName = product.vendor?.store_name || 'Aso designer';
                     const prepDays = product.preparation_time_days || 3;
                     const imageUrl = getTraditionalProductImage(product, idx);
 
@@ -549,12 +554,7 @@ export const TraditionalCollectionPage: React.FC = () => {
                               className="product-img"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                const fallbackImgs = [
-                                  '/traditional-men-1.png',
-                                  '/adire-1.png',
-                                  '/traditional-men-3.png',
-                                  '/traditional-men-2.png',
-                                ];
+                                const fallbackImgs = ['/placeholder-piece.svg'];
                                 const fallback = fallbackImgs[idx % fallbackImgs.length];
                                 if (!target.src.endsWith(fallback)) {
                                   target.src = fallback;
@@ -570,7 +570,7 @@ export const TraditionalCollectionPage: React.FC = () => {
                               </div>
                             ) : prepDays > 3 ? (
                               <div className="badge-lead-pill">
-                                <span>Limited Stock</span>
+                                <span>Made to order</span>
                               </div>
                             ) : null}
                           </div>

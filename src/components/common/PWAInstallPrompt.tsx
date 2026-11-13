@@ -29,11 +29,11 @@ export const PWAInstallPrompt: React.FC = () => {
     setIsStandalone(checkStandalone);
     if (checkStandalone) return;
 
-    // 2. Check if dismissed recently (24 hours cooldown)
+    // 2. Check if dismissed recently (7-day cooldown)
     const dismissedTimestamp = localStorage.getItem('aso_pwa_dismissed');
     if (dismissedTimestamp) {
       const hoursSinceDismiss = (Date.now() - parseInt(dismissedTimestamp, 10)) / (1000 * 60 * 60);
-      if (hoursSinceDismiss < 24) return;
+      if (hoursSinceDismiss < 24 * 7) return;
     }
 
     // 3. Detect iOS Safari
@@ -42,8 +42,8 @@ export const PWAInstallPrompt: React.FC = () => {
     const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS/.test(ua);
     if (isIOSDevice && isSafari) {
       setIsIOS(true);
-      // Reveal prompt after 3.5 seconds on iOS
-      const timer = setTimeout(() => setShowPrompt(true), 3500);
+      // Reveal prompt after 45 seconds, once the shopper has had time to browse
+      const timer = setTimeout(() => setShowPrompt(true), 45000);
       return () => clearTimeout(timer);
     }
 
@@ -51,8 +51,8 @@ export const PWAInstallPrompt: React.FC = () => {
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      // Reveal banner after 2.5 seconds
-      setTimeout(() => setShowPrompt(true), 2500);
+      // Reveal banner after 45 seconds, once the shopper has had time to browse
+      setTimeout(() => setShowPrompt(true), 45000);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
@@ -122,7 +122,7 @@ export const PWAInstallPrompt: React.FC = () => {
                 <span className="pwa-tag-pill">PWA</span>
               </div>
               <p className="pwa-description">
-                Fast, offline-ready Nigerian luxury fashion at your fingertips.
+                Shop Nigerian designers straight from your home screen.
               </p>
             </div>
           </div>

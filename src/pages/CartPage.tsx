@@ -714,7 +714,7 @@ export const CartPage: React.FC = () => {
                     style={{
                       backgroundImage: item.primary_image_url
                         ? `url(${item.primary_image_url})`
-                        : `url(/traditional-men-1.png)`,
+                        : `url(/placeholder-piece.svg)`,
                     }}
                   />
                 </Link>

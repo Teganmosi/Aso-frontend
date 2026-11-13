@@ -11,9 +11,6 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegister, className = '' }) => {
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
-
   // Accordion open states for mobile
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     discover: false,
@@ -26,14 +23,6 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail.trim()) {
-      setSubscribed(true);
-      setNewsletterEmail('');
-    }
-  };
-
   return (
     <footer className={`stitch-footer ${className}`.trim()}>
       <div className="footer-container">
@@ -44,7 +33,7 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
             <Logo showTagline={true} option={logoOption} />
           </div>
           <p className="footer-brand-bio">
-            The premier operating platform for authentic African bespoke fashion, connecting discerning shoppers worldwide with verified master tailors and fashion houses.
+            The marketplace for made-to-measure and ready-to-wear Nigerian fashion. Shop independent designers with protected payments and tracked delivery.
           </p>
         </div>
 
@@ -65,7 +54,7 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
               <li><Link to="/men">Men's Senator &amp; Agbada</Link></li>
               <li><Link to="/women">Women's Gowns &amp; Sets</Link></li>
               <li><Link to="/traditional">Traditional &amp; Bridal Aṣọ</Link></li>
-              <li><Link to="/designers">Verified Designers Directory</Link></li>
+              <li><Link to="/designers">All Designers</Link></li>
             </ul>
           </div>
 
@@ -76,7 +65,7 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
               className="footer-accordion-header"
               onClick={() => toggleSection('sell')}
             >
-              <span>DESIGNER ATELIER</span>
+              <span>FOR DESIGNERS</span>
               <span className="accordion-arrow">
                 {openSections.sell ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </span>
@@ -114,9 +103,9 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
             </button>
             <ul className="footer-links-list">
               <li><Link to="/faq">Help Center &amp; FAQs</Link></li>
-              <li><Link to="/escrow-policy">Aso Escrow Guarantee</Link></li>
-              <li><Link to="/shipping-returns">Dellyman Delivery &amp; Returns</Link></li>
-              <li><Link to="/contact">Contact Atelier Concierge</Link></li>
+              <li><Link to="/escrow-policy">Buyer Protection</Link></li>
+              <li><Link to="/shipping-returns">Delivery &amp; Returns</Link></li>
+              <li><Link to="/contact">Contact Us</Link></li>
             </ul>
           </div>
 
@@ -133,50 +122,35 @@ export const Footer: React.FC<FooterProps> = ({ logoOption = 2, onOpenVendorRegi
               </span>
             </button>
             <ul className="footer-links-list">
-              <li><Link to="/about">About Aso Manifesto</Link></li>
+              <li><Link to="/about">About Aso</Link></li>
               <li><Link to="/terms">Terms of Service</Link></li>
-              <li><Link to="/privacy">Privacy Policy (NDPA)</Link></li>
-              <li><Link to="/contact">Atelier HQ &amp; Partnerships</Link></li>
+              <li><Link to="/privacy">Privacy Policy</Link></li>
+              <li><Link to="/contact">Partnerships</Link></li>
             </ul>
           </div>
 
-          {/* Column 5: Newsletter */}
+          {/* Column 5: Help (replaces a newsletter form that had no backend) */}
           <div className="footer-col newsletter-col">
-            <h4 className="footer-newsletter-header">Atelier Newsletter</h4>
+            <h4 className="footer-newsletter-header">Need help with an order?</h4>
             <p className="newsletter-subtitle">
-              Exclusive bespoke drops, artisan highlights, and fashion releases.
+              Our team answers questions about sizing, payments and delivery.
             </p>
-
-            {subscribed ? (
-              <p className="newsletter-success-msg">Welcome to the Aso circle!</p>
-            ) : (
-              <form onSubmit={handleSubscribe} className="newsletter-form">
-                <input
-                  type="email"
-                  className="newsletter-input"
-                  placeholder="Email address"
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  required
-                />
-                <button type="submit" className="btn-newsletter-join">
-                  Join
-                </button>
-              </form>
-            )}
+            <Link to="/contact" className="btn-newsletter-join footer-help-link">
+              Contact us
+            </Link>
           </div>
         </div>
 
         {/* Bottom Bar: Copyright & Direct Legal Navigation */}
         <div className="footer-bottom-bar">
           <p className="footer-copyright">
-            © 2026 Aso Marketplace Ltd. All rights reserved.
+            © 2026 Aso Marketplace. All rights reserved.
           </p>
           <ul className="footer-legal-links">
             <li><Link to="/terms">Terms of Service</Link></li>
             <li><Link to="/privacy">Privacy Policy</Link></li>
-            <li><Link to="/escrow-policy">Escrow Protection</Link></li>
-            <li><Link to="/shipping-returns">Fulfillment &amp; Alterations</Link></li>
+            <li><Link to="/escrow-policy">Buyer Protection</Link></li>
+            <li><Link to="/shipping-returns">Delivery &amp; Returns</Link></li>
           </ul>
         </div>
       </div>

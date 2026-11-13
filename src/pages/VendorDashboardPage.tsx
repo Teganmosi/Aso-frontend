@@ -315,7 +315,7 @@ export const VendorDashboardPage: React.FC = () => {
                 <Store size={22} color="#064E3B" />
               </div>
               <h4 className="pillar-title">Digital Storefront</h4>
-              <p className="pillar-desc">Custom luxury storefront showcasing your craft to thousands of fashion lovers nationwide.</p>
+              <p className="pillar-desc">Your own storefront on Aso, with no website or setup costs. We bring the shoppers to you.</p>
             </div>
 
             <div className="pillar-item">
@@ -402,7 +402,7 @@ export const VendorDashboardPage: React.FC = () => {
                 <Store size={22} color="#064E3B" />
               </div>
               <h4 className="pillar-title">Digital Storefront</h4>
-              <p className="pillar-desc">Custom luxury storefront showcasing your craft to thousands of fashion lovers nationwide.</p>
+              <p className="pillar-desc">Your own storefront on Aso, with no website or setup costs. We bring the shoppers to you.</p>
             </div>
 
             <div className="pillar-item">
@@ -721,7 +721,7 @@ export const VendorDashboardPage: React.FC = () => {
                   <div className="stat-icon-wrapper"><Clock size={18} /></div>
                 </div>
                 <div className="stat-value">₦ {pendingNaira.toLocaleString()}</div>
-                <div className="stat-meta text-muted"><span>72h Customer Protection Hold</span></div>
+                <div className="stat-meta text-muted"><span>Held until delivery + 48h inspection</span></div>
               </div>
 
               <div className="stat-card">

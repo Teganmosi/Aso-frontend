@@ -213,7 +213,7 @@ export const CategoriesPage: React.FC = () => {
           </h1>
 
           <p className="categories-subtitle">
-            Authentic Nigerian luxury pieces, precision tailored by verified master designers.
+            Ready-to-wear and made-to-measure pieces from independent Nigerian designers.
           </p>
 
           {/* Search Input */}

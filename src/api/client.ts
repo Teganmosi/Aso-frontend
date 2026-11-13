@@ -382,7 +382,41 @@ export const variantApi = {
 
 // ─── Media API (Sprint 4) ────────────────────────────────────────────────────
 
+export type UploadImageKind = 'product' | 'logo' | 'banner' | 'avatar';
+
+export interface UploadedImage {
+  url: string;
+  thumbnail_url: string | null;
+}
+
+/** Turns an upload error into a message a designer can act on. */
+export const describeUploadError = (err: any, fileName: string): string => {
+  const serverMessage = err?.response?.data?.message;
+  if (serverMessage) return `${fileName}: ${serverMessage}`;
+  if (err?.response?.status === 413) return `${fileName} is too large. Please use a photo under 10 MB.`;
+  if (!err?.response) return `${fileName} didn’t upload. Check your connection and try again.`;
+  return `${fileName} didn’t upload. Please try again.`;
+};
+
 export const mediaApi = {
+  /**
+   * Uploads an image to Aso's media storage. The server resizes it, converts it
+   * to WebP and returns its URL (plus a small thumbnail for product photos).
+   * Never fall back to inline base64: the server rejects it.
+   */
+  uploadImage: async (file: File, kind: UploadImageKind): Promise<UploadedImage> => {
+    await fetchCsrfToken();
+    const form = new FormData();
+    form.append('file', file);
+    form.append('kind', kind);
+    const res = await apiClient.post('/media/upload/', form, {
+      // Let the browser set the multipart boundary.
+      headers: { 'Content-Type': undefined as unknown as string },
+      timeout: 120000,
+    });
+    return { url: res.data.url, thumbnail_url: res.data.thumbnail_url ?? null };
+  },
+
   getPresignedUrl: async (payload: PresignedUrlPayload): Promise<PresignedUrlResponse> => {
     await fetchCsrfToken();
     const res = await apiClient.post('/products/upload-url/', payload);
