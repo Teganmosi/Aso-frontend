@@ -322,7 +322,7 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
                   <strong>Protected payments:</strong> your payment is held until your order is delivered, and you have 48 hours to inspect it before the designer is paid.
                 </li>
                 <li>
-                  <strong>Delivery handled for you:</strong> when your order is ready, a Dellyman rider is booked automatically and you can track it to your door.
+                  <strong>Delivery handled for you:</strong> when your order is ready, Aso books a rider to collect it from the designer and bring it to you.
                 </li>
               </ul>
             </article>

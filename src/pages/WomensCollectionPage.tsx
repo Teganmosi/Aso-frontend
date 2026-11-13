@@ -78,46 +78,17 @@ export const WomensCollectionPage: React.FC = () => {
       setError(null);
       try {
         const [rawProducts, rawCategories] = await Promise.all([
-          productApi.getPublicProducts({ category: 'women' }).catch(async () => {
-            return await productApi.getPublicProducts().catch(() => []);
-          }),
+          productApi.getPublicProducts({ category: 'women' }),
           categoryApi.getCategories().catch(() => []),
         ]);
 
         setCategories(rawCategories || []);
 
-        if (Array.isArray(rawProducts) && rawProducts.length > 0) {
-          // Prioritize women collection pieces
-          const womensFiltered = rawProducts.filter((p) => {
-            const catSlug = p.category?.slug?.toLowerCase() || '';
-            const catName = p.category?.name?.toLowerCase() || '';
-            const title = p.title.toLowerCase();
-            const desc = (p.description || '').toLowerCase();
-
-            const isWomenCategory = catSlug.includes('women') || catName.includes('women');
-            const isWomenKeywords =
-              title.includes('dress') ||
-              title.includes('gown') ||
-              title.includes('corset') ||
-              title.includes('skirt') ||
-              title.includes('boubou') ||
-              title.includes('adire') ||
-              title.includes('women') ||
-              title.includes('kaftan') ||
-              desc.includes('women') ||
-              desc.includes('feminine') ||
-              desc.includes('dress');
-
-            return isWomenCategory || isWomenKeywords || true;
-          });
-
-          setProducts(womensFiltered.length > 0 ? womensFiltered : rawProducts);
-        } else {
-          setProducts([]);
-        }
+        // Only pieces filed under this collection; never fall back to the whole catalogue.
+        setProducts(Array.isArray(rawProducts) ? rawProducts : []);
       } catch (err: any) {
         console.error('Failed to load women collection from DB', err);
-        setError('Unable to load pieces from the database at this time.');
+        setError('We couldn’t load these pieces. Check your connection and refresh the page.');
       } finally {
         setLoading(false);
       }

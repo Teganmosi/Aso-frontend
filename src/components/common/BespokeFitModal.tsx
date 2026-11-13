@@ -113,6 +113,12 @@ export const detectGarmentType = (
   const specificText = `${normHint} ${normTitle}`.trim();
   const fullContext = `${normHint} ${normCat} ${normSlug} ${normTitle}`.trim();
 
+  // 0. Agbada / kaftan / dashiki in the title win over everything else: an "Agbada Set"
+  //    or "Kaftan Suit" is cut as a flowing native set, not a western two-piece suit.
+  if (/(agbada|kaftan|caftan|dashiki|jalabiya)/.test(normTitle) || /(agbada|kaftan)/.test(normHint)) {
+    return { type: 'tops_senator', label: 'Kaftan / Agbada Cut', isAutoDetected: true };
+  }
+
   // 1. Two-Piece Tailored Suits, Work Suits, Pantsuits, Blazers, Tuxedos, Co-ords
   // Check title first: "Female royal work suit" must be detected as a Suit, NOT a Corset Gown!
   if (
@@ -557,7 +563,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
                 <Sparkles size={12} color="#D4AF37" />
                 <span>MY ASO FIT</span>
               </div>
-              <h2 className="bespoke-title">Custom Made-to-Measure Spec</h2>
+              <h2 className="bespoke-title">Your measurements</h2>
             </div>
           </div>
           <button className="bespoke-close-btn" onClick={onClose} aria-label="Close modal">
@@ -568,7 +574,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
         {/* Product Context Banner */}
         {productTitle && (
           <div className="bespoke-product-banner">
-            <span>Tailoring garment:</span>
+            <span>For:</span>
             <strong>{productTitle}</strong>
           </div>
         )}
@@ -580,13 +586,13 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
               className={`bespoke-tab-btn ${activeTab === 'custom_form' ? 'active' : ''}`}
               onClick={() => setActiveTab('custom_form')}
             >
-              📏 Atelier Measurements
+              📏 Enter measurements
             </button>
             <button
               className={`bespoke-tab-btn ${activeTab === 'estimator' ? 'active' : ''}`}
               onClick={() => setActiveTab('estimator')}
             >
-              ✨ Smart Fit Estimator
+              ✨ Help me estimate
             </button>
           </div>
 
@@ -640,7 +646,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
                     <span>You have a saved <strong>My Aso Fit</strong> profile.</span>
                   </div>
                   <button className="btn-quick-apply-profile" onClick={handleApplySavedProfile}>
-                    <Zap size={14} /> 1-Click Apply Saved Profile
+                    <Zap size={14} /> Use my saved measurements
                   </button>
                 </div>
               )}
@@ -653,11 +659,11 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
                       <Sparkles size={16} color="#D4AF37" />
                     </div>
                     <div className="detected-garment-text">
-                      <div className="detected-badge-sub">Auto-Detected Garment Cut</div>
+                      <div className="detected-badge-sub">Measurements for this cut</div>
                       <div className="detected-badge-title">
                         <strong>{detectedLabel}</strong>
                         <span className="detected-badge-pill">
-                          {productTitle ? `Calibrated for "${productTitle}"` : 'Calibrated for this piece'}
+                          {'Not right? Change the cut'}
                         </span>
                       </div>
                     </div>
@@ -668,7 +674,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
                     onClick={() => setShowManualTypeSelector(prev => !prev)}
                     title="Manually switch garment cut if needed"
                   >
-                    {showManualTypeSelector ? 'Keep Auto-Detected' : 'Change Cut'}
+                    {showManualTypeSelector ? 'Done' : 'Change cut'}
                   </button>
                 </div>
               )}
@@ -984,7 +990,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
             Cancel
           </button>
           <button type="button" className="btn-bespoke-apply" onClick={handleApply}>
-            <CheckCircle2 size={16} /> Confirm & Apply Made-to-Measure Spec
+            <CheckCircle2 size={16} /> Use these measurements
           </button>
         </div>
       </div>

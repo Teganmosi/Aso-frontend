@@ -1754,3 +1754,40 @@
 .gate-vendor-link:hover {
   text-decoration: underline;
 }
+
+/* Phones: the three stats sit in one compact row so the orders are visible without scrolling. */
+@media (max-width: 640px) {
+  .profile-stats-strip {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    padding-top: 1rem;
+  }
+  .profile-stats-strip .stat-card {
+    padding: 0.7rem 0.6rem;
+    gap: 0.2rem;
+  }
+  .profile-stats-strip .stat-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+  .profile-stats-strip .stat-val {
+    font-size: 1.25rem;
+  }
+}
+
+/* Phones: the review button drops under the item instead of running off the screen. */
+@media (max-width: 640px) {
+  .order-item-card {
+    flex-wrap: wrap;
+  }
+  .order-item-card .item-main-details {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .order-item-card .item-review-action {
+    flex-basis: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
