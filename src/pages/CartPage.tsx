@@ -370,7 +370,7 @@ export const CartPage: React.FC = () => {
               {!isPaid && (
                 <div className="conf-card-action">
                   <h3>Complete Your Order</h3>
-                  <p>Use Paystack gateway to make a test payment.</p>
+                  <p>Pay securely with Paystack. Your payment is held until your order is delivered.</p>
                   <button
                     type="button"
                     onClick={async () => {

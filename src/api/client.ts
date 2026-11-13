@@ -67,6 +67,23 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// The backend wraps errors as {success: false, error: {code, message, details}},
+// but most screens read `response.data.detail`, so they showed only generic
+// fallback text ("An error occurred…"). Mirror the server message into `detail`
+// (and `message`) so every existing error display shows the real reason.
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const data = error?.response?.data;
+    const serverMessage = data && typeof data === 'object' ? data.error?.message : undefined;
+    if (serverMessage) {
+      if (!data.detail) data.detail = serverMessage;
+      if (!data.message) data.message = serverMessage;
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const fetchCsrfToken = async (force: boolean = false) => {
   const existingCookie = getCookie('csrftoken');
   if (!force && (existingCookie || memoryCsrfToken)) {
