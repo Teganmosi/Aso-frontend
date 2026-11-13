@@ -14,7 +14,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { payoutApi, orderApi } from '../../api/client';
+import { payoutApi, orderApi, productApi } from '../../api/client';
 import type { VendorBalance, PayoutRequest, Order } from '../../types';
 
 interface DashboardOverviewViewProps {
@@ -22,6 +22,7 @@ interface DashboardOverviewViewProps {
   onNavigateToOrders: () => void;
   onNavigateToAddProduct?: () => void;
   onNavigateToEarnings?: () => void;
+  onNavigateToProfile?: () => void;
 }
 
 export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
@@ -29,12 +30,14 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
   onNavigateToOrders,
   onNavigateToAddProduct,
   onNavigateToEarnings,
+  onNavigateToProfile,
 }) => {
   const { user } = useAuth();
   const [balance, setBalance] = useState<VendorBalance | null>(null);
   const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productCount, setProductCount] = useState<number | null>(null);
 
   // Withdrawal Modal States
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -46,11 +49,13 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [balanceData, payoutsData, ordersData] = await Promise.allSettled([
+      const [balanceData, payoutsData, ordersData, productsData] = await Promise.allSettled([
         payoutApi.getBalance(),
         payoutApi.getPayoutRequests(),
         orderApi.vendorGetOrders(),
+        productApi.getVendorProducts(),
       ]);
+      if (productsData.status === 'fulfilled') setProductCount(productsData.value.length);
 
       if (balanceData.status === 'fulfilled') setBalance(balanceData.value);
       if (payoutsData.status === 'fulfilled') setPayouts(payoutsData.value);
@@ -111,7 +116,17 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
     (o) => !['COMPLETED', 'CANCELLED', 'REFUNDED', 'DELIVERED'].includes(o.order_status)
   ).length;
 
-  const totalSalesNaira = recentOrders.reduce((acc, curr) => acc + (curr.total_amount_naira || 0), 0);
+  // Paid orders only, and only the designer's share (garment subtotal, not delivery).
+  const totalSalesNaira = recentOrders
+    .filter((o) => !['PENDING_PAYMENT', 'CANCELLED', 'REFUNDED'].includes(o.order_status))
+    .reduce((acc, curr) => acc + (curr.subtotal_naira ?? curr.total_amount_naira ?? 0), 0);
+  const vp = user?.vendor_profile;
+  const setupSteps = [
+    { done: !!(vp?.logo_url || vp?.banner_url), label: 'Add your logo and a banner photo', cta: 'Edit studio profile', go: 'profile' as const },
+    { done: (productCount ?? 0) > 0, label: 'Add your first piece (each piece is reviewed before it goes live)', cta: 'Add a piece', go: 'add' as const },
+    { done: !!vp?.has_bank_account, label: 'Add your bank account so we can pay you', cta: 'Add bank details', go: 'profile' as const },
+  ];
+  const showSetup = productCount !== null && setupSteps.some((st) => !st.done);
   const displayOrders = recentOrders.slice(0, 5);
   const displayPayouts = payouts.slice(0, 4);
   const designerName = user?.first_name || user?.vendor_profile?.store_name || 'Designer';
@@ -120,9 +135,38 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
     <div className="heritage-vendor-dashboard-content">
       {/* Welcome Header */}
       <div className="heritage-welcome-section">
-        <h1 className="heritage-headline-lg">Welcome back, {designerName}</h1>
-        <p className="heritage-body-lg">Here is your live studio atelier performance and active customer pipeline.</p>
+        <h1 className="heritage-headline-lg">{recentOrders.length || productCount ? 'Welcome back' : 'Welcome'}, {designerName}</h1>
+        <p className="heritage-body-lg">Your sales, orders and money at a glance.</p>
       </div>
+
+      {showSetup && (
+        <section className="heritage-orders-card ambient-shadow" style={{ padding: '1.25rem 1.25rem 0.5rem', marginBottom: '1.5rem' }}>
+          <h2 className="heritage-card-title" style={{ marginBottom: '0.25rem' }}>Get your studio ready</h2>
+          <p style={{ fontSize: '0.875rem', color: '#4B5563', margin: '0 0 0.75rem' }}>
+            {setupSteps.filter((st) => st.done).length} of {setupSteps.length} done. Shoppers only see studios with at least one approved piece.
+          </p>
+          <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            {setupSteps.map((st) => (
+              <li key={st.label} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 0', borderTop: '1px solid #F3F4F6', flexWrap: 'wrap' }}>
+                {st.done
+                  ? <CheckCircle2 size={20} color="#047857" aria-label="Done" />
+                  : <span aria-hidden style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid #D1D5DB', flexShrink: 0 }} />}
+                <span style={{ flex: '1 1 180px', fontSize: '0.9rem', color: st.done ? '#6B7280' : '#111827', textDecoration: st.done ? 'line-through' : 'none' }}>{st.label}</span>
+                {!st.done && (
+                  <button
+                    type="button"
+                    className="heritage-view-all-link"
+                    onClick={() => (st.go === 'add' ? onNavigateToAddProduct?.() : onNavigateToProfile?.())}
+                  >
+                    <span>{st.cta}</span>
+                    <ArrowRight size={15} />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {/* 4 Top High-Level Metrics Cards */}
       <section className="heritage-metrics-grid">
@@ -137,7 +181,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
           <p className="metric-amount-serif">₦ {totalSalesNaira.toLocaleString()}</p>
           <div className="metric-trend-positive">
             <TrendingUp size={13} />
-            <span>Cumulative marketplace orders</span>
+            <span>From paid orders</span>
           </div>
         </div>
 
@@ -151,7 +195,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
           </div>
           <p className="metric-amount-serif">{activeOrdersCount}</p>
           <div className="metric-trend-subtext">
-            <span>{activeOrdersCount === 1 ? '1 active garment order' : `${activeOrdersCount} active garment orders`}</span>
+            <span>{activeOrdersCount === 1 ? '1 order in progress' : `${activeOrdersCount} orders in progress`}</span>
           </div>
         </div>
 
@@ -165,7 +209,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
           </div>
           <p className="metric-amount-serif">₦ {availableNaira.toLocaleString()}</p>
           <div className="metric-trend-subtext">
-            <span>{availableNaira > 0 ? 'Ready for bank settlement' : 'No cleared funds yet'}</span>
+            <span>{availableNaira > 0 ? 'Ready to withdraw' : 'Nothing to withdraw yet'}</span>
           </div>
         </div>
 
@@ -179,7 +223,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
           </div>
           <p className="metric-amount-serif">₦ {pendingNaira.toLocaleString()}</p>
           <div className="metric-trend-subtext">
-            <span>Customer escrow hold</span>
+            <span>Held until the buyer confirms delivery</span>
           </div>
         </div>
       </section>
@@ -200,7 +244,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
             {loading ? (
               <div style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
                 <Loader size={24} className="cart-spinner" />
-                <p style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>Syncing orders with database...</p>
+                <p style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>Loading orders…</p>
               </div>
             ) : displayOrders.length === 0 ? (
               <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: '#6B7280' }}>
@@ -209,7 +253,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
                   No orders received yet
                 </h3>
                 <p style={{ fontSize: '0.875rem', margin: '0 0 1rem', maxWidth: '380px', marginInline: 'auto' }}>
-                  When customers purchase your garments, incoming orders and customer measurements will appear here live.
+                  When a shopper pays for one of your pieces, the order and their measurements appear here.
                 </p>
                 {onNavigateToAddProduct && (
                   <button
@@ -218,7 +262,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                   >
                     <Plus size={15} />
-                    <span>Upload New Garment</span>
+                    <span>Add a piece</span>
                   </button>
                 )}
               </div>

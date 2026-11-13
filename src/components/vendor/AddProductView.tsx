@@ -33,8 +33,10 @@ interface AddProductViewProps {
   productToEdit?: ProductItem | null;
 }
 
-// Department / Target Audience Taxonomy
-export type DepartmentType = 'Men' | 'Women' | 'Traditional & Bridal';
+// Departments are the root categories in the database. A piece is filed under one of the
+// root's subcategories, and the Men / Women / Traditional collection pages list exactly
+// the pieces under their root, so what the designer picks here is where shoppers find it.
+export type DepartmentType = 'Men' | 'Women' | 'Traditional' | 'Accessories';
 
 interface DepartmentOption {
   id: DepartmentType;
@@ -43,103 +45,36 @@ interface DepartmentOption {
   description: string;
 }
 
-// Fallback standard categories in case server DB is unseeded
-const FALLBACK_CATEGORIES: Category[] = [
-  { id: 'cat-womens-suits', name: "Women's Suits & Blazers", slug: 'womens-suits-blazers' },
-  { id: 'cat-female-senator', name: 'Female Senator & Two-Piece Sets', slug: 'female-senator' },
-  { id: 'cat-dresses', name: 'Corset Gowns & Evening Dresses', slug: 'corset-gowns-dresses' },
-  { id: 'cat-aso-ebi', name: 'Aso Ebi, Iro & Buba', slug: 'aso-ebi-iro-buba' },
-  { id: 'cat-boubou', name: 'Boubous & Rich Auntie Gowns', slug: 'boubous' },
-  { id: 'cat-jumpsuits', name: 'Jumpsuits & Playsuits', slug: 'jumpsuits' },
-  { id: 'cat-agbada', name: 'Agbada & Grand Native Sets', slug: 'agbada' },
-  { id: 'cat-senator', name: "Men's Two-Piece Senator Suits", slug: 'mens-senator-suits' },
-  { id: 'cat-kaftan', name: 'Kaftans & Tunics', slug: 'kaftans' },
-  { id: 'cat-mens-suits', name: "Men's Suits & Blazers", slug: 'mens-suits-blazers' },
-  { id: 'cat-traditional', name: 'Handwoven Aso Oke & Bridal Regalia', slug: 'traditional-bridal' },
-  { id: 'cat-accessories', name: 'Caps (Fila), Geles & Accessories', slug: 'accessories' },
-];
+const DEPARTMENT_ROOT_SLUG: Record<DepartmentType, string> = {
+  Men: 'men',
+  Women: 'women',
+  Traditional: 'traditional-heritage',
+  Accessories: 'accessories',
+};
 
-// Dynamic Department Category Filtering (Omits raw developer slugs and top-level parents)
+const rootOf = (cats: Category[], dept: DepartmentType) => cats.find((c) => c.slug === DEPARTMENT_ROOT_SLUG[dept]);
+
+/** The subcategories a designer can choose for a department. */
 export const filterCategoriesByDepartment = (cats: Category[], dept: DepartmentType): Category[] => {
-  const normDept = dept.toLowerCase();
-  
-  // Exclude root parent category slugs so designers only categorize into specific apparel types
-  const nonParentCats = cats.filter(c => {
-    const slug = (c.slug || '').toLowerCase();
-    return slug !== 'men' && slug !== 'women' && slug !== 'traditional-heritage' && slug !== 'traditional-bridal';
-  });
+  const root = rootOf(cats, dept);
+  if (!root) return cats.filter((c) => c.parent);
+  return cats.filter((c) => c.parent === root.id || (!!c.parent_name && c.parent_name === root.name));
+};
 
-  if (normDept.includes('men') && !normDept.includes('women')) {
-    const menCats = nonParentCats.filter(c => {
-      const p = (c.parent_name || '').toLowerCase();
-      const s = (c.slug || '').toLowerCase();
-      const n = (c.name || '').toLowerCase();
-      return (
-        p === 'men' ||
-        s.startsWith('mens-') ||
-        s === 'agbada' ||
-        s.includes('agbada') ||
-        s.includes('senator') ||
-        s.includes('kaftan') ||
-        s.includes('fila') ||
-        s.includes('two-piece') ||
-        (!p && (n.includes('men') || n.includes('agbada') || n.includes('senator') || n.includes('kaftan')))
-      ) && !s.includes('womens') && !s.includes('female');
-    });
-    return menCats.length > 0 ? menCats : nonParentCats;
-  }
-
-  if (normDept.includes('women')) {
-    const womenCats = nonParentCats.filter(c => {
-      const p = (c.parent_name || '').toLowerCase();
-      const s = (c.slug || '').toLowerCase();
-      const n = (c.name || '').toLowerCase();
-      return (
-        p === 'women' ||
-        s.startsWith('womens-') ||
-        s.includes('female') ||
-        s.includes('boubou') ||
-        s.includes('corset') ||
-        s.includes('dress') ||
-        s.includes('gown') ||
-        s.includes('aso-ebi') ||
-        s.includes('iro') ||
-        s.includes('jumpsuit') ||
-        s.includes('gele') ||
-        (!p && (n.includes('women') || n.includes('boubou') || n.includes('dress') || n.includes('gown') || n.includes('corset') || n.includes('female')))
-      );
-    });
-    return womenCats.length > 0 ? womenCats : nonParentCats;
-  }
-
-  // Traditional & Bridal
-  const tradCats = nonParentCats.filter(c => {
-    const p = (c.parent_name || '').toLowerCase();
-    const s = (c.slug || '').toLowerCase();
-    const n = (c.name || '').toLowerCase();
-    return (
-      p.includes('traditional') ||
-      p.includes('bridal') ||
-      p.includes('accessories') ||
-      s.includes('aso-oke') ||
-      s.includes('bridal') ||
-      s.includes('adire') ||
-      s.includes('batik') ||
-      s.includes('bead') ||
-      s.includes('agbada') ||
-      s.includes('heritage') ||
-      s.includes('regalia') ||
-      s.includes('aso-ebi') ||
-      (!p && (n.includes('aso oke') || n.includes('traditional') || n.includes('bridal') || n.includes('regalia') || n.includes('bead') || n.includes('heritage')))
-    );
-  });
-  return tradCats.length > 0 ? tradCats : nonParentCats;
+/** Which department a saved category belongs to (for editing). */
+export const departmentForCategory = (cats: Category[], categoryId: string): DepartmentType | null => {
+  const cat = cats.find((c) => c.id === categoryId);
+  if (!cat) return null;
+  const rootId = cat.parent || cat.id;
+  const match = (Object.keys(DEPARTMENT_ROOT_SLUG) as DepartmentType[]).find((d) => rootOf(cats, d)?.id === rootId);
+  return match || null;
 };
 
 const DEPARTMENTS: DepartmentOption[] = [
-  { id: 'Men', label: 'Men', icon: <Shirt size={18} />, description: 'Senators, Agbadas, Kaftans & Two-Piece Sets' },
-  { id: 'Women', label: 'Women', icon: <Gem size={18} />, description: 'Aso Ebi, Boubous, Corset Gowns & Co-ords' },
-  { id: 'Traditional & Bridal', label: 'Traditional', icon: <Crown size={18} />, description: 'Handwoven Aso Oke, Groom/Bride Regalia & Ceremonial Attire' }
+  { id: 'Men', label: 'Men', icon: <Shirt size={18} />, description: 'Agbada, senator, kaftans, suits' },
+  { id: 'Women', label: 'Women', icon: <Gem size={18} />, description: 'Aso ebi, boubous, gowns, co-ords' },
+  { id: 'Traditional', label: 'Traditional', icon: <Crown size={18} />, description: 'Aso oke, bridal and groom regalia, adire' },
+  { id: 'Accessories', label: 'Accessories', icon: <Sparkles size={18} />, description: 'Caps, geles, coral beads' },
 ];
 
 // Universal Apparel Sizing Presets
@@ -317,27 +252,25 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             setCategoryId(catList[0].id);
           }
         } else {
-          // If server database is unseeded, use fallback category hierarchy
-          setCategories(FALLBACK_CATEGORIES);
-          const initialFiltered = filterCategoriesByDepartment(FALLBACK_CATEGORIES, selectedDepartment);
-          if (!categoryId && initialFiltered.length > 0) {
-            setCategoryId(initialFiltered[0].id);
-          } else if (!categoryId) {
-            setCategoryId(FALLBACK_CATEGORIES[0].id);
-          }
+          setErrorMessage('Categories haven’t been set up yet. Please contact Aso support.');
         }
       } catch (err) {
-        console.warn('Could not load categories from server, using standard taxonomy:', err);
-        setCategories(FALLBACK_CATEGORIES);
-        if (!categoryId) {
-          setCategoryId(FALLBACK_CATEGORIES[0].id);
-        }
+        console.warn('Could not load categories', err);
+        setErrorMessage('We couldn’t load the categories. Check your connection and refresh the page.');
       }
     };
     fetchCats();
   }, []);
 
   // Filtered categories for active department
+  // When editing, open on the department the piece is actually filed under.
+  useEffect(() => {
+    if (!categoryId || categories.length === 0) return;
+    const dept = departmentForCategory(categories, categoryId);
+    if (dept && dept !== selectedDepartment) setSelectedDepartment(dept);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, categoryId]);
+
   const filteredCategories = useMemo(() => {
     return filterCategoriesByDepartment(categories, selectedDepartment);
   }, [categories, selectedDepartment]);
@@ -478,7 +411,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
     if (targetStatus === 'Active') {
       if (!productName.trim()) {
-        setErrorMessage('Please enter a product name before publishing.');
+        setErrorMessage('Please give your piece a name.');
         return;
       }
       if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
@@ -494,7 +427,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         return;
       }
       if (images.length === 0) {
-        setErrorMessage('Please add at least one product image before publishing.');
+        setErrorMessage('Please add at least one photo of the piece.');
         return;
       }
     } else {
@@ -649,10 +582,10 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
           </div>
           <div className="header-title-group">
             <h1 className="header-main-title">
-              {isEditing ? 'Edit Fashion Piece' : 'Add New Fashion Piece'}
+              {isEditing ? 'Edit Piece' : 'Add a New Piece'}
             </h1>
             <span className={`status-indicator-badge ${isEditing ? 'active' : 'draft'}`}>
-              {isEditing ? 'Live in Catalog' : 'Draft Creation'}
+              {isEditing ? 'Editing' : 'New piece'}
             </span>
           </div>
         </div>
@@ -705,14 +638,14 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 <Shirt size={18} />
               </div>
               <div className="section-title-wrap">
-                <h3>Basic Information &amp; Taxonomy</h3>
-                <p>Categorize your piece so customers can find it across departments.</p>
+                <h3>The basics</h3>
+                <p>Who it’s for and what it is, so shoppers can find it.</p>
               </div>
             </div>
 
             {/* Department Selection */}
             <div className="field-group">
-              <label className="field-label">Target Department / Audience *</label>
+              <label className="field-label">Who is it for? *</label>
               <div className="department-selection-grid">
                 {DEPARTMENTS.map((dept) => (
                   <button
@@ -733,7 +666,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             {/* Title */}
             <div className="field-group">
               <div className="field-label-row">
-                <label className="field-label">Piece Title / Design Name *</label>
+                <label className="field-label">Name of the piece *</label>
                 <span className="char-counter">{productName.length}/120</span>
               </div>
               <input
@@ -749,7 +682,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             {/* Category Dropdown */}
             <div className="field-group">
               <div className="field-label-row">
-                <label className="field-label">Marketplace Category *</label>
+                <label className="field-label">Category *</label>
                 <span className="char-counter">{categories.length === 0 ? 'Loading categories…' : `${filteredCategories.length} categories in ${selectedDepartment}`}</span>
               </div>
               <select
@@ -768,7 +701,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
             {/* Description */}
             <div className="field-group">
-              <label className="field-label">Garment Story &amp; Craft Details</label>
+              <label className="field-label">Description</label>
               <textarea
                 className="field-textarea"
                 placeholder="Detail the fabric composition (e.g. 100% Swiss Damask, Aso Oke), embroidery motif, silhouette cut, and styling recommendations..."
@@ -777,7 +710,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 rows={4}
               />
               <span className="field-hint-text">
-                High-quality tailoring descriptions build immediate trust with bespoke buyers.
+                Mention the fabric, the fit and what’s included. Good descriptions sell more.
               </span>
             </div>
           </div>
@@ -789,18 +722,18 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 <ImageIcon size={18} />
               </div>
               <div className="section-title-wrap">
-                <h3>Product Imagery &amp; Photography</h3>
-                <p>Upload clean, high-resolution shots showing front, back, and embroidery closeups.</p>
+                <h3>Photos</h3>
+                <p>Clear, well-lit photos of the front, back and details. The first photo is the cover.</p>
               </div>
             </div>
 
             {/* Photo Guidelines Bar */}
             <div className="photo-guidance-bar">
-              <span className="photo-guidance-title">💡 Recommended Portfolio Angles:</span>
+              <span className="photo-guidance-title">💡 Photos that sell:</span>
               <div className="photo-guidance-chips">
-                <span className="p-guidance-pill">1. Front Silhouette (Main)</span>
-                <span className="p-guidance-pill">2. Embroidery &amp; Fabric Detail</span>
-                <span className="p-guidance-pill">3. Back Drape / Hem</span>
+                <span className="p-guidance-pill">1. Front (cover photo)</span>
+                <span className="p-guidance-pill">2. Fabric and embroidery close-up</span>
+                <span className="p-guidance-pill">3. Back</span>
               </div>
             </div>
 
@@ -821,9 +754,9 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                   {isUploadingMedia ? <Loader size={24} className="spin-icon" /> : <UploadCloud size={24} />}
                 </div>
                 <p className="dropzone-title">
-                  {isUploadingMedia ? 'Uploading high-res photos...' : 'Click or Drag images to upload'}
+                  {isUploadingMedia ? 'Uploading photos…' : 'Tap to add photos'}
                 </p>
-                <p className="dropzone-sub">Supports JPG, PNG, WEBP up to 10MB each</p>
+                <p className="dropzone-sub">JPG, PNG or WEBP, up to 10 MB each</p>
               </div>
             </div>
 
@@ -869,14 +802,14 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 <Package size={18} />
               </div>
               <div className="section-title-wrap">
-                <h3>Pricing &amp; Fulfillment Model</h3>
-                <p>Set your selling price and define whether this piece is tailored on-demand or ready to ship.</p>
+                <h3>Price and timing</h3>
+                <p>Your price, and whether you sew it after the order or already have it ready.</p>
               </div>
             </div>
 
             {/* Price */}
             <div className="field-group">
-              <label className="field-label">Base Retail Price (NGN ₦) *</label>
+              <label className="field-label">Price (₦) *</label>
               <div className="currency-input-wrap">
                 <span className="currency-symbol-box">₦</span>
                 <input
@@ -927,10 +860,10 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                   onClick={() => setFulfillmentMode('MADE_TO_ORDER')}
                 >
                   <div className="fulfillment-header">
-                    <span className="fulfillment-title">✨ Made to Order (Bespoke)</span>
+                    <span className="fulfillment-title">✨ Made to order</span>
                     {fulfillmentMode === 'MADE_TO_ORDER' && <Check size={16} color="#004B44" />}
                   </div>
-                  <p>Tailored upon customer order. Dispatched within your custom tailoring lead time.</p>
+                  <p>You sew it after the shopper pays, within the time you choose below.</p>
                 </div>
 
                 <div
@@ -938,10 +871,10 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                   onClick={() => setFulfillmentMode('READY_TO_WEAR')}
                 >
                   <div className="fulfillment-header">
-                    <span className="fulfillment-title">📦 Ready to Wear (In Stock)</span>
+                    <span className="fulfillment-title">📦 Ready to wear (in stock)</span>
                     {fulfillmentMode === 'READY_TO_WEAR' && <Check size={16} color="#004B44" />}
                   </div>
-                  <p>Finished garment already sewn in your studio. Dispatched immediately within 24 hours.</p>
+                  <p>Already sewn. You hand it to the rider within 24 hours of the order.</p>
                 </div>
               </div>
             </div>
@@ -949,7 +882,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             {/* Conditional: Prep Days vs Stock Units */}
             {fulfillmentMode === 'MADE_TO_ORDER' ? (
               <div className="field-group">
-                <label className="field-label">Tailoring Lead Time (SLA) *</label>
+                <label className="field-label">How many days do you need to sew it? *</label>
                 <div className="lead-time-options-bar">
                   {['2', '3', '5', '7', '10', '14'].map((days) => (
                     <button
@@ -964,7 +897,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 </div>
                 <div className="made-to-order-capacity-badge">
                   <Sparkles size={14} color="#D4AF37" />
-                  <span>Garments are tailored upon customer order from fabric. Finished studio stock is not required (Default order capacity: 99 units).</span>
+                  <span>Shoppers see this time before they pay. Choose a time you can always meet.</span>
                 </div>
               </div>
             ) : (
@@ -992,19 +925,19 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 <Ruler size={18} />
               </div>
               <div className="section-title-wrap">
-                <h3>Sizing Framework &amp; Fit Specifications</h3>
-                <p>Configure available ready-to-wear sizes and enable custom made-to-measure tailoring.</p>
+                <h3>Sizes and fit</h3>
+                <p>The standard sizes you offer, and whether shoppers can order to their own measurements.</p>
               </div>
             </div>
 
             {/* Section A: Standard Ready-To-Wear Sizes */}
             <div className="field-group">
               <div className="field-label-row">
-                <label className="field-label">Available Standard Sizes (Ready-to-Wear)</label>
+                <label className="field-label">Standard sizes</label>
                 <span className="char-counter">{selectedSizes.length} sizes active</span>
               </div>
               <p className="field-hint-text" style={{ marginBottom: '0.65rem' }}>
-                Select standard sizing options available for this piece. Buyers looking for standard fit can checkout instantly.
+                Tap every size you can make this piece in.
               </p>
 
               {/* Size Chips Matrix */}
@@ -1062,11 +995,11 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 <div className="bespoke-enable-info">
                   <div className="bespoke-title-row">
                     <Scissors size={18} color="#D4AF37" />
-                    <strong className="bespoke-enable-title">Allow Custom Made-to-Measure Fit</strong>
+                    <strong className="bespoke-enable-title">Allow custom fit</strong>
                     <span className="badge-recommended">Recommended</span>
                   </div>
                   <p className="bespoke-enable-desc">
-                    When enabled, clients can either order standard sizes or click <strong>Custom Fit</strong> to have this piece tailored to their exact body silhouette (Bust/Chest, Waist, Hips, Sleeve, Length).
+                    Shoppers can pick a standard size or choose <strong>Custom fit</strong> and send their measurements (bust/chest, waist, hips, sleeve, length).
                   </p>
                 </div>
                 <label className="aso-switch">
@@ -1083,7 +1016,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 <div className="bespoke-active-notice">
                   <Sparkles size={14} color="#065F46" />
                   <span>
-                    <strong>Zero Setup Required:</strong> Aso's Smart Fit Estimator automatically detects your garment silhouette ({garmentCut.toLowerCase()}) and collects calibrated client measurements during checkout.
+                    Nothing else to set up. Aso asks the shopper for the right measurements at checkout and shows them on the order.
                   </span>
                 </div>
               )}
@@ -1097,13 +1030,13 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 <Palette size={18} />
               </div>
               <div className="section-title-wrap">
-                <h3>Color Palette &amp; Fabric Characteristics</h3>
-                <p>Indicate available colorways and garment stretch level.</p>
+                <h3>Colours and fabric</h3>
+                <p>The colours you can make it in, and how the fabric fits.</p>
               </div>
             </div>
 
             <div className="field-group">
-              <label className="field-label">Available Colorways &amp; Fabric Shades</label>
+              <label className="field-label">Colours available</label>
               <div className="color-swatches-row">
                 {availableColors.map((preset) => {
                   const isSelected = colors.some((c) => c.name.toLowerCase() === preset.name.toLowerCase());
@@ -1163,7 +1096,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
             {/* Garment Cut / Silhouette */}
             <div className="field-group" style={{ marginTop: '1rem' }}>
-              <label className="field-label">Garment Silhouette / Tailored Cut</label>
+              <label className="field-label">Cut</label>
               <div className="lead-time-options-bar">
                 {[
                   { id: 'TAILORED', label: 'Tailored Fit (Traditional)' },
@@ -1185,7 +1118,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
             {/* Stretch Level */}
             <div className="field-group" style={{ marginTop: '1rem' }}>
-              <label className="field-label">Fabric Stretch Specification</label>
+              <label className="field-label">Fabric stretch</label>
               <div className="lead-time-options-bar">
                 {[
                   { id: 'NON', label: 'No Stretch (Structured)' },
@@ -1214,7 +1147,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             <div className="live-preview-header">
               <span className="preview-badge-live">
                 <span className="preview-pulse-dot" />
-                LIVE STOREFRONT PREVIEW
+                PREVIEW
               </span>
               <Eye size={15} color="#64748B" />
             </div>
@@ -1225,7 +1158,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
               ) : (
                 <div className="preview-image-placeholder">
                   <ImageIcon size={32} />
-                  <span>No primary image uploaded yet</span>
+                  <span>No photo yet</span>
                 </div>
               )}
             </div>
@@ -1235,7 +1168,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 {selectedDepartment} • {selectedCategoryObj?.name || 'African Fashion'}
               </div>
               <h4 className="preview-title">
-                {productName.trim() || 'Untitled Fashion Piece'}
+                {productName.trim() || 'Untitled piece'}
               </h4>
               <div className="preview-price">
                 {formattedPriceDisplay}
@@ -1244,7 +1177,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 <Clock size={12} />
                 <span>
                   {fulfillmentMode === 'MADE_TO_ORDER'
-                    ? `Tailored & Dispatched in ${prepDays} Days`
+                    ? `Made and sent in ${prepDays} days`
                     : 'Ready to Ship (24h Dispatch)'}
                 </span>
               </div>
@@ -1253,30 +1186,30 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
           {/* Publishing Checklist Card */}
           <div className="checklist-card">
-            <h4 className="checklist-title">Publishing Quality Checklist</h4>
+            <h4 className="checklist-title">Before you submit</h4>
             <div className={`checklist-item ${productName.trim() ? 'done' : ''}`}>
               <span className="check-box-indicator">
                 {productName.trim() ? <Check size={11} /> : null}
               </span>
-              <span>Design title provided</span>
+              <span>Name added</span>
             </div>
             <div className={`checklist-item ${price && parseFloat(price) > 0 ? 'done' : ''}`}>
               <span className="check-box-indicator">
                 {price && parseFloat(price) > 0 ? <Check size={11} /> : null}
               </span>
-              <span>Valid selling price configured</span>
+              <span>Price added</span>
             </div>
             <div className={`checklist-item ${images.length > 0 ? 'done' : ''}`}>
               <span className="check-box-indicator">
                 {images.length > 0 ? <Check size={11} /> : null}
               </span>
-              <span>High-resolution image attached</span>
+              <span>At least one photo</span>
             </div>
             <div className={`checklist-item ${selectedSizes.length > 0 ? 'done' : ''}`}>
               <span className="check-box-indicator">
                 {selectedSizes.length > 0 ? <Check size={11} /> : null}
               </span>
-              <span>Available sizes selected</span>
+              <span>Sizes chosen</span>
             </div>
           </div>
 

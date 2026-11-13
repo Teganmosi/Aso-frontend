@@ -1,7 +1,7 @@
 import { BrandLoader } from '../components/common/BrandLoader';
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { productApi, reviewApi } from '../api/client';
+import { productApi, reviewApi, apiErrorMessage } from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import type { Product, ProductVariant, Review } from '../types';
@@ -115,7 +115,12 @@ export const ProductDetailPage: React.FC = () => {
       const data = await productApi.getPublicProductDetail(id);
       setProduct(data);
       if (data.variants && data.variants.length > 0) {
-        const firstAvailable = data.variants.find(v => v.stock_quantity > 0 && v.is_active) || data.variants[0];
+        // Start on a standard size; custom fit is a deliberate choice (it needs measurements).
+        const isCustom = (v: { size: string }) => /bespoke|custom/i.test(v.size);
+        const firstAvailable =
+          data.variants.find(v => v.stock_quantity > 0 && v.is_active && !isCustom(v)) ||
+          data.variants.find(v => v.stock_quantity > 0 && v.is_active) ||
+          data.variants[0];
         setSelectedVariant(firstAvailable);
         if (firstAvailable.color && firstAvailable.color !== 'Standard' && firstAvailable.color.toLowerCase() !== 'default') {
           setSelectedColor(firstAvailable.color);
@@ -204,7 +209,16 @@ export const ProductDetailPage: React.FC = () => {
     }
 
     const hasBespokeMeasurements = Boolean(bespokeMeasurements && Object.keys(bespokeMeasurements).length > 0);
-    const isBespoke = isBespokeMode || hasBespokeMeasurements || selectedVariant.size.toLowerCase().includes('bespoke') || selectedVariant.size.toLowerCase().includes('custom');
+    const isCustomSize = (size: string) => /bespoke|custom/i.test(size);
+    // Custom fit only when the shopper chose it; measurements typed earlier don't follow a standard size.
+    const isBespoke = isBespokeMode || isCustomSize(selectedVariant.size);
+    // Custom-fit orders go on the piece's custom-fit variant (same colour if possible), so the
+    // designer sees "Bespoke Fit" on the order instead of the last standard size tapped.
+    const variantToAdd = isBespoke
+      ? (product?.variants?.find(v => isCustomSize(v.size) && v.is_active && (!selectedColor || v.color?.toLowerCase() === selectedColor.toLowerCase()))
+        || product?.variants?.find(v => isCustomSize(v.size) && v.is_active)
+        || selectedVariant)
+      : selectedVariant;
     if (isBespoke && !hasBespokeMeasurements) {
       setShowBespokeModal(true);
       setCartMessage({ type: 'error', text: 'Please enter your custom body measurements for this bespoke piece.' });
@@ -214,12 +228,11 @@ export const ProductDetailPage: React.FC = () => {
     setAddingToCart(true);
     setCartMessage(null);
     try {
-      await addToCart(selectedVariant.id, quantity, (isBespoke && hasBespokeMeasurements) ? bespokeMeasurements : undefined);
-      setCartMessage({ type: 'success', text: 'Added to cart successfully!' });
+      await addToCart(variantToAdd.id, quantity, (isBespoke && hasBespokeMeasurements) ? bespokeMeasurements : undefined);
+      setCartMessage({ type: 'success', text: isBespoke ? 'Added to your bag with your measurements.' : 'Added to your bag.' });
       setTimeout(() => setCartMessage(null), 3000);
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || 'Failed to add item to cart.';
-      setCartMessage({ type: 'error', text: msg });
+      setCartMessage({ type: 'error', text: apiErrorMessage(err, 'We couldn’t add this to your bag. Please try again.') });
     } finally {
       setAddingToCart(false);
     }
@@ -438,7 +451,7 @@ export const ProductDetailPage: React.FC = () => {
                     }}
                   >
                     <Scissors size={13} />
-                    <span>Custom Made-to-Measure</span>
+                    <span>Custom fit</span>
                   </button>
                 </div>
 

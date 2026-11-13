@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { addressApi, orderApi, paymentApi, deliveryApi, reviewApi, measurementsApi } from '../api/client';
+import { addressApi, orderApi, paymentApi, deliveryApi, reviewApi, measurementsApi, apiErrorMessage } from '../api/client';
 import type { BespokeMeasurements } from '../types';
 import type { Address, Order, Delivery, OrderItem } from '../types';
 import {
@@ -14,13 +14,8 @@ import {
 import { OrderWorkspaceChat } from '../components/orders/OrderWorkspaceChat';
 import './ProfilePage.css';
 
-const NIGERIAN_STATES = [
-  'Abia', 'Abuja FCT', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue',
-  'Borno', 'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Gombe',
-  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara',
-  'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau',
-  'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
-];
+
+import { normalizeNigerianState, stateOptions } from '../data/nigerianStates';
 
 const BLANK_ADDRESS: Omit<Address, 'id' | 'created_at'> = {
   full_name: '',
@@ -119,6 +114,11 @@ export const ProfilePage: React.FC = () => {
   const [profilePhone, setProfilePhone] = useState(user?.phone_number || '');
   const [profileUpdating, setProfileUpdating] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
+  const [disputeOpen, setDisputeOpen] = useState(false);
+  const [disputeText, setDisputeText] = useState('');
+  const [disputeBusy, setDisputeBusy] = useState(false);
+  const [disputeMsg, setDisputeMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [paymentNotice, setPaymentNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const [profileErrorMsg, setProfileErrorMsg] = useState('');
 
   // Review Modal States
@@ -164,15 +164,21 @@ export const ProfilePage: React.FC = () => {
       // Check if redirected back from Paystack checkout callback
       const trxref = searchParams.get('trxref') || searchParams.get('reference');
       if (trxref) {
+        setPaymentNotice({ ok: true, text: 'Checking your payment with Paystack…' });
         paymentApi.verifyPayment(trxref)
           .then((res) => {
             if (res.success) {
-              setProfileSuccessMsg('Payment successfully verified! Your order is now confirmed.');
-              setTimeout(() => setProfileSuccessMsg(''), 4000);
+              setPaymentNotice({ ok: true, text: 'Payment received. Your order is confirmed and the designer has been notified.' });
               loadOrders();
+            } else {
+              setPaymentNotice({ ok: false, text: 'We haven’t received confirmation from Paystack yet. If you were charged, your order will update within a few minutes.' });
             }
           })
-          .catch((err) => console.log('Payment verification attempt:', err));
+          .catch(() => setPaymentNotice({ ok: false, text: 'We couldn’t confirm your payment yet. If you were charged, your order will update within a few minutes. You can also contact us.' }))
+          .finally(() => {
+            // Don't re-check on refresh.
+            window.history.replaceState(null, '', location.pathname);
+          });
       }
     }
   }, [user]);
@@ -188,6 +194,9 @@ export const ProfilePage: React.FC = () => {
   const handleSelectOrder = async (order: Order) => {
     setSelectedOrder(order);
     setDelivery(null);
+    setDisputeOpen(false);
+    setDisputeMsg(null);
+    setDisputeText('');
     const trackingStatuses = ['READY_FOR_PICKUP', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED', 'COMPLETED'];
     if (trackingStatuses.includes(order.order_status)) {
       setDeliveryLoading(true);
@@ -301,7 +310,7 @@ export const ProfilePage: React.FC = () => {
       phone_number: addr.phone_number,
       street_address: addr.street_address,
       city: addr.city,
-      state: addr.state,
+      state: normalizeNigerianState(addr.state) || 'Lagos',
       landmark: addr.landmark || '',
       is_default: addr.is_default,
     });
@@ -723,6 +732,61 @@ export const ProfilePage: React.FC = () => {
                   )}
                 </div>
 
+                {(selectedOrder.order_status === 'DELIVERED' || selectedOrder.order_status === 'DISPUTED' || disputeMsg) && (
+                  <div style={{ border: '1px solid #FDE68A', background: '#FFFBEB', borderRadius: 10, padding: '1rem', margin: '0 0 1.25rem' }}>
+                    {selectedOrder.order_status === 'DISPUTED' && !disputeMsg ? (
+                      <p style={{ margin: 0, color: '#92400E' }}>
+                        You reported a problem with this order. The designer’s payment is on hold and the Aso team will contact you.
+                      </p>
+                    ) : disputeMsg ? (
+                      <p role="status" style={{ margin: 0, color: disputeMsg.ok ? '#065F46' : '#B91C1C', fontWeight: 600 }}>{disputeMsg.text}</p>
+                    ) : !disputeOpen ? (
+                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#92400E', fontSize: '0.9rem', flex: '1 1 220px' }}>
+                          Something wrong with the fit or the piece? Tell us within 48 hours of delivery and we’ll hold the designer’s payment while we sort it out.
+                        </span>
+                        <button type="button" className="aso-btn-sm-review" onClick={() => setDisputeOpen(true)}>Report a problem</button>
+                      </div>
+                    ) : (
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          setDisputeBusy(true);
+                          try {
+                            const res = await orderApi.reportProblem(selectedOrder.id, disputeText.trim());
+                            setDisputeMsg({ ok: true, text: res.message });
+                            setSelectedOrder({ ...selectedOrder, order_status: 'DISPUTED' } as typeof selectedOrder);
+                            loadOrders();
+                          } catch (err) {
+                            setDisputeMsg({ ok: false, text: apiErrorMessage(err, 'We couldn’t send your report. Please contact us.') });
+                          } finally {
+                            setDisputeBusy(false);
+                          }
+                        }}
+                      >
+                        <label htmlFor="dispute-reason" style={{ display: 'block', fontWeight: 600, marginBottom: '0.4rem', color: '#92400E' }}>
+                          What went wrong?
+                        </label>
+                        <textarea
+                          id="dispute-reason"
+                          className="input-field"
+                          rows={3}
+                          minLength={10}
+                          required
+                          value={disputeText}
+                          onChange={(e) => setDisputeText(e.target.value)}
+                          placeholder="e.g. The waist is 3 inches smaller than the measurements I sent."
+                          style={{ width: '100%', boxSizing: 'border-box' }}
+                        />
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', justifyContent: 'flex-end' }}>
+                          <button type="button" className="aso-btn-sm-review" onClick={() => setDisputeOpen(false)} disabled={disputeBusy}>Cancel</button>
+                          <button type="submit" className="aso-btn-sm-review" disabled={disputeBusy}>{disputeBusy ? 'Sending…' : 'Send report'}</button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
+
                 <div className="order-content-grid">
                   {/* Left: Products List */}
                   <div className="order-items-pane">
@@ -928,9 +992,19 @@ export const ProfilePage: React.FC = () => {
                 <div className="orders-header-row">
                   <div>
                     <h2>My Orders</h2>
-                    <p className="subtext">Browse and track your marketplace orders.</p>
+                    <p className="subtext">Track your orders and message designers.</p>
                   </div>
                 </div>
+
+                {paymentNotice && (
+                  <div
+                    role="status"
+                    className={paymentNotice.ok ? 'form-success-banner' : 'form-error-banner'}
+                    style={{ marginBottom: '1rem', ...(paymentNotice.ok ? {} : { background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '0.85rem 1rem', borderRadius: 8 }) }}
+                  >
+                    {paymentNotice.text}
+                  </div>
+                )}
 
                 {/* Filter Pills */}
                 <div className="order-filters-bar" role="tablist">
@@ -1111,7 +1185,7 @@ export const ProfilePage: React.FC = () => {
                                   }}
                                 >
                                   <MessageSquare size={14} color="#D4AF37" />
-                                  <span>Atelier Chat &amp; Workspace</span>
+                                  <span>Message the designer</span>
                                 </button>
                               ) : order.order_status === 'PENDING_PAYMENT' ? (
                                 <button
@@ -1332,7 +1406,7 @@ export const ProfilePage: React.FC = () => {
                             value={formData.state}
                             onChange={e => setFormData({ ...formData, state: e.target.value })}
                           >
-                            {NIGERIAN_STATES.map(st => (
+                            {stateOptions(formData.state).map(st => (
                               <option key={st} value={st}>{st}</option>
                             ))}
                           </select>

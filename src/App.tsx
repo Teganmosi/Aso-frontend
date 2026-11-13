@@ -14,6 +14,8 @@ import { Suspense, lazy } from 'react';
 const MensCollectionPage = lazy(() => import('./pages/MensCollectionPage').then(m => ({ default: m.MensCollectionPage })));
 const WomensCollectionPage = lazy(() => import('./pages/WomensCollectionPage').then(m => ({ default: m.WomensCollectionPage })));
 const TraditionalCollectionPage = lazy(() => import('./pages/TraditionalCollectionPage').then(m => ({ default: m.TraditionalCollectionPage })));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then(m => ({ default: m.CategoriesPage })));
 const DesignersPage = lazy(() => import('./pages/DesignersPage').then(m => ({ default: m.DesignersPage })));
 const VendorDashboardPage = lazy(() => import('./pages/VendorDashboardPage').then(m => ({ default: m.VendorDashboardPage })));
@@ -109,6 +111,8 @@ const AppContent: React.FC = () => {
           {/* Staff work in Django admin (/admin/ on the API). The custom admin
               portal page was removed from routing: none of its APIs exist (QA-19). */}
 
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
           {/* Trust, Legal, FAQ & Support Pages */}
           <Route path="/terms" element={<PolicyPage initialSection="terms" />} />
           <Route path="/terms-of-service" element={<PolicyPage initialSection="terms" />} />
@@ -127,6 +131,7 @@ const AppContent: React.FC = () => {
           <Route path="/help" element={<PolicyPage initialSection="faq" />} />
           <Route path="/contact" element={<PolicyPage initialSection="contact" />} />
           <Route path="/contact-us" element={<PolicyPage initialSection="contact" />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </Suspense>
       </main>

@@ -137,7 +137,17 @@ export const VendorDashboardPage: React.FC = () => {
     { name: 'Stanbic IBTC Bank', code: '221' },
     { name: 'Sterling Bank', code: '232' },
     { name: 'Wema Bank (ALAT)', code: '035' },
-  ];
+    { name: 'Moniepoint MFB', code: '50515' },
+    { name: 'Fidelity Bank', code: '070' },
+    { name: 'First City Monument Bank (FCMB)', code: '214' },
+    { name: 'Ecobank Nigeria', code: '050' },
+    { name: 'Union Bank of Nigeria', code: '032' },
+    { name: 'Polaris Bank', code: '076' },
+    { name: 'Keystone Bank', code: '082' },
+    { name: 'Providus Bank', code: '101' },
+    { name: 'Unity Bank', code: '215' },
+    { name: 'Jaiz Bank', code: '301' },
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
   useEffect(() => {
     if (user?.is_vendor || user?.vendor_profile) {
@@ -640,6 +650,7 @@ export const VendorDashboardPage: React.FC = () => {
             onNavigateToProducts={() => setActiveTab('products')}
             onNavigateToOrders={() => setActiveTab('orders')}
             onNavigateToAddProduct={() => setActiveTab('add-product')}
+            onNavigateToProfile={() => setActiveTab('profile')}
             onNavigateToEarnings={() => setActiveTab('earnings')}
           />
         )}
@@ -679,8 +690,8 @@ export const VendorDashboardPage: React.FC = () => {
           <div className="earnings-verification-tab-view">
             <div className="dashboard-welcome-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <h1 className="dashboard-serif-title">Earnings, Ledger & Bank Settlements</h1>
-                <p className="dashboard-subtitle">Real-time marketplace balances, payout withdrawal requests, and immutable financial ledger.</p>
+                <h1 className="dashboard-serif-title">Earnings</h1>
+                <p className="dashboard-subtitle">What you’ve earned, what’s on hold until delivery, and your withdrawals.</p>
               </div>
               <button
                 className="btn-primary"
@@ -700,7 +711,7 @@ export const VendorDashboardPage: React.FC = () => {
                 }}
               >
                 {!user?.vendor_profile?.is_verified ? <Lock size={16} /> : <Landmark size={18} />}
-                <span>{!user?.vendor_profile?.is_verified ? 'Verify Identity to Withdraw' : 'Withdraw to Bank'}</span>
+                <span>{!user?.vendor_profile?.is_verified ? 'Verify your identity to withdraw' : 'Withdraw to Bank'}</span>
               </button>
             </div>
 
@@ -748,8 +759,7 @@ export const VendorDashboardPage: React.FC = () => {
               {/* Financial Ledger Log */}
               <div className="dashboard-card" style={{ padding: '1.5rem' }}>
                 <div className="card-header-flex">
-                  <h3 className="card-heading">Financial Ledger Breakdown</h3>
-                  <span style={{ fontSize: '0.75rem', color: '#6B7280', fontFamily: 'monospace' }}>DOUBLE-ENTRY LEDGER</span>
+                  <h3 className="card-heading">Money in and out</h3>
                 </div>
                 {financeLoading ? (
                   <div style={{ padding: '2rem', textAlign: 'center', color: '#6B7280' }}><Loader size={20} className="cart-spinner" /></div>
@@ -811,8 +821,8 @@ export const VendorDashboardPage: React.FC = () => {
                 <div className="card-header-row">
                   <ShieldCheck size={24} style={{ color: '#D4AF37' }} />
                   <div>
-                    <h3 className="card-title">Identity & Verification (KYC)</h3>
-                    <p className="card-subtitle">Provide your NIN and nearest landmark to get the Verified Designer badge.</p>
+                    <h3 className="card-title">Identity verification</h3>
+                    <p className="card-subtitle">Needed before you can withdraw. Verified studios also get a badge shoppers trust.</p>
                   </div>
                 </div>
 
@@ -830,14 +840,21 @@ export const VendorDashboardPage: React.FC = () => {
                   </div>
                 )}
 
-                {kycSubmitted ? (
+                {user?.vendor_profile?.is_verified ? (
+                  <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #A7F3D0', padding: '1.25rem', borderRadius: '8px', marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#065F46', fontWeight: 700 }}>
+                      <CheckCircle2 size={18} />
+                      <span>Verified. Withdrawals are unlocked.</span>
+                    </div>
+                  </div>
+                ) : (kycSubmitted || user?.vendor_profile?.verification_status === 'PENDING_REVIEW') ? (
                   <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #A7F3D0', padding: '1.25rem', borderRadius: '8px', marginTop: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#065F46', fontWeight: 700, marginBottom: '0.4rem' }}>
                       <CheckCircle2 size={18} />
-                      <span>KYC Details Under Audit</span>
+                      <span>Submitted. We’re checking your details.</span>
                     </div>
                     <p style={{ fontSize: '0.85rem', color: '#047857', margin: 0 }}>
-                      NIN ({nin.substring(0, 3)}••••{nin.substring(7)}) and Workshop Landmark submitted.
+                      We’ll email you when it’s done. You can keep selling in the meantime.
                     </p>
                   </div>
                 ) : (
@@ -899,13 +916,13 @@ export const VendorDashboardPage: React.FC = () => {
                   <Landmark size={24} className="card-header-icon" />
                   <div>
                     <h3 className="card-title">Payout Bank Account</h3>
-                    <p className="card-subtitle">Complete your financial details to receive payments once approved.</p>
+                    <p className="card-subtitle">The account we pay your earnings into. The name must match the account holder.</p>
                   </div>
                 </div>
 
-                {bankAccount && (
+                {bankAccount?.account_number && (
                   <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #A7F3D0', padding: '0.85rem 1rem', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.85rem', color: '#065F46' }}>
-                    <strong>Active Payout Bank:</strong> {bankAccount.bank_name} • {bankAccount.account_number} ({bankAccount.account_name})
+                    <strong>Payments go to:</strong> {bankAccount.bank_name} • {bankAccount.account_number} ({bankAccount.account_name})
                   </div>
                 )}
 

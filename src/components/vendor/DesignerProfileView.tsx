@@ -29,38 +29,11 @@ import {
   Building,
 } from 'lucide-react';
 
+import { normalizeNigerianState, stateOptions } from '../../data/nigerianStates';
+
 interface DesignerProfileViewProps {
   onNavigateToEarnings?: () => void;
 }
-
-const NIGERIAN_STATES = [
-  'Abia State', 'Adamawa State', 'Akwa Ibom State', 'Anambra State', 'Bauchi State',
-  'Bayelsa State', 'Benue State', 'Borno State', 'Cross River State', 'Delta State',
-  'Ebonyi State', 'Edo State', 'Ekiti State', 'Enugu State', 'FCT - Abuja',
-  'Gombe State', 'Imo State', 'Jigawa State', 'Kaduna State', 'Kano State',
-  'Katsina State', 'Kebbi State', 'Kogi State', 'Kwara State', 'Lagos State',
-  'Nasarawa State', 'Niger State', 'Ogun State', 'Ondo State', 'Osun State',
-  'Oyo State', 'Plateau State', 'Rivers State', 'Sokoto State', 'Taraba State',
-  'Yobe State', 'Zamfara State'
-];
-
-/**
- * Map a stored state ("Lagos", "lagos state", "Abuja", "FCT") to its dropdown
- * option. Sign-up stores e.g. "Lagos" while the options read "Lagos State"; with
- * no match the select silently showed "Abia State" and saving overwrote the
- * designer's real state. Unknown values are kept (added as an option) rather
- * than replaced.
- */
-const normalizeNigerianState = (raw?: string | null): string => {
-  const value = (raw || '').trim();
-  if (!value) return 'Lagos State';
-  const lower = value.toLowerCase();
-  if (['fct', 'abuja', 'fct abuja', 'fct - abuja', 'federal capital territory'].includes(lower)) return 'FCT - Abuja';
-  const exact = NIGERIAN_STATES.find((s) => s.toLowerCase() === lower);
-  if (exact) return exact;
-  const withSuffix = NIGERIAN_STATES.find((s) => s.toLowerCase() === `${lower} state`);
-  return withSuffix || value;
-};
 
 const STANDARD_SPECIALTIES = [
   'Menswear', 'Womenswear', 'Traditional', 'Agbada', 'Senator',
@@ -137,7 +110,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
 
   // Section 2: Location & Shipping (Separating Public from Private)
   const [publicCity, setPublicCity] = useState(user?.vendor_profile?.city || 'Lagos');
-  const [publicState, setPublicState] = useState(normalizeNigerianState(user?.vendor_profile?.state));
+  const [publicState, setPublicState] = useState(normalizeNigerianState(user?.vendor_profile?.state) || 'Lagos');
   const [workshopAddress, setWorkshopAddress] = useState(user?.vendor_profile?.workshop_address || '');
   const [landmark, setLandmark] = useState(user?.vendor_profile?.landmark || '');
   const dispatchHub = 'Dellyman Logistics Dispatch Terminal';
@@ -1011,10 +984,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     onChange={(e) => setPublicState(e.target.value)}
                     style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #86EFAC', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
                   >
-                    {!NIGERIAN_STATES.includes(publicState) && (
-                      <option value={publicState}>{publicState}</option>
-                    )}
-                    {NIGERIAN_STATES.map((st) => (
+                    {stateOptions(publicState).map((st) => (
                       <option key={st} value={st}>{st}</option>
                     ))}
                   </select>

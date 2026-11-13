@@ -65,47 +65,17 @@ export const TraditionalCollectionPage: React.FC = () => {
       setError(null);
       try {
         const [rawProducts, rawCategories] = await Promise.all([
-          productApi.getPublicProducts({ category: 'traditional' }).catch(async () => {
-            return await productApi.getPublicProducts().catch(() => []);
-          }),
+          productApi.getPublicProducts({ category: 'traditional-heritage' }),
           categoryApi.getCategories().catch(() => []),
         ]);
 
         setCategories(rawCategories || []);
 
-        if (Array.isArray(rawProducts) && rawProducts.length > 0) {
-          // Identify traditional & native wear pieces
-          const traditionalFiltered = rawProducts.filter((p) => {
-            const catSlug = p.category?.slug?.toLowerCase() || '';
-            const catName = p.category?.name?.toLowerCase() || '';
-            const title = p.title.toLowerCase();
-            const desc = (p.description || '').toLowerCase();
-
-            const isTraditionalCat = catSlug.includes('traditional') || catName.includes('traditional');
-            const isTraditionalKeywords =
-              title.includes('agbada') ||
-              title.includes('senator') ||
-              title.includes('iro') ||
-              title.includes('buba') ||
-              title.includes('kaftan') ||
-              title.includes('aso-oke') ||
-              title.includes('aso oke') ||
-              title.includes('boubou') ||
-              title.includes('native') ||
-              desc.includes('traditional') ||
-              desc.includes('heritage') ||
-              desc.includes('ceremony');
-
-            return isTraditionalCat || isTraditionalKeywords || true;
-          });
-
-          setProducts(traditionalFiltered.length > 0 ? traditionalFiltered : rawProducts);
-        } else {
-          setProducts([]);
-        }
+        // Only pieces filed under this collection; never fall back to the whole catalogue.
+        setProducts(Array.isArray(rawProducts) ? rawProducts : []);
       } catch (err: any) {
         console.error('Failed to load traditional collection from DB', err);
-        setError('Unable to load pieces from the database at this time.');
+        setError('We couldn’t load these pieces. Check your connection and refresh the page.');
       } finally {
         setLoading(false);
       }

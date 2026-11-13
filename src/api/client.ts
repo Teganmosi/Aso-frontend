@@ -155,6 +155,18 @@ export const authApi = {
     return res.data;
   },
 
+  requestPasswordReset: async (email: string): Promise<{ message: string }> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post('/auth/password-reset/', { email });
+    return res.data;
+  },
+
+  confirmPasswordReset: async (payload: { uid: string; token: string; new_password: string }): Promise<{ message: string }> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post('/auth/password-reset/confirm/', payload);
+    return res.data;
+  },
+
   getMe: async (): Promise<User> => {
     const res = await apiClient.get('/me/');
     return res.data.user || res.data.data || res.data;
@@ -382,13 +394,13 @@ export const variantApi = {
   createVariant: async (product_id: string, payload: CreateVariantPayload): Promise<ProductVariant> => {
     await fetchCsrfToken();
     const res = await apiClient.post(`/products/${product_id}/variants/`, payload);
-    return res.data;
+    return res.data.variant || res.data;
   },
 
   updateVariant: async (product_id: string, variant_id: string, payload: Partial<CreateVariantPayload>): Promise<ProductVariant> => {
     await fetchCsrfToken();
     const res = await apiClient.patch(`/products/${product_id}/variants/${variant_id}/`, payload);
-    return res.data;
+    return res.data.variant || res.data;
   },
 
   deleteVariant: async (product_id: string, variant_id: string): Promise<void> => {
@@ -407,6 +419,19 @@ export interface UploadedImage {
 }
 
 /** Turns an upload error into a message a designer can act on. */
+/**
+ * The one sentence to show a user when a request fails. The server sends
+ * { success:false, error:{ message } } with the first problem in plain words.
+ */
+export const apiErrorMessage = (err: any, fallback = 'Something went wrong. Please try again.'): string => {
+  const data = err?.response?.data;
+  const message = data?.error?.message || data?.detail || data?.message;
+  if (typeof message === 'string' && message.trim()) return message;
+  if (err?.response?.status === 429) return 'Too many attempts. Please wait a minute and try again.';
+  if (!err?.response) return 'We couldn’t reach Aso. Check your connection and try again.';
+  return fallback;
+};
+
 export const describeUploadError = (err: any, fileName: string): string => {
   const serverMessage = err?.response?.data?.message;
   if (serverMessage) return `${fileName}: ${serverMessage}`;
@@ -456,7 +481,7 @@ export const mediaApi = {
   attachMedia: async (product_id: string, payload: CreateMediaPayload): Promise<ProductMedia> => {
     await fetchCsrfToken();
     const res = await apiClient.post(`/products/${product_id}/media/`, payload);
-    return res.data;
+    return res.data.media || res.data;
   },
 
   deleteMedia: async (product_id: string, media_id: string): Promise<void> => {
@@ -468,6 +493,13 @@ export const mediaApi = {
 // ─── Order API ───────────────────────────────────────────────────────────────
 
 export const orderApi = {
+  /** Shopper reports a problem with a delivered order; payment to the designer is put on hold. */
+  reportProblem: async (orderId: string, reason: string): Promise<{ message: string; data: Order }> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/orders/${orderId}/dispute/`, { reason });
+    return res.data;
+  },
+
   getOrders: async (status?: string): Promise<Order[]> => {
     const params = status && status !== 'ALL' ? { status } : undefined;
     const res = await apiClient.get('/orders/', { params });
@@ -591,13 +623,14 @@ export const deliveryApi = {
 export const payoutApi = {
   getBalance: async (): Promise<VendorBalance> => {
     const res = await apiClient.get('/payouts/balance/');
-    return res.data.data || res.data;
+    // The server answers { success, balance: {...} }; reading .data showed every designer ₦0.
+    return res.data.balance || res.data.data || res.data;
   },
 
   requestWithdrawal: async (amountKobo: number): Promise<PayoutRequest> => {
     await fetchCsrfToken();
     const res = await apiClient.post('/payouts/withdraw/', { amount_kobo: amountKobo });
-    return res.data.data || res.data;
+    return res.data.payout || res.data.data || res.data;
   },
 
   getLedger: async (): Promise<LedgerEntry[]> => {
@@ -617,7 +650,7 @@ export const reviewApi = {
   submitReview: async (productId: string, payload: CreateReviewPayload): Promise<Review> => {
     await fetchCsrfToken();
     const res = await apiClient.post(`/products/${productId}/reviews/`, payload);
-    return res.data.data || res.data;
+    return res.data.review || res.data.data || res.data;
   },
 
   getProductReviews: async (productId: string): Promise<Review[]> => {

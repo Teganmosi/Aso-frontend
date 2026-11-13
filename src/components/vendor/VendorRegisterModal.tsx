@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { vendorApi } from '../../api/client';
+import { vendorApi, apiErrorMessage } from '../../api/client';
+import { stateOptions } from '../../data/nigerianStates';
 import { X, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
 import './VendorRegisterModal.css';
 
@@ -59,15 +60,7 @@ export const VendorRegisterModal: React.FC<VendorRegisterModalProps> = ({ isOpen
       window.location.href = '/vendor/dashboard';
     } catch (err: any) {
       console.error(err);
-      const data = err.response?.data;
-      if (typeof data === 'object' && data !== null) {
-        const firstKey = Object.keys(data)[0];
-        const val = data[firstKey];
-        const msg = Array.isArray(val) ? val[0] : String(val);
-        setErrorMessage(`${firstKey.replace('_', ' ')}: ${msg}`);
-      } else {
-        setErrorMessage('Failed to submit application. Please verify your information.');
-      }
+      setErrorMessage(apiErrorMessage(err, 'We couldn’t create your studio. Please check your details.'));
     } finally {
       setLoading(false);
     }
@@ -141,14 +134,16 @@ export const VendorRegisterModal: React.FC<VendorRegisterModalProps> = ({ isOpen
                   </div>
                   <div className="form-group">
                     <label className="form-label">STATE *</label>
-                    <input
-                      type="text"
+                    <select
                       className="input-field"
-                      placeholder="e.g. Lagos"
                       value={state}
                       onChange={(e) => setState(e.target.value)}
                       required
-                    />
+                    >
+                      {stateOptions(state).map((st) => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

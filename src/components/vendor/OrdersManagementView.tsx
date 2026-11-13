@@ -163,14 +163,14 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
       {/* Header */}
       <div className="dashboard-welcome-header">
         <div>
-          <h1 className="dashboard-serif-title">Order Fulfillment & Tailoring Pipeline</h1>
+          <h1 className="dashboard-serif-title">Orders</h1>
           <p className="dashboard-subtitle">
-            Track customer measurements, 48-hour acceptance SLAs, and handover to verified dispatch couriers.
+            Accept new orders within 48 hours, see the shopper’s measurements, and mark pieces ready for the rider.
           </p>
         </div>
         <button className="btn-action-outline" onClick={handleRefresh} disabled={loading}>
           <RefreshCw size={15} className={loading ? 'spin-loader' : ''} />
-          <span>Refresh Orders</span>
+          <span>Refresh</span>
         </button>
       </div>
 
@@ -187,14 +187,14 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
           className={`pipeline-tab ${activeFilter === 'PAID' ? 'active' : ''}`}
           onClick={() => setActiveFilter('PAID')}
         >
-          <span>Action Required (PAID)</span>
+          <span>New (needs accepting)</span>
           {paidCount > 0 && <span className="pipeline-count count-urgent">{paidCount}</span>}
         </button>
         <button
           className={`pipeline-tab ${activeFilter === 'PREPARING' ? 'active' : ''}`}
           onClick={() => setActiveFilter('PREPARING')}
         >
-          <span>In Tailoring</span>
+          <span>Being made</span>
           <span className="pipeline-count">{preparingCount}</span>
         </button>
         <button
@@ -294,7 +294,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                                       setSelectedOrder(order);
                                       setOrderDetailTab('WORKSPACE');
                                     }}
-                                    title="Open Atelier Chat & Workspace"
+                                    title="Message the shopper"
                                   >
                                     <MessageSquare size={12} />
                                     <span>Chat</span>
@@ -310,7 +310,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                     {isPaidUrgent && (
                       <div className="order-card-sla-strip">
                         <AlertTriangle size={13} color="#B45309" />
-                        <span>Accept within 48h SLA to start tailoring</span>
+                        <span>Accept within 48 hours or the order is cancelled</span>
                       </div>
                     )}
                   </div>
@@ -344,7 +344,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                   onClick={() => setOrderDetailTab('DETAILS')}
                 >
                   <FileText size={15} />
-                  <span>Production &amp; Specs</span>
+                  <span>Details</span>
                 </button>
                 <button
                   type="button"
@@ -352,7 +352,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                   onClick={() => setOrderDetailTab('WORKSPACE')}
                 >
                   <MessageSquare size={15} />
-                  <span>Atelier Chat &amp; Workspace</span>
+                  <span>Messages</span>
                 </button>
               </div>
 
@@ -392,7 +392,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                     ) : (
                       <Check size={16} />
                     )}
-                    <span>1. Accept Order (Confirm SLA)</span>
+                    <span>1. Accept order</span>
                   </button>
                 )}
 
@@ -407,7 +407,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                     ) : (
                       <Scissors size={16} />
                     )}
-                    <span>2. Start Tailoring & Preparation</span>
+                    <span>2. Start making it</span>
                   </button>
                 )}
 
@@ -422,7 +422,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                     ) : (
                       <PackageCheck size={16} />
                     )}
-                    <span>3. Mark Ready for Courier Pickup</span>
+                    <span>3. Ready for the rider</span>
                   </button>
                 )}
 
@@ -434,30 +434,34 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                           <Truck size={18} color="#0C3B2E" />
                         </div>
                         <div>
-                          <strong className="dellyman-title">Dellyman Logistics Courier Dispatch</strong>
-                          <span className="dellyman-subtitle">Automated courier booking & digital waybill</span>
+                          <strong className="dellyman-title">Delivery</strong>
+                          <span className="dellyman-subtitle">
+                            {delivery?.courier_booked ? 'Rider booked with Dellyman' : 'Rider being arranged by Aso'}
+                          </span>
                         </div>
                       </div>
-                      <button
-                        className="btn-print-waybill"
-                        onClick={() => window.open(deliveryApi.getWaybillPdfUrl(selectedOrder.id), '_blank')}
-                        title="Open and print digital shipping waybill PDF"
-                      >
-                        <Printer size={15} />
-                        <span>🖨️ Print Dellyman Waybill</span>
-                      </button>
+                      {delivery?.has_waybill && (
+                        <button
+                          className="btn-print-waybill"
+                          onClick={() => window.open(deliveryApi.getWaybillPdfUrl(selectedOrder.id), '_blank')}
+                          title="Open and print the shipping label"
+                        >
+                          <Printer size={15} />
+                          <span>Print shipping label</span>
+                        </button>
+                      )}
                     </div>
 
                     <div className="dellyman-meta-grid">
                       <div className="dellyman-meta-item">
                         <span className="dellyman-meta-k">Tracking Number</span>
                         <span className="dellyman-meta-v font-mono">
-                          {delivery?.dellyman_tracking_id || delivery?.tracking_number || (deliveryLoading ? 'Summoning...' : 'Pending Dispatch')}
+                          {delivery?.dellyman_tracking_id || delivery?.tracking_number || (deliveryLoading ? 'Loading…' : 'Not booked yet')}
                         </span>
                       </div>
 
                       <div className="dellyman-meta-item">
-                        <span className="dellyman-meta-k">Fulfillment Stage</span>
+                        <span className="dellyman-meta-k">Status</span>
                         <span className="dellyman-meta-v stage-badge">
                           {delivery?.status || selectedOrder.order_status.replace(/_/g, ' ')}
                         </span>
@@ -481,7 +485,11 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                     <div className="dellyman-instructions">
                       <CheckCircle size={15} color="#065F46" />
                       <span>
-                        Garment is ready. Print the waybill and attach to your package. The Dellyman bike/van rider will scan the barcode upon studio arrival.
+                        {delivery?.courier_booked
+                          ? (delivery?.has_waybill
+                            ? 'Print the shipping label and stick it on the package. The rider scans it when they collect.'
+                            : 'Pack the piece and write the order number on the package. The rider will collect it from your studio.')
+                          : 'Pack the piece and write the order number on the package. The Aso team is booking a rider and will message you the pickup time.'}
                       </span>
                     </div>
                   </div>
@@ -490,7 +498,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
 
               {/* Items in Order */}
               <div className="detail-section">
-                <h4 className="detail-section-heading">Garment Summary</h4>
+                <h4 className="detail-section-heading">What was ordered</h4>
                 {selectedOrder.items?.map((item) => {
                   const itemImg = (item as any)?.product_image || null;
                   const itemAmount = item.total_price_naira ?? (item.total_price_kobo ? item.total_price_kobo / 100 : 0);
@@ -519,7 +527,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.35rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 700, color: '#0C3B2E', textTransform: 'uppercase' }}>
                                 <Scissors size={13} color="#D4AF37" />
-                                <span>Atelier Tailoring Cut Spec ({item.custom_measurements.unit || 'IN'}):</span>
+                                <span>Shopper’s measurements ({item.custom_measurements.unit || 'IN'}):</span>
                               </div>
                               {item.custom_measurements.fit_source === 'smart_estimator_v1.2' && (
                                 <span style={{ fontSize: '0.7rem', fontWeight: 600, background: '#FEF3C7', color: '#92400E', padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
@@ -614,7 +622,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                     <span className="text-muted">- ₦ {((selectedOrder.subtotal_naira || 0) * 0.1).toLocaleString()}</span>
                   </div>
                   <div className="fin-row total-row">
-                    <span>Your Net Payout (Escrow):</span>
+                    <span>You receive (after delivery):</span>
                     <strong className="text-emerald">₦ {((selectedOrder.subtotal_naira || 0) * 0.9).toLocaleString()}</strong>
                   </div>
                 </div>

@@ -7,9 +7,10 @@ import type { Order, PaymentRequest, Address } from '../types';
 import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ArrowRight,
   Store, AlertCircle, Loader, Package, Check, MapPin, CreditCard, ShieldCheck, CheckCircle,
-  Scissors, CheckCircle2, Truck
+  Scissors, Truck
 } from 'lucide-react';
 import './CartPage.css';
+import { stateOptions } from '../data/nigerianStates';
 
 const BLANK_ADDRESS: Omit<Address, 'id' | 'created_at'> = {
   full_name: '',
@@ -86,29 +87,21 @@ export const CartPage: React.FC = () => {
     const vendorId = firstItem?.product?.vendor_id || firstItem?.product?.vendor?.id || undefined;
     deliveryApi.getQuote(selectedAddressId, vendorId)
       .then(q => {
-        if (q && q.success && q.has_live_quote && q.delivery_fee_naira !== null && q.delivery_fee_naira !== undefined) {
-          setShippingQuote({
-            fee: q.delivery_fee_naira,
-            eta: q.eta || 'Same-Day / Next-Day Delivery',
-            carrier: q.carrier || 'Dellyman Logistics',
-            loading: false,
-            hasLiveQuote: true
-          });
-        } else {
-          setShippingQuote({
-            fee: null,
-            eta: q?.eta || 'Calculated upon dispatch',
-            carrier: q?.carrier || 'Dellyman Logistics',
-            loading: false,
-            hasLiveQuote: false
-          });
-        }
+        // The server charges exactly this fee when the order is placed (live quote or flat fee).
+        const fee = q && typeof q.delivery_fee_naira === 'number' ? q.delivery_fee_naira : 0;
+        setShippingQuote({
+          fee,
+          eta: q?.eta || 'Delivered after your piece is ready',
+          carrier: q?.carrier || 'Dellyman Logistics',
+          loading: false,
+          hasLiveQuote: Boolean(q?.has_live_quote),
+        });
       })
       .catch(err => {
-        console.warn('Dellyman quote calculation error', err);
+        console.warn('Delivery quote error', err);
         setShippingQuote({
-          fee: null,
-          eta: 'Calculated upon dispatch',
+          fee: 0,
+          eta: 'Delivered after your piece is ready',
           carrier: 'Dellyman Logistics',
           loading: false,
           hasLiveQuote: false
@@ -191,8 +184,8 @@ export const CartPage: React.FC = () => {
 
   const handleAddressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addressFormData.full_name.trim() || !addressFormData.street_address.trim() || !addressFormData.city.trim() || !addressFormData.state.trim()) {
-      setAddressFormError('Please fill in all required fields.');
+    if (!addressFormData.full_name.trim() || !addressFormData.phone_number.trim() || !addressFormData.street_address.trim() || !addressFormData.city.trim() || !addressFormData.state.trim()) {
+      setAddressFormError('Please fill in all required fields. The rider needs a phone number to reach you.');
       return;
     }
     setAddressFormLoading(true);
@@ -356,7 +349,7 @@ export const CartPage: React.FC = () => {
                 </div>
                 <div className="totals-row">
                   <span>Delivery Fee</span>
-                  <span>{createdOrder.delivery_fee_naira === 0 ? 'Free' : `₦${createdOrder.delivery_fee_naira.toLocaleString()}`}</span>
+                  <span>{createdOrder.delivery_fee_naira === 0 ? 'Included' : `₦${createdOrder.delivery_fee_naira.toLocaleString()}`}</span>
                 </div>
                 <div className="totals-row total-grand">
                   <span>Grand Total</span>
@@ -529,6 +522,9 @@ export const CartPage: React.FC = () => {
                       <label>Phone Number *</label>
                       <input
                         className="input-field"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
                         value={addressFormData.phone_number}
                         onChange={e => handleAddressFormChange('phone_number', e.target.value)}
                         placeholder="e.g. 08012345678"
@@ -555,19 +551,23 @@ export const CartPage: React.FC = () => {
                         className="input-field"
                         value={addressFormData.city}
                         onChange={e => handleAddressFormChange('city', e.target.value)}
-                        placeholder="e.g. Lagos"
+                        placeholder="e.g. Surulere"
                         required
                       />
                     </div>
                     <div className="form-group">
                       <label>State *</label>
-                      <input
+                      <select
                         className="input-field"
                         value={addressFormData.state}
                         onChange={e => handleAddressFormChange('state', e.target.value)}
-                        placeholder="e.g. Lagos State"
                         required
-                      />
+                      >
+                        <option value="" disabled>Select state</option>
+                        {stateOptions(addressFormData.state).map(st => (
+                          <option key={st} value={st}>{st}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -637,17 +637,13 @@ export const CartPage: React.FC = () => {
                     <span style={{ fontWeight: 600 }}>Delivery ({shippingQuote.carrier})</span>
                     <span style={{ fontSize: '0.75rem', color: '#047857', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                       <Truck size={12} />
-                      {shippingQuote.loading ? 'Calculating live rate...' : shippingQuote.eta}
+                      {shippingQuote.loading ? 'Getting delivery price…' : shippingQuote.eta}
                     </span>
                   </div>
-                  <span style={{ fontWeight: 600, color: shippingQuote.hasLiveQuote ? 'inherit' : '#6B7280', fontSize: shippingQuote.hasLiveQuote ? 'inherit' : '0.85rem' }}>
-                    {shippingQuote.loading ? (
-                      '...'
-                    ) : shippingQuote.hasLiveQuote && shippingQuote.fee !== null ? (
-                      shippingQuote.fee === 0 ? 'Free' : `₦${shippingQuote.fee.toLocaleString()}`
-                    ) : (
-                      'Calculated at dispatch'
-                    )}
+                  <span style={{ fontWeight: 600, color: shippingQuote.fee ? 'inherit' : '#047857' }}>
+                    {shippingQuote.loading
+                      ? '…'
+                      : shippingQuote.fee ? `₦${shippingQuote.fee.toLocaleString()}` : 'Included'}
                   </span>
                 </div>
               </div>
@@ -655,7 +651,7 @@ export const CartPage: React.FC = () => {
               <div className="cart-summary-total-row">
                 <span>Grand Total</span>
                 <span className="cart-summary-total-price">
-                  ₦{(cart.subtotal_naira + (shippingQuote.hasLiveQuote && shippingQuote.fee ? shippingQuote.fee : 0)).toLocaleString()}
+                  ₦{(cart.subtotal_naira + (shippingQuote.fee || 0)).toLocaleString()}
                 </span>
               </div>
 
@@ -747,7 +743,7 @@ export const CartPage: React.FC = () => {
                       <div className="cart-item-bespoke-card">
                         <div className="cart-bespoke-card-header">
                           <span className="cart-bespoke-tag-pill">
-                            <Scissors size={12} /> Bespoke Tailored Cut
+                            <Scissors size={12} /> Custom fit
                           </span>
                           {isSmartEstimated ? (
                             <span className="cart-bespoke-source-note">
@@ -755,7 +751,7 @@ export const CartPage: React.FC = () => {
                             </span>
                           ) : (
                             <span className="cart-bespoke-source-note">
-                              📏 Atelier Measurement Profile ({unit})
+                              📏 Your measurements ({unit})
                             </span>
                           )}
                         </div>
@@ -787,7 +783,7 @@ export const CartPage: React.FC = () => {
                               className="cart-bespoke-expand-btn"
                               onClick={() => toggleCutSheet(item.id)}
                             >
-                              {isExpanded ? 'Hide Specs' : `+${entries.length - 4} more specs`}
+                              {isExpanded ? 'Show fewer' : `+${entries.length - 4} more`}
                             </button>
                           )}
                         </div>
@@ -817,10 +813,6 @@ export const CartPage: React.FC = () => {
                           </div>
                         )}
 
-                        <div className="cart-bespoke-assurance-row">
-                          <CheckCircle2 size={13} color="#10B981" />
-                          <span>Includes 2" tailor's inner seam allowance for custom fitting adjustments.</span>
-                        </div>
                       </div>
                     );
                   })()}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth, type UserTypeMode } from '../../context/AuthContext';
-import { vendorApi } from '../../api/client';
+import { vendorApi, authApi, apiErrorMessage } from '../../api/client';
+import { stateOptions } from '../../data/nigerianStates';
 import { X, AlertCircle, Sparkles, ArrowRight, Store, User as UserIcon } from 'lucide-react';
 import './AuthModal.css';
 
@@ -22,12 +23,14 @@ export const AuthModal: React.FC = () => {
   const [storeName, setStoreName] = useState('');
   const [description, setDescription] = useState('');
   const [city, setCity] = useState('Lagos');
-  const [state, setState] = useState('Lagos State');
+  const [state, setState] = useState('Lagos');
   const [instagramHandle, setInstagramHandle] = useState('');
   const [workshopAddress, setWorkshopAddress] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetSentMessage, setResetSentMessage] = useState('');
 
   React.useEffect(() => {
     setTab(authModalTab);
@@ -42,6 +45,8 @@ export const AuthModal: React.FC = () => {
       setDesignerStep(1);
     }
     setErrorMessage('');
+    setForgotMode(false);
+    setResetSentMessage('');
   }, [authModalTab, authModalUserType, isAuthModalOpen, user]);
 
   if (!isAuthModalOpen) return null;
@@ -57,8 +62,21 @@ export const AuthModal: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      const msg = err.response?.data?.detail || err.response?.data?.non_field_errors?.[0] || 'Invalid email or password.';
-      setErrorMessage(msg);
+      setErrorMessage(apiErrorMessage(err, 'Invalid email or password.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setLoading(true);
+    try {
+      const res = await authApi.requestPasswordReset(email.trim());
+      setResetSentMessage(res.message || 'If that email has an Aso account, we’ve sent a reset link.');
+    } catch (err: any) {
+      setErrorMessage(apiErrorMessage(err, 'We couldn’t send the reset email. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -78,15 +96,7 @@ export const AuthModal: React.FC = () => {
       });
     } catch (err: any) {
       console.error(err);
-      const data = err.response?.data;
-      if (typeof data === 'object' && data !== null) {
-        const firstKey = Object.keys(data)[0];
-        const val = data[firstKey];
-        const msg = Array.isArray(val) ? val[0] : String(val);
-        setErrorMessage(`${firstKey.replace('_', ' ')}: ${msg}`);
-      } else {
-        setErrorMessage('Registration failed. Please check your details.');
-      }
+      setErrorMessage(apiErrorMessage(err, 'Registration failed. Please check your details.'));
     } finally {
       setLoading(false);
     }
@@ -124,15 +134,7 @@ export const AuthModal: React.FC = () => {
       window.location.href = '/vendor/dashboard';
     } catch (err: any) {
       console.error(err);
-      const data = err.response?.data;
-      if (typeof data === 'object' && data !== null) {
-        const firstKey = Object.keys(data)[0];
-        const val = data[firstKey];
-        const msg = Array.isArray(val) ? val[0] : String(val);
-        setErrorMessage(`${firstKey.replace('_', ' ')}: ${msg}`);
-      } else {
-        setErrorMessage('Designer registration failed. Please verify your details.');
-      }
+      setErrorMessage(apiErrorMessage(err, 'Designer registration failed. Please check your details.'));
     } finally {
       setLoading(false);
     }
@@ -195,7 +197,41 @@ export const AuthModal: React.FC = () => {
           )}
 
           {/* LOGIN TAB */}
-          {tab === 'login' ? (
+          {tab === 'login' && forgotMode ? (
+            <form onSubmit={handleForgotSubmit} className="auth-form">
+              <div className="auth-title-container">
+                <h2 className="auth-serif-title">Reset your password</h2>
+                <p className="auth-subtitle">
+                  Enter the email you signed up with and we’ll send you a link to choose a new password.
+                </p>
+              </div>
+              {resetSentMessage ? (
+                <p className="auth-subtitle" role="status" style={{ color: '#064E3B', fontWeight: 600 }}>{resetSentMessage}</p>
+              ) : (
+                <>
+                  <div className="form-group">
+                    <input
+                      type="email"
+                      className="input-field"
+                      placeholder="Email Address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+                  <button type="submit" className="btn-primary auth-submit-btn" disabled={loading}>
+                    {loading ? 'SENDING…' : 'SEND RESET LINK'}
+                  </button>
+                </>
+              )}
+              <div className="auth-forgot-link-wrapper">
+                <a href="#signin" onClick={(e) => { e.preventDefault(); setForgotMode(false); setErrorMessage(''); }} className="auth-forgot-link">
+                  Back to sign in
+                </a>
+              </div>
+            </form>
+          ) : tab === 'login' ? (
             <form onSubmit={handleLoginSubmit} className="auth-form">
               <div className="auth-title-container">
                 <h2 className="auth-serif-title">
@@ -224,6 +260,7 @@ export const AuthModal: React.FC = () => {
                   type="password"
                   className="input-field"
                   placeholder="Password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -231,8 +268,12 @@ export const AuthModal: React.FC = () => {
               </div>
 
               <div className="auth-forgot-link-wrapper">
-                <a href="#forgot" onClick={(e) => e.preventDefault()} className="auth-forgot-link">
-                  Forgot Password?
+                <a
+                  href="#forgot"
+                  onClick={(e) => { e.preventDefault(); setForgotMode(true); setErrorMessage(''); setResetSentMessage(''); }}
+                  className="auth-forgot-link"
+                >
+                  Forgot password?
                 </a>
               </div>
 
@@ -483,14 +524,17 @@ export const AuthModal: React.FC = () => {
                           />
                         </div>
                         <div className="form-group">
-                          <input
-                            type="text"
+                          <select
                             className="input-field"
-                            placeholder="State * (e.g. Lagos State)"
+                            aria-label="State"
                             value={state}
                             onChange={(e) => setState(e.target.value)}
                             required
-                          />
+                          >
+                            {stateOptions(state).map((st) => (
+                              <option key={st} value={st}>{st}</option>
+                            ))}
+                          </select>
                         </div>
                       </div>
 

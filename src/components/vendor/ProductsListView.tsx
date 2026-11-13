@@ -8,7 +8,8 @@ import {
   Clock,
   Layers
 } from 'lucide-react';
-import { categoryApi, productApi } from '../../api/client';
+import { categoryApi, productApi, apiErrorMessage } from '../../api/client';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import type { Category, ProductItem } from '../../types';
 
 interface ProductsListViewProps {
@@ -26,7 +27,10 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const isMobile = useIsMobile();
+  // The table needs a wide screen; phones start on cards.
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => (typeof window !== 'undefined' && window.innerWidth < 768 ? 'grid' : 'table'));
+  useEffect(() => { if (isMobile) setViewMode('grid'); }, [isMobile]);
 
   const loadVendorProducts = async () => {
     setLoading(true);
@@ -85,14 +89,14 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
   }, []);
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (!window.confirm(`Are you sure you want to archive "${name}"? Archived products will no longer be purchasable, while preserving historical orders.`)) {
+    if (!window.confirm(`Remove "${name}" from your studio? Shoppers won’t be able to buy it any more. Past orders are kept.`)) {
       return;
     }
     try {
       await productApi.deleteVendorProduct(id);
-      setProducts(products.filter((p) => p.id !== id));
+      setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      setProducts(products.filter((p) => p.id !== id));
+      window.alert(apiErrorMessage(err, `We couldn’t remove "${name}". Please try again.`));
     }
   };
 
@@ -124,14 +128,14 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
       {/* Top Header */}
       <div className="dashboard-welcome-header">
         <div>
-          <h1 className="dashboard-serif-title">Products & Inventory</h1>
+          <h1 className="dashboard-serif-title">Your pieces</h1>
           <p className="dashboard-subtitle">
-            Manage your products, live pricing, stock, variants, and preparation times.
+            Add, edit and track your pieces. New pieces and edits are reviewed before they go live.
           </p>
         </div>
         <button className="btn-action-primary" onClick={onAddNewProduct}>
           <Plus size={16} />
-          <span>Add New Product</span>
+          <span>Add a piece</span>
         </button>
       </div>
 
@@ -141,14 +145,14 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           className={`status-filter-tab ${selectedStatus === 'ALL' ? 'active' : ''}`}
           onClick={() => setSelectedStatus('ALL')}
         >
-          <span>All Products</span>
+          <span>All</span>
           <span className="count-pill">{products.length}</span>
         </button>
         <button
           className={`status-filter-tab ${selectedStatus === 'ACTIVE' ? 'active' : ''}`}
           onClick={() => setSelectedStatus('ACTIVE')}
         >
-          <span>Published & Live</span>
+          <span>Live</span>
           <span className="count-pill count-active">{activeCount}</span>
         </button>
         <button
@@ -226,7 +230,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           <p>Try refining your search terms or add a new product to your storefront.</p>
           <button className="btn-action-primary" onClick={onAddNewProduct}>
             <Plus size={16} />
-            <span>Add New Product</span>
+            <span>Add a piece</span>
           </button>
         </div>
       ) : viewMode === 'table' ? (
@@ -281,7 +285,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                     </td>
                     <td>
                       <span className={`inventory-status-pill ${statusClass}`}>
-                        {p.status}
+                        {p.status === 'Active' ? 'Live' : p.status}
                       </span>
                       {p.status === 'Changes Requested' && p.rejection_reason && (
                         <div style={{ fontSize: '0.75rem', color: '#92400E', marginTop: '0.35rem', maxWidth: '220px' }}>
@@ -294,14 +298,14 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                         <button
                           className="btn-icon-action"
                           onClick={() => onEditProduct && onEditProduct(p)}
-                          title="Edit Product"
+                          title="Edit piece"
                         >
                           <Edit3 size={15} />
                         </button>
                         <button
                           className="btn-icon-action danger"
                           onClick={() => handleDeleteProduct(p.id, p.name)}
-                          title="Archive Product"
+                          title="Remove piece"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -321,24 +325,31 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
               <div className="grid-card-img-wrap">
                 <img src={p.image_url} alt={p.name} />
                 <span className={`grid-status-badge ${p.status === 'Active' ? 'active' : 'pending'}`}>
-                  {p.status}
+                  {p.status === 'Active' ? 'Live' : p.status}
                 </span>
               </div>
               <div className="grid-card-content">
                 <span className="grid-cat">{p.category}</span>
                 <h4 className="grid-title">{p.name}</h4>
+                {p.status === 'Changes Requested' && p.rejection_reason && (
+                  <p style={{ fontSize: '0.78rem', color: '#92400E', margin: '0.25rem 0 0.5rem', lineHeight: 1.4 }}>
+                    <strong>What to change:</strong> {p.rejection_reason}
+                  </p>
+                )}
                 <div className="grid-bottom-row">
                   <strong className="grid-price">₦ {p.price.toLocaleString()}</strong>
                   <div className="grid-actions">
                     <button
                       className="btn-icon-action"
                       onClick={() => onEditProduct && onEditProduct(p)}
+                      aria-label={`Edit ${p.name}`}
                     >
                       <Edit3 size={14} />
                     </button>
                     <button
                       className="btn-icon-action danger"
                       onClick={() => handleDeleteProduct(p.id, p.name)}
+                      aria-label={`Remove ${p.name}`}
                     >
                       <Trash2 size={14} />
                     </button>

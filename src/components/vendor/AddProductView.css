@@ -1390,3 +1390,37 @@
     font-size: 1.05rem;
   }
 }
+
+/* Custom-fit card: header (text + switch) on top, notice underneath. Was a flex row,
+   which squeezed the text into narrow columns on phones. */
+.bespoke-enable-card {
+  flex-direction: column;
+  align-items: stretch;
+}
+.bespoke-enable-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.bespoke-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+}
+.bespoke-active-notice {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.badge-recommended {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #065F46;
+  background: #D1FAE5;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+}

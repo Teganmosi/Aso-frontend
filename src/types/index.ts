@@ -101,6 +101,9 @@ export interface VendorProfileBrief {
   workshop_address?: string;
   landmark?: string;
   instagram_handle?: string;
+  logo_url?: string | null;
+  banner_url?: string | null;
+  has_bank_account?: boolean;
   kyc_tier?: string;
   nin_number?: string;
   cac_number?: string;
@@ -425,6 +428,9 @@ export interface Delivery {
   carrier_name: string;
   status: DeliveryStatus;
   status_display: string;
+  /** False when no rider could be booked automatically; the Aso team books one by hand. */
+  courier_booked?: boolean;
+  has_waybill?: boolean;
   dellyman_order_id?: string | null;
   dellyman_order_code?: string | null;
   dellyman_tracking_id?: string | null;
