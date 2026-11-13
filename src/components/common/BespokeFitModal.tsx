@@ -555,7 +555,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
             <div>
               <div className="bespoke-tagline">
                 <Sparkles size={12} color="#D4AF37" />
-                <span>MY ASO FIT • SMART ATELIER v1.2</span>
+                <span>MY ASO FIT</span>
               </div>
               <h2 className="bespoke-title">Custom Made-to-Measure Spec</h2>
             </div>
