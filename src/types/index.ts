@@ -288,7 +288,9 @@ export interface ProductItem {
   category: string;
   price: number;
   stock_quantity: number;
-  status: 'Active' | 'Out of Stock' | 'Draft' | 'Pending Approval';
+  status: 'Active' | 'Out of Stock' | 'Draft' | 'Pending Approval' | 'Changes Requested';
+  /** Admin's reason when a product was sent back for changes. */
+  rejection_reason?: string | null;
   image_url: string;
   created_at: string;
   description?: string;

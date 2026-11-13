@@ -595,10 +595,14 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         setErrorMessage(photoErrors.join(' '));
       }
 
+      // Every new piece (and any change to title, description or price) is reviewed
+      // by the Aso team before it appears publicly.
       setSuccessMessage(
-        isEditing
-          ? 'Product changes saved successfully!'
-          : 'Product published successfully to your storefront and catalog!'
+        targetStatus === 'Draft'
+          ? 'Saved as a draft. Only you can see it.'
+          : isEditing
+          ? 'Changes saved. If you changed the title, description or price, the piece goes back for a quick review before it’s live again.'
+          : 'Submitted for review. Your piece will appear on your storefront as soon as the Aso team approves it.'
       );
 
       if (onSaveProduct) {
