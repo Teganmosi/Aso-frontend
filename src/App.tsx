@@ -21,7 +21,6 @@ const VendorStorefrontPage = lazy(() => import('./pages/VendorStorefrontPage').t
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then(m => ({ default: m.ProductDetailPage })));
 const CartPage = lazy(() => import('./pages/CartPage').then(m => ({ default: m.CartPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
-const AdminPortalPage = lazy(() => import('./pages/AdminPortalPage').then(m => ({ default: m.AdminPortalPage })));
 const PolicyPage = lazy(() => import('./pages/PolicyPage').then(m => ({ default: m.PolicyPage })));
 
 const RouteFallback: React.FC = () => (
@@ -107,9 +106,8 @@ const AppContent: React.FC = () => {
           <Route path="/vendor/profile" element={<VendorDashboardPage />} />
           <Route path="/vendor/settings" element={<VendorDashboardPage />} />
 
-          {/* Platform Staff & Admin Desk */}
-          <Route path="/admin" element={<AdminPortalPage />} />
-          <Route path="/admin-portal" element={<AdminPortalPage />} />
+          {/* Staff work in Django admin (/admin/ on the API). The custom admin
+              portal page was removed from routing: none of its APIs exist (QA-19). */}
 
           {/* Trust, Legal, FAQ & Support Pages */}
           <Route path="/terms" element={<PolicyPage initialSection="terms" />} />

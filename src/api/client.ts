@@ -387,7 +387,7 @@ export const variantApi = {
 
   updateVariant: async (product_id: string, variant_id: string, payload: Partial<CreateVariantPayload>): Promise<ProductVariant> => {
     await fetchCsrfToken();
-    const res = await apiClient.put(`/products/${product_id}/variants/${variant_id}/`, payload);
+    const res = await apiClient.patch(`/products/${product_id}/variants/${variant_id}/`, payload);
     return res.data;
   },
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useAuth } from '../../context/AuthContext';
 import { vendorApi, reviewApi, productApi, mediaApi, describeUploadError } from '../../api/client';
 import type { BankAccount, VerificationStatus } from '../../types';
@@ -43,12 +44,32 @@ const NIGERIAN_STATES = [
   'Yobe State', 'Zamfara State'
 ];
 
+/**
+ * Map a stored state ("Lagos", "lagos state", "Abuja", "FCT") to its dropdown
+ * option. Sign-up stores e.g. "Lagos" while the options read "Lagos State"; with
+ * no match the select silently showed "Abia State" and saving overwrote the
+ * designer's real state. Unknown values are kept (added as an option) rather
+ * than replaced.
+ */
+const normalizeNigerianState = (raw?: string | null): string => {
+  const value = (raw || '').trim();
+  if (!value) return 'Lagos State';
+  const lower = value.toLowerCase();
+  if (['fct', 'abuja', 'fct abuja', 'fct - abuja', 'federal capital territory'].includes(lower)) return 'FCT - Abuja';
+  const exact = NIGERIAN_STATES.find((s) => s.toLowerCase() === lower);
+  if (exact) return exact;
+  const withSuffix = NIGERIAN_STATES.find((s) => s.toLowerCase() === `${lower} state`);
+  return withSuffix || value;
+};
+
 const STANDARD_SPECIALTIES = [
   'Menswear', 'Womenswear', 'Traditional', 'Agbada', 'Senator',
   'Suits', 'Kaftans', 'Bridal', 'Couture', 'Ready-to-Wear', 'Bespoke'
 ];
 
 export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavigateToEarnings: _onNavigateToEarnings }) => {
+  // Stack the form and the sidebar on phones (fixed 2:1 columns crushed both).
+  const isMobile = useIsMobile();
   const { user, refreshMe, logout } = useAuth();
   const navigate = useNavigate();
   const [activeSubTab, setActiveSubTab] = useState<'general' | 'location' | 'kyc' | 'payout' | 'social'>('general');
@@ -116,7 +137,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
 
   // Section 2: Location & Shipping (Separating Public from Private)
   const [publicCity, setPublicCity] = useState(user?.vendor_profile?.city || 'Lagos');
-  const [publicState, setPublicState] = useState(user?.vendor_profile?.state || 'Lagos State');
+  const [publicState, setPublicState] = useState(normalizeNigerianState(user?.vendor_profile?.state));
   const [workshopAddress, setWorkshopAddress] = useState(user?.vendor_profile?.workshop_address || '');
   const [landmark, setLandmark] = useState(user?.vendor_profile?.landmark || '');
   const dispatchHub = 'Dellyman Logistics Dispatch Terminal';
@@ -202,7 +223,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           if (profile.banner_url) setCoverBannerUrl(profile.banner_url);
           if (profile.logo_url) setLogoUrl(profile.logo_url);
           if (profile.city) setPublicCity(profile.city);
-          if (profile.state) setPublicState(profile.state);
+          if (profile.state) setPublicState(normalizeNigerianState(profile.state));
           if (profile.workshop_address) setWorkshopAddress(profile.workshop_address);
           if (profile.landmark) setLandmark(profile.landmark);
           if (profile.instagram_handle) setInstagram(profile.instagram_handle.replace('@', ''));
@@ -586,14 +607,14 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
       </div>
 
       {/* MAIN TWO-COLUMN LAYOUT */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '1.75rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'minmax(0, 2fr) minmax(0, 1fr)', gap: '1.75rem', alignItems: 'start' }}>
         
         {/* LEFT COLUMN: EDITABLE FORMS */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* 1. BRAND IDENTITY & STOREFRONT */}
           <div id="section-general" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
                   Brand Identity &amp; Assets
@@ -943,7 +964,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
 
           {/* 2. LOCATION & FULFILLMENT */}
           <div id="section-location" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
                   Location &amp; Courier Pickup
@@ -990,6 +1011,9 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                     onChange={(e) => setPublicState(e.target.value)}
                     style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #86EFAC', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
                   >
+                    {!NIGERIAN_STATES.includes(publicState) && (
+                      <option value={publicState}>{publicState}</option>
+                    )}
                     {NIGERIAN_STATES.map((st) => (
                       <option key={st} value={st}>{st}</option>
                     ))}
@@ -1056,7 +1080,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
 
           {/* 3. IDENTITY VERIFICATION & WITHDRAWALS */}
           <div id="section-kyc" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
                   Identity Verification &amp; Bank Withdrawals
@@ -1219,7 +1243,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
 
           {/* 4. PAYOUT DETAILS */}
           <div id="section-payout" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
                   Settlement Bank Account
