@@ -11,10 +11,12 @@ import {
   Wallet 
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import './MobileBottomNav.css';
 
 export const MobileBottomNav: React.FC = () => {
   const { cartCount } = useCart();
+  const { user } = useAuth();
   const location = useLocation();
 
   // Hide on admin portal routes to avoid clutter
@@ -23,6 +25,13 @@ export const MobileBottomNav: React.FC = () => {
   }
 
   const isVendorRoute = location.pathname.startsWith('/vendor');
+  const isVendor = Boolean(user?.is_vendor || user?.vendor_profile);
+
+  // Studio tabs only make sense for a signed-in designer. On the studio
+  // sign-in / sign-up gate, show no bottom nav so the page's own buttons lead.
+  if (isVendorRoute && !isVendor) {
+    return null;
+  }
 
   const isCategoryActive = 
     location.pathname.startsWith('/categories') ||

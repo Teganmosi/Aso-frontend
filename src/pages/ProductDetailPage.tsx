@@ -124,8 +124,14 @@ export const ProductDetailPage: React.FC = () => {
       }
       // Load reviews for this product
       loadReviews(data.id);
-    } catch {
-      setError('Product not found or is no longer available.');
+    } catch (err: any) {
+      // Only a real 404 means the piece is gone. Anything else (slow network,
+      // server error) is a load failure the shopper can retry.
+      setError(
+        err?.response?.status === 404
+          ? 'NOT_FOUND'
+          : 'We couldn’t load this piece. Please check your connection and try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -225,7 +231,7 @@ export const ProductDetailPage: React.FC = () => {
       ? [{ id: 'primary', url: product.primary_image_url, media_type: 'IMAGE' as const, is_primary: true, display_order: 0, created_at: '' }]
       : [];
 
-  const activeImage = mediaItems[activeMediaIndex]?.url || '/traditional-men-1.png';
+  const activeImage = mediaItems[activeMediaIndex]?.url || '/placeholder-piece.svg';
 
   const getStockStatus = (variant: ProductVariant | null) => {
     if (!variant) return null;
@@ -249,18 +255,29 @@ export const ProductDetailPage: React.FC = () => {
   const stockStatus = getStockStatus(selectedVariant);
 
   if (loading) {
-    return <BrandLoader message="Loading luxury piece details..." theme="light" />;
+    return <BrandLoader message="Loading this piece..." theme="light" />;
   }
 
   if (error || !product) {
+    const isNotFound = !error || error === 'NOT_FOUND';
     return (
       <div className="pdp-error-state">
         <AlertCircle size={40} color="#DC2626" />
-        <h2>Product Not Found</h2>
-        <p>{error || 'This product could not be found.'}</p>
-        <button className="pdp-back-btn" onClick={() => navigate('/')}>
-          <ArrowLeft size={16} /> Back to Home
-        </button>
+        <h2>{isNotFound ? 'This piece is no longer available' : 'Something went wrong'}</h2>
+        <p>
+          {isNotFound
+            ? 'The designer may have sold out or removed it. There’s plenty more to discover.'
+            : error}
+        </p>
+        {isNotFound ? (
+          <button className="pdp-back-btn" onClick={() => navigate('/categories')}>
+            <ArrowLeft size={16} /> Browse pieces
+          </button>
+        ) : (
+          <button className="pdp-back-btn" onClick={() => identifier && loadProduct(identifier)}>
+            Try again
+          </button>
+        )}
       </div>
     );
   }
@@ -285,7 +302,7 @@ export const ProductDetailPage: React.FC = () => {
               src={activeImage}
               alt={product.title}
               className="pdp-main-image"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/traditional-men-1.png'; }}
+              onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder-piece.svg'; }}
             />
             {mediaItems.length > 1 && (
               <>
@@ -315,7 +332,7 @@ export const ProductDetailPage: React.FC = () => {
                   className={`pdp-thumb ${i === activeMediaIndex ? 'active' : ''}`}
                   onClick={() => setActiveMediaIndex(i)}
                 >
-                  <img src={m.url} alt={`View ${i + 1}`} onError={(e) => { (e.target as HTMLImageElement).src = '/traditional-men-1.png'; }} />
+                  <img src={m.url} alt={`View ${i + 1}`} onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder-piece.svg'; }} />
                 </button>
               ))}
             </div>
@@ -355,7 +372,7 @@ export const ProductDetailPage: React.FC = () => {
               ))}
             </div>
             <span className="pdp-rating-text">
-              {product.review_count > 0 ? `${avgRatingNum.toFixed(1)} (${product.review_count} verified review${product.review_count !== 1 ? 's' : ''})` : 'Newly Listed • No reviews yet'}
+              {product.review_count > 0 ? `${avgRatingNum.toFixed(1)} (${product.review_count} verified review${product.review_count !== 1 ? 's' : ''})` : 'New on Aso • No reviews yet'}
             </span>
           </div>
 
@@ -674,13 +691,16 @@ export const ProductDetailPage: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'Cinzel, Georgia, serif', color: '#111827', margin: 0 }}>
-              Verified Buyer Reviews
+              Reviews
             </h2>
             <p style={{ color: '#6B7280', fontSize: '0.9rem', marginTop: '0.3rem' }}>
-              Authentic feedback from customers who purchased and received this bespoke creation.
+              Only shoppers who bought and received this piece can leave a review.
             </p>
           </div>
 
+          {/* Rating summary only when there is something to summarise; the empty
+              state below already says there are no reviews. */}
+          {product.review_count > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#F9FAFB', padding: '0.75rem 1.25rem', borderRadius: '8px' }}>
             <div style={{ fontSize: product.review_count > 0 ? '2rem' : '1.25rem', fontWeight: 700, color: '#111827', fontFamily: 'Cinzel, Georgia, serif' }}>
               {product.review_count > 0 ? avgRatingNum.toFixed(1) : 'No reviews yet'}
@@ -697,23 +717,24 @@ export const ProductDetailPage: React.FC = () => {
                 ))}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.2rem' }}>
-                {product.review_count > 0 ? `Based on ${product.review_count} verified customer review${product.review_count !== 1 ? 's' : ''}` : 'Be the first client to review this bespoke piece'}
+                {`Based on ${product.review_count} verified review${product.review_count !== 1 ? 's' : ''}`}
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {reviewsLoading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>
             <Loader size={24} className="cart-spinner" />
-            <p style={{ marginTop: '0.5rem' }}>Loading verified reviews...</p>
+            <p style={{ marginTop: '0.5rem' }}>Loading reviews...</p>
           </div>
         ) : reviews.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 2rem', background: '#F9FAFB', borderRadius: '12px', color: '#6B7280' }}>
             <MessageSquare size={36} style={{ color: '#9CA3AF', marginBottom: '0.75rem' }} />
-            <h3 style={{ fontSize: '1.1rem', color: '#374151', margin: 0 }}>No Customer Reviews Yet</h3>
+            <h3 style={{ fontSize: '1.1rem', color: '#374151', margin: 0 }}>No reviews yet</h3>
             <p style={{ fontSize: '0.875rem', maxWidth: '400px', margin: '0.5rem auto 0' }}>
-              Be the first to purchase and review this bespoke piece once your order is fulfilled and delivered!
+              Buy this piece and you can review it once it’s delivered.
             </p>
           </div>
         ) : (

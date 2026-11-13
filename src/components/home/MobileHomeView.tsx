@@ -164,9 +164,9 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
           </div>
         ) : products.length === 0 ? (
           <div className="mobile-empty-box">
-            <p>No pieces found matching your criteria</p>
+            <p>No pieces in this category yet. New pieces are added every week.</p>
             <button onClick={() => onCategorySelect(null)} className="btn-mobile-browse-all">
-              Browse Full Catalog
+              Show all pieces
             </button>
           </div>
         ) : (
@@ -180,7 +180,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
                 <div key={prod.id} className="mobile-product-card">
                   <Link to={`/products/${prod.slug || prod.id}`} className="mobile-product-media">
                     <img
-                      src={prod.primary_image_url || (prod.media && prod.media[0]?.url) || '/traditional-men-1.png'}
+                      src={prod.primary_image_url || (prod.media && prod.media[0]?.url) || '/placeholder-piece.svg'}
                       alt={prod.title}
                       loading="lazy"
                       decoding="async"
@@ -360,8 +360,8 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
                 <CheckCircle2 size={20} color="#004B44" />
               </div>
               <div className="mobile-confidence-content">
-                <strong>Verified Designers</strong>
-                <p>Every designer on Aso goes through a verification process before they can sell on the marketplace.</p>
+                <strong>Reviewed Pieces</strong>
+                <p>Every piece is reviewed before it goes live. Designers with a Verified badge have also had their identity checked.</p>
               </div>
             </div>
             <div className="mobile-confidence-item">
@@ -378,8 +378,8 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
                 <ShieldCheck size={20} color="#004B44" />
               </div>
               <div className="mobile-confidence-content">
-                <strong>72h Buyer Protection</strong>
-                <p>Your payment remains securely protected while your order is being fulfilled, giving you time to inspect your delivery.</p>
+                <strong>Buyer Protection</strong>
+                <p>Your payment is held until your order is delivered, and you get 48 hours to inspect it before the designer is paid.</p>
               </div>
             </div>
           </div>

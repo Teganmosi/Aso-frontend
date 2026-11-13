@@ -243,7 +243,7 @@ export const WomensCollectionPage: React.FC = () => {
 
   // Fallback image helper for women's collection
   const getWomensProductImage = (product: Product, index: number = 0): string => {
-    const fallbacks = ['/adire-1.png', '/adire-2.png', '/adire-3.png', '/adire-4.png', '/hero-bg.png'];
+    const fallbacks = ['/placeholder-piece.svg'];
     const fallback = fallbacks[index % fallbacks.length];
 
     let raw = product.primary_image_url || (product.media && product.media.length > 0 ? product.media[0].url : null);
@@ -257,32 +257,13 @@ export const WomensCollectionPage: React.FC = () => {
     return raw;
   };
 
-  // Featured Designer of the Month (Dynamically chosen or top rated from DB)
-  const featuredDesigner: PublicVendorProfile = useMemo(() => {
-    if (products.length > 0 && products[0]?.vendor) {
-      return products[0].vendor;
-    }
-    return {
-      id: 'adebisi-atelier',
-      store_name: 'Adebisi Atelier',
-      slug: 'adebisi-atelier',
-      description: 'Lagos-based designer Adebisi reimagines hand-woven Aso-Oke and silk into structural, avant-garde pieces for the modern cosmopolitan woman.',
-      logo_url: '/adire-1.png',
-      banner_url: '/adire-2.png',
-      city: 'Lagos',
-      state: 'Lagos State',
-      kyc_tier: 'TIER_3_ENTERPRISE',
-      is_verified: true,
-      instagram_handle: 'adebisi.atelier',
-      workshop_address: '12 Kofo Abayomi Street, Victoria Island, Lagos',
-      landmark: 'Victoria Island Fashion Hub',
-      average_rating: '5.0',
-      review_count: 32,
-      created_at: new Date().toISOString()
-    };
-  }, [products]);
-
+  // Featured designer: only ever a real designer from the catalogue. If there are
+  // no products yet, the section is hidden rather than filled with invented content.
   const featuredPiece = products.length > 0 ? products[0] : null;
+  const featuredDesigner: PublicVendorProfile | null = useMemo(
+    () => featuredPiece?.vendor ?? null,
+    [featuredPiece]
+  );
 
   return (
     <div className="womens-collection-page">
@@ -309,7 +290,7 @@ export const WomensCollectionPage: React.FC = () => {
             </div>
             <h1 className="womens-floating-title">The Modern Woman</h1>
             <p className="womens-floating-subtitle">
-              Contemporary silhouettes met with timeless Nigerian craftsmanship. Curated Adire, Aso-Oke, and silk pieces for the global wardrobe.
+              Contemporary silhouettes met with timeless Nigerian craftsmanship. Adire, Aso-Oke and silk pieces from independent Nigerian designers.
             </p>
           </div>
         </div>
@@ -320,7 +301,7 @@ export const WomensCollectionPage: React.FC = () => {
         <div className="womens-container womens-controls-inner">
           <div className="controls-left">
             <span className="results-count-text">
-              Showing <strong>{filteredProducts.length}</strong> {filteredProducts.length === 1 ? 'piece' : 'pieces'} from verified Nigerian designers
+              Showing <strong>{filteredProducts.length}</strong> {filteredProducts.length === 1 ? 'piece' : 'pieces'} from Nigerian designers
             </span>
             {hasActiveFilters && (
               <button onClick={clearAllFilters} className="btn-clear-filters-inline">
@@ -553,11 +534,23 @@ export const WomensCollectionPage: React.FC = () => {
               <div className="empty-icon-circle">
                 <Layers size={36} color="#00322D" />
               </div>
-              <h3>No Pieces Found Matching Your Filters</h3>
-              <p>Try resetting your fabric or silhouette selections to view more pieces.</p>
-              <button onClick={clearAllFilters} className="btn-empty-reset">
-                Reset All Filters
-              </button>
+              {hasActiveFilters ? (
+                <>
+                  <h3>No pieces match your filters</h3>
+                  <p>Try removing a fabric or silhouette to see more pieces.</p>
+                  <button onClick={clearAllFilters} className="btn-empty-reset">
+                    Clear filters
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3>New pieces are on the way</h3>
+                  <p>Our designers are adding their women’s collections. Check back soon, or browse the full catalogue.</p>
+                  <Link to="/categories" className="btn-empty-reset">
+                    Browse all pieces
+                  </Link>
+                </>
+              )}
             </div>
           ) : (
             /* Connected Product Grid */
@@ -566,7 +559,7 @@ export const WomensCollectionPage: React.FC = () => {
                 {paginatedProducts.map((product, idx) => {
                   const priceNaira = product.base_price_naira || (product.base_price_kobo ? product.base_price_kobo / 100 : 0);
                   const isVerified = Boolean(product.vendor?.is_verified);
-                  const storeName = product.vendor?.store_name || 'Adire Collection';
+                  const storeName = product.vendor?.store_name || 'Aso designer';
                   const prepDays = product.preparation_time_days || 3;
                   const imageUrl = getWomensProductImage(product, idx);
 
@@ -586,7 +579,7 @@ export const WomensCollectionPage: React.FC = () => {
                             className="product-main-img"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              const fallbackImgs = ['/adire-1.png', '/adire-2.png', '/adire-3.png', '/adire-4.png'];
+                              const fallbackImgs = ['/placeholder-piece.svg'];
                               const fallback = fallbackImgs[idx % fallbackImgs.length];
                               if (!target.src.endsWith(fallback)) {
                                 target.src = fallback;
@@ -609,7 +602,7 @@ export const WomensCollectionPage: React.FC = () => {
                               </div>
                             ) : (
                               <div className="badge-lead-time neutral">
-                                <span>Limited Stock</span>
+                                <span>Made to order</span>
                               </div>
                             )}
                           </div>
@@ -686,13 +679,14 @@ export const WomensCollectionPage: React.FC = () => {
         </main>
       </div>
 
-      {/* ─── 3. DESIGNER OF THE MONTH (Editorial Feature Section) ─── */}
+      {/* ─── 3. FEATURED DESIGNER (real catalogue data only) ─── */}
+      {featuredDesigner && featuredPiece && (
       <section className="designer-month-section">
         <div className="womens-container">
           <div className="designer-month-header">
-            <h2 className="designer-month-title">Designer of the Month</h2>
+            <h2 className="designer-month-title">Featured designer</h2>
             <p className="designer-month-subtitle">
-              Celebrating visionary creators blending Nigerian heritage with modernity.
+              Meet one of the designers behind this collection.
             </p>
           </div>
 
@@ -701,27 +695,28 @@ export const WomensCollectionPage: React.FC = () => {
             <div className="designer-profile-card">
               <div className="designer-portrait-wrap">
                 <img 
-                  src={featuredDesigner.logo_url && !featuredDesigner.logo_url.includes('traditional-women-1.png') ? featuredDesigner.logo_url : '/adire-1.png'} 
+                  src={featuredDesigner.logo_url && !featuredDesigner.logo_url.includes('traditional-women-1.png') ? featuredDesigner.logo_url : '/placeholder-piece.svg'} 
                   alt={featuredDesigner.store_name} 
                   className="designer-portrait-img"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = '/adire-1.png';
+                    target.src = '/placeholder-piece.svg';
                   }}
                 />
               </div>
 
               <h3 className="designer-studio-title">{featuredDesigner.store_name}</h3>
 
-              <div className="designer-verified-pill">
-                <ShieldCheck size={13} />
-                <span>Verified Designer</span>
-              </div>
+              {featuredDesigner.is_verified && (
+                <div className="designer-verified-pill">
+                  <ShieldCheck size={13} />
+                  <span>Verified Designer</span>
+                </div>
+              )}
 
-              <p className="designer-editorial-bio">
-                {featuredDesigner.description || 
-                  'Lagos-based designer reimagines hand-woven Aso-Oke into structural, avant-garde pieces for the modern cosmopolitan woman.'}
-              </p>
+              {featuredDesigner.description && (
+                <p className="designer-editorial-bio">{featuredDesigner.description}</p>
+              )}
 
               <Link to={`/store/${featuredDesigner.slug}`} className="btn-explore-designer-collection">
                 <span>Explore Collection</span>
@@ -734,16 +729,16 @@ export const WomensCollectionPage: React.FC = () => {
               <div 
                 className="signature-visual-bg"
                 style={{ 
-                  backgroundImage: `url(${featuredPiece ? getWomensProductImage(featuredPiece, 1) : '/adire-2.png'})` 
+                  backgroundImage: `url(${getWomensProductImage(featuredPiece, 1)})`
                 }}
               >
                 <div className="signature-overlay" />
                 <div className="signature-content-overlay">
                   <h4 className="signature-piece-title">
-                    {featuredPiece?.title || 'The Golden Era Corset'}
+                    {featuredPiece.title}
                   </h4>
-                  <Link 
-                    to={featuredPiece ? `/products/${featuredPiece.slug || featuredPiece.id}` : `/store/${featuredDesigner.slug}`}
+                  <Link
+                    to={`/products/${featuredPiece.slug || featuredPiece.id}`}
                     className="signature-shop-link"
                   >
                     <span>Shop this piece</span>
@@ -756,6 +751,7 @@ export const WomensCollectionPage: React.FC = () => {
           </div>
         </div>
       </section>
+      )}
 
     </div>
   );

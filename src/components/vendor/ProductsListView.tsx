@@ -57,7 +57,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
             price: p.base_price_naira,
             stock_quantity: 10,
             status: statusStr,
-            image_url: p.primary_image_url || '/traditional-men-1.png',
+            image_url: p.primary_image_url || '/placeholder-piece.svg',
             created_at: new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
             description: p.description,
             preparation_time: `${p.preparation_time_days || 3} Days`,

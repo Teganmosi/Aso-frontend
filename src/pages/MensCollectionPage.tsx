@@ -230,7 +230,7 @@ export const MensCollectionPage: React.FC = () => {
 
     const allVerified = products.every((p) => p.vendor?.is_verified === true);
     if (allVerified) {
-      return `Showing ${products.length} pieces from verified designers`;
+      return `Showing ${products.length} ${products.length === 1 ? "piece" : "pieces"} from Nigerian designers`;
     }
     return `Showing ${products.length} pieces`;
   }, [products, loading]);

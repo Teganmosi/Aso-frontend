@@ -10,8 +10,6 @@ import {
   HelpCircle, 
   ChevronDown, 
   ChevronUp, 
-  Phone, 
-  MapPin, 
   CheckCircle2, 
   AlertTriangle 
 } from 'lucide-react';
@@ -52,30 +50,37 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
         <div className="policy-hero-inner">
           <div className="policy-badge">
             <Sparkles size={14} color="#D4AF37" />
-            <span>TRUST, GOVERNANCE & LEGAL</span>
+            <span>
+              {activeSection === 'about' && 'OUR STORY'}
+              {activeSection === 'contact' && 'WE’RE HERE TO HELP'}
+              {activeSection === 'faq' && 'HELP CENTRE'}
+              {['terms', 'privacy', 'escrow', 'shipping'].includes(activeSection) && 'POLICIES'}
+            </span>
           </div>
 
           <h1 className="policy-title">
             {activeSection === 'terms' && 'Terms of Service'}
             {activeSection === 'privacy' && 'Privacy & Data Protection Policy'}
-            {activeSection === 'escrow' && 'Aso Escrow & Buyer Protection'}
-            {activeSection === 'shipping' && 'Fulfillment, Delivery & Returns'}
-            {activeSection === 'about' && 'About Aso: The African Fashion Operating System'}
-            {activeSection === 'contact' && 'Contact Atelier Support'}
-            {activeSection === 'faq' && 'Help Center & Frequently Asked Questions'}
+            {activeSection === 'escrow' && 'Buyer Protection'}
+            {activeSection === 'shipping' && 'Delivery & Returns'}
+            {activeSection === 'about' && 'About Aso'}
+            {activeSection === 'contact' && 'Contact us'}
+            {activeSection === 'faq' && 'Frequently asked questions'}
           </h1>
 
           <p className="policy-subtitle">
-            {activeSection === 'terms' && 'Rules, rights, and contractual obligations governing shoppers and verified fashion designers on Aso.'}
-            {activeSection === 'privacy' && 'How we protect your personal, measurement, and financial data in full compliance with the Nigeria Data Protection Act (NDPA).'}
-            {activeSection === 'escrow' && 'Your funds are held securely until you receive and verify your bespoke garment. 100% dispute-free guarantee.'}
-            {activeSection === 'shipping' && 'Automated Dellyman nationwide dispatch, tailoring lead times, and bespoke alteration terms.'}
-            {activeSection === 'about' && 'Empowering master African artisans with digital storefronts, automated logistics, and smart sizing.'}
-            {activeSection === 'contact' && 'Direct channels to our customer concierge, designer onboarding desk, and dispute resolution team.'}
-            {activeSection === 'faq' && 'Clear answers to common questions on bespoke sizing, Escrow security, delivery times, and payments.'}
+            {activeSection === 'terms' && 'The rules, rights and obligations for shoppers and designers on Aso.'}
+            {activeSection === 'privacy' && 'How we collect, use and protect your personal, measurement and payment data under the Nigeria Data Protection Act (NDPA).'}
+            {activeSection === 'escrow' && 'Your payment is held until your order is delivered, and you have 48 hours to inspect it before the designer is paid.'}
+            {activeSection === 'shipping' && 'Delivery times, tailoring lead times and our alteration guarantee.'}
+            {activeSection === 'about' && 'Bringing customers to Nigeria’s independent designers.'}
+            {activeSection === 'contact' && 'Questions about an order or selling on Aso? Get in touch.'}
+            {activeSection === 'faq' && 'Answers about sizing, payments, delivery and returns.'}
           </p>
 
-          <span className="policy-updated-date">Effective Date: October 2026 • Version 1.2</span>
+          {['terms', 'privacy', 'escrow', 'shipping'].includes(activeSection) && (
+            <span className="policy-updated-date">Effective date: October 2026</span>
+          )}
         </div>
       </section>
 
@@ -122,7 +127,7 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
             <article>
               <h2>1. Introduction &amp; Marketplace Model</h2>
               <p>
-                Welcome to <strong>Aso Marketplace</strong> (accessible at <code>asomarketplace.com.ng</code>). Aso operates as a curated luxury multi-vendor marketplace connecting independent African fashion designers, bespoke tailors, and textile artisans with domestic and international fashion buyers.
+                Welcome to <strong>Aso Marketplace</strong> (accessible at <code>asomarketplace.com.ng</code>). Aso operates as a curated multi-vendor marketplace connecting independent Nigerian fashion designers, bespoke tailors, and textile artisans with fashion buyers in Nigeria.
               </p>
               <p>
                 By creating an account, browsing collections, or transacting on Aso, you enter into a legally binding agreement governed by the Laws of the Federal Republic of Nigeria.
@@ -164,7 +169,7 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
               </p>
               <ul>
                 <li><strong>Order Confirmation SLA:</strong> Designers have forty-eight (48) hours to review and accept an incoming tailoring order.</li>
-                <li><strong>Tailoring &amp; Fulfillment:</strong> The designer crafts the garment within their declared SLA (typically 3 to 7 working days) and marks the parcel "Ready for Pickup".</li>
+                <li><strong>Tailoring &amp; Fulfillment:</strong> The designer crafts the garment within the preparation time shown on the product page (typically 4 to 7 working days) and marks the parcel "Ready for Pickup".</li>
                 <li><strong>Automated Delivery:</strong> Dellyman Logistics couriers collect the parcel directly from the designer's verified workshop.</li>
                 <li><strong>Settlement Release:</strong> Payout is released to the designer's registered Nigerian bank account forty-eight (48) hours following confirmed courier delivery, provided no dispute has been raised.</li>
               </ul>
@@ -241,7 +246,7 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
               </div>
               <ul>
                 <li><strong>Ready-to-Wear (RTW):</strong> Ships within 24 to 48 hours of order confirmation.</li>
-                <li><strong>Bespoke / Custom Made-to-Measure:</strong> Requires 4 to 8 working days for pattern drafting, cutting, and finishing by the designer.</li>
+                <li><strong>Bespoke / Custom Made-to-Measure:</strong> Typically 4 to 7 working days for pattern drafting, cutting, and finishing. Each product page shows the designer’s exact preparation time.</li>
                 <li><strong>Intra-State Lagos Transit:</strong> 24 to 48 hours via dedicated Dellyman bike dispatch.</li>
                 <li><strong>Inter-State Transit (Abuja, Port Harcourt, Ibadan, etc.):</strong> 2 to 4 working days via regional hubs.</li>
               </ul>
@@ -293,31 +298,31 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
           {/* 5. ABOUT ASO */}
           {activeSection === 'about' && (
             <article>
-              <h2>Heritage Reimagined: The African Fashion Operating System</h2>
+              <h2>Why we built Aso</h2>
               <p>
-                African fashion is celebrated globally for its vibrancy, bespoke craftsmanship, and cultural pride. From majestic three-piece Agbadas in Yoruba culture to intricately beaded Edo bridal gowns and modern street-cut Ankara two-pieces, our artisans are master craftsmen.
+                Nigeria is full of talented designers and tailors, from agbadas and senator wear to bridal gowns and modern Ankara sets. Most of them sell through Instagram and WhatsApp, and buying from them has meant long chats about measurements, paying strangers by bank transfer, and arranging delivery one rider at a time.
               </p>
               <p>
-                However, for decades, buying African fashion has meant endless back-and-forth WhatsApp chats, tape measure anxiety, unpredictable tailor delays, and off-platform bank transfer risks.
+                Aso started with a simple conversation. Our founder, a software engineer, offered to build websites for fashion designers. They all said the same thing: a website costs money and doesn’t bring customers. So instead of building websites for designers, we built the place where customers come to them.
               </p>
 
               <div className="policy-callout emerald">
                 <Sparkles size={20} className="policy-callout-icon" />
                 <div>
-                  <strong>Our Mission:</strong> Aso builds the digital infrastructure powering African fashion commerce. We connect talented independent ateliers with global fashion lovers backed by verified escrow, automated logistics, and smart sizing.
+                  <strong>Our mission:</strong> make it safe and simple to buy from Nigeria’s independent designers, and help those designers grow beyond their own followers.
                 </div>
               </div>
 
-              <h2>Our Three Founding Pillars</h2>
+              <h2>How Aso works</h2>
               <ul>
                 <li>
-                  <strong>Sizing Confidence ("My Aso Fit"):</strong> We remove fit anxiety. Buyers can enter exact dimensions directly or utilize our anthropometric smart estimator to generate tailor cut sheets in seconds.
+                  <strong>Clothes that fit (My Aso Fit):</strong> choose a standard size with a visual size chart, or save your measurements once and use them with any designer. The designer gets an exact cut sheet, so there’s no back-and-forth.
                 </li>
                 <li>
-                  <strong>Payment Integrity (Aso Escrow):</strong> Funds are protected until the parcel is physically received and verified.
+                  <strong>Protected payments:</strong> your payment is held until your order is delivered, and you have 48 hours to inspect it before the designer is paid.
                 </li>
                 <li>
-                  <strong>Logistics Without Stress:</strong> Automated Dellyman integration generates digital waybills, books riders, and tracks dispatches nationwide.
+                  <strong>Delivery handled for you:</strong> when your order is ready, a Dellyman rider is booked automatically and you can track it to your door.
                 </li>
               </ul>
             </article>
@@ -341,7 +346,7 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
                   },
                   {
                     q: "What if my bespoke outfit doesn't fit properly?",
-                    a: "Under our Atelier Sizing Guarantee, if your outfit deviates from the measurements submitted in your order cut sheet by more than 1.5 inches, the designer is contractually bound to perform free alterations. Aso arranges and covers the courier dispatch."
+                    a: "Under our Sizing Guarantee, if your outfit deviates from the measurements submitted in your order cut sheet by more than 1.5 inches, the designer is contractually bound to perform free alterations. Aso arranges and covers the courier dispatch."
                   },
                   {
                     q: "How long does tailoring and delivery take?",
@@ -379,9 +384,9 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
           {/* 7. CONTACT US */}
           {activeSection === 'contact' && (
             <article>
-              <h2>Get in Touch with Atelier Concierge</h2>
+              <h2>Contact us</h2>
               <p>
-                Have questions regarding an active bespoke order, dispute, designer application, or corporate partnership? Our team is available Monday through Saturday, 8:00 AM – 7:00 PM (WAT).
+                Questions about an order, a sizing issue, a dispute or selling on Aso? Email us and we’ll reply within one working day.
               </p>
 
               <div className="contact-channels-grid">
@@ -389,45 +394,25 @@ export const PolicyPage: React.FC<PolicyPageProps> = ({ initialSection }) => {
                   <div className="contact-card-icon">
                     <Mail size={22} />
                   </div>
-                  <h3 className="contact-card-title">Customer Concierge &amp; Escrow</h3>
+                  <h3 className="contact-card-title">Shoppers &amp; orders</h3>
                   <a href="mailto:support@asomarketplace.com.ng" className="contact-card-detail">
                     support@asomarketplace.com.ng
                   </a>
-                  <p className="contact-card-desc">For order status, sizing alterations, and Escrow dispute resolution.</p>
+                  <p className="contact-card-desc">Order status, sizing alterations and disputes.</p>
                 </div>
 
                 <div className="contact-channel-card">
                   <div className="contact-card-icon">
                     <Sparkles size={22} />
                   </div>
-                  <h3 className="contact-card-title">Designer &amp; Studio Partnerships</h3>
+                  <h3 className="contact-card-title">Designers &amp; partnerships</h3>
                   <a href="mailto:designers@asomarketplace.com.ng" className="contact-card-detail">
                     designers@asomarketplace.com.ng
                   </a>
-                  <p className="contact-card-desc">For fashion houses, tailor onboarding, and catalog curation support.</p>
+                  <p className="contact-card-desc">Opening a studio, listing help and partnerships.</p>
                 </div>
-
-                <div className="contact-channel-card">
-                  <div className="contact-card-icon">
-                    <Phone size={22} />
-                  </div>
-                  <h3 className="contact-card-title">WhatsApp Priority Hotline</h3>
-                  <a href="https://wa.me/2348000000000" target="_blank" rel="noreferrer" className="contact-card-detail">
-                    +234 800 ASO MARKET
-                  </a>
-                  <p className="contact-card-desc">Instant messaging concierge for active orders and urgent queries.</p>
-                </div>
-
-                <div className="contact-channel-card">
-                  <div className="contact-card-icon">
-                    <MapPin size={22} />
-                  </div>
-                  <h3 className="contact-card-title">Atelier Operations Hub</h3>
-                  <span className="contact-card-detail">
-                    Victoria Island, Lagos, Nigeria
-                  </span>
-                  <p className="contact-card-desc">HQ hub coordinating Dellyman nationwide parcel dispatches.</p>
-                </div>
+                {/* WhatsApp and office address cards removed: they showed a placeholder
+                    number (wa.me/2348000000000) and an unconfirmed address. Re-add with real details. */}
               </div>
             </article>
           )}

@@ -90,7 +90,7 @@ export const VendorRegisterModal: React.FC<VendorRegisterModalProps> = ({ isOpen
           <div className="vendor-title-wrapper">
             <h2 className="auth-serif-title">Register your Designer Storefront</h2>
             <p className="auth-subtitle">
-              Join Nigeria's leading luxury fashion marketplace. Showcase your collection to thousands of buyers.
+              Open your free storefront on Aso. We handle payments and delivery, and bring shoppers to your designs.
             </p>
           </div>
 

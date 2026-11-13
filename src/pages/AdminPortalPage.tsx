@@ -535,11 +535,11 @@ export const AdminPortalPage: React.FC = () => {
                         <td className="product-title-cell">
                           <div className="prod-cell-flex">
                             <img
-                              src={prod.primary_image_url || '/adire-1.png'}
+                              src={prod.primary_image_url || '/placeholder-piece.svg'}
                               alt={prod.title}
                               className="prod-thumb-mini"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/traditional-men-1.png';
+                                (e.target as HTMLImageElement).src = '/placeholder-piece.svg';
                               }}
                             />
                             <div>
@@ -632,7 +632,7 @@ export const AdminPortalPage: React.FC = () => {
                               {isPaid ? (
                                 <span className="escrow-pill-active">
                                   <ShieldCheck size={12} />
-                                  <span>72h Protected</span>
+                                  <span>48h Protected</span>
                                 </span>
                               ) : (
                                 <span className="escrow-pill-pending">Awaiting Payment</span>

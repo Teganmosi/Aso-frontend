@@ -23,7 +23,7 @@ import {
   Scissors,
   ShieldCheck
 } from 'lucide-react';
-import { categoryApi, productApi, mediaApi } from '../../api/client';
+import { categoryApi, productApi, mediaApi, describeUploadError } from '../../api/client';
 import type { Category, ProductItem, CreateProductPayload } from '../../types';
 import './AddProductView.css';
 
@@ -274,6 +274,29 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // When editing, load the product's real photo list. The studio's product list
+  // only carries a small card thumbnail, which must never be re-saved as a photo.
+  useEffect(() => {
+    const productId = productToEdit?.id;
+    if (!productId) return;
+    let cancelled = false;
+    mediaApi
+      .listMedia(productId)
+      .then((media) => {
+        if (cancelled || media.length === 0) return;
+        const ordered = [...media].sort(
+          (a, b) => Number(b.is_primary) - Number(a.is_primary) || (a.display_order ?? 0) - (b.display_order ?? 0)
+        );
+        setImages(ordered.map((m) => m.url));
+      })
+      .catch(() => {
+        /* keep whatever the form started with */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [productToEdit?.id]);
+
   // Form Submission States
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -411,41 +434,26 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     setIsUploadingMedia(true);
     setErrorMessage('');
 
+    // Upload one at a time so a slow connection doesn't time out on a batch,
+    // and report every photo that failed instead of silently skipping it.
+    const failures: string[] = [];
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.size > 10 * 1024 * 1024) {
-          setErrorMessage(`File "${file.name}" exceeds 10MB limit.`);
+          failures.push(`${file.name} is larger than 10 MB.`);
           continue;
         }
-
         try {
-          const presigned = await mediaApi.getPresignedUrl({
-            filename: file.name,
-            file_type: file.type || 'image/jpeg',
-          });
-          if (presigned?.upload_url && presigned?.public_url) {
-            await mediaApi.uploadToPresignedUrl(presigned.upload_url, file);
-            setImages((prev) => [...prev, presigned.public_url]);
-          } else {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              const dataUrl = ev.target?.result as string;
-              if (dataUrl) setImages((prev) => [...prev, dataUrl]);
-            };
-            reader.readAsDataURL(file);
-          }
-        } catch {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            const dataUrl = ev.target?.result as string;
-            if (dataUrl) setImages((prev) => [...prev, dataUrl]);
-          };
-          reader.readAsDataURL(file);
+          const uploaded = await mediaApi.uploadImage(file, 'product');
+          setImages((prev) => [...prev, uploaded.url]);
+        } catch (err: any) {
+          failures.push(describeUploadError(err, file.name));
         }
       }
-    } catch (err: any) {
-      setErrorMessage('Error uploading image: ' + (err.message || 'Network error'));
+      if (failures.length > 0) {
+        setErrorMessage(failures.join(' '));
+      }
     } finally {
       setIsUploadingMedia(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -543,9 +551,34 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         savedProd = await productApi.createVendorProduct(payload);
       }
 
-      if (savedProd?.id && images.length > 0) {
+      // Sync photos with what's already saved: attach only new photos and remove
+      // ones the designer deleted. (Re-attaching everything duplicated photos on every edit.)
+      const photoErrors: string[] = [];
+      if (savedProd?.id) {
+        let existing: Awaited<ReturnType<typeof mediaApi.listMedia>> = [];
+        if (isEditing) {
+          try {
+            existing = await mediaApi.listMedia(savedProd.id);
+          } catch {
+            existing = [];
+          }
+        }
+        const keptUrls = new Set(images);
+        const existingUrls = new Set(existing.flatMap((m) => [m.url, m.thumbnail_url].filter(Boolean) as string[]));
+
+        for (const media of existing) {
+          if (!keptUrls.has(media.url) && !(media.thumbnail_url && keptUrls.has(media.thumbnail_url))) {
+            try {
+              await mediaApi.deleteMedia(savedProd.id, media.id);
+            } catch {
+              photoErrors.push('A removed photo could not be deleted.');
+            }
+          }
+        }
+
         for (let idx = 0; idx < images.length; idx++) {
           const imgUrl = images[idx];
+          if (existingUrls.has(imgUrl)) continue;
           try {
             await mediaApi.attachMedia(savedProd.id, {
               url: imgUrl,
@@ -553,10 +586,13 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
               is_primary: idx === 0,
               display_order: idx,
             });
-          } catch (mErr) {
-            console.warn('Failed to attach media item:', imgUrl, mErr);
+          } catch {
+            photoErrors.push(`Photo ${idx + 1} could not be saved. Please remove it and upload it again.`);
           }
         }
+      }
+      if (photoErrors.length > 0) {
+        setErrorMessage(photoErrors.join(' '));
       }
 
       setSuccessMessage(
