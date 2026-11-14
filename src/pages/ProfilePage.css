@@ -1791,3 +1791,10 @@
     justify-content: flex-end;
   }
 }
+
+/* AUTH-02: shown until the 6-digit sign-up code is entered */
+.profile-verify-email {
+  max-width: 640px;
+  margin: 0 auto 1.75rem;
+  padding: 0 1rem;
+}

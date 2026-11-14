@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderApi, paymentApi, addressApi, deliveryApi } from '../api/client';
+import { orderApi, paymentApi, addressApi, deliveryApi, apiErrorMessage, isEmailNotVerifiedError } from '../api/client';
+import { EmailVerifyPanel } from '../components/auth/EmailVerifyPanel';
 import type { Order, PaymentRequest, Address } from '../types';
 import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ArrowRight,
@@ -23,7 +24,8 @@ const BLANK_ADDRESS: Omit<Address, 'id' | 'created_at'> = {
 };
 
 export const CartPage: React.FC = () => {
-  const { user, isLoading: authLoading, openAuthModal, addresses, fetchAddresses } = useAuth();
+  const { user, isLoading: authLoading, openAuthModal, addresses, fetchAddresses, refreshMe } = useAuth();
+  const [checkoutError, setCheckoutError] = useState('');
   const { cart, cartLoading, updateItem, removeItem, clearCart, refreshCart } = useCart();
   const navigate = useNavigate();
 
@@ -197,9 +199,7 @@ export const CartPage: React.FC = () => {
       setShowAddressForm(false);
       setAddressFormData({ ...BLANK_ADDRESS });
     } catch (err: any) {
-      const data = err?.response?.data;
-      const msg = typeof data === 'object' ? Object.values(data).flat().join(' ') : 'Failed to save address.';
-      setAddressFormError(String(msg));
+      setAddressFormError(apiErrorMessage(err, 'We couldn’t save that address. Please check it and try again.'));
     } finally {
       setAddressFormLoading(false);
     }
@@ -208,9 +208,10 @@ export const CartPage: React.FC = () => {
   // Checkout order placement & payment initialization
   const handlePlaceOrder = async () => {
     if (!selectedAddressId) {
-      alert('Please select or add a shipping address.');
+      setCheckoutError('Choose or add a delivery address first.');
       return;
     }
+    setCheckoutError('');
     setCheckoutLoading(true);
     try {
       // 1. Create order on backend
@@ -232,8 +233,12 @@ export const CartPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Failed to checkout', err);
-      const detail = err.response?.data?.detail || 'An error occurred during checkout. Please try again.';
-      alert(detail);
+      if (isEmailNotVerifiedError(err)) {
+        // Shows the code box in place of the pay button.
+        await refreshMe();
+        return;
+      }
+      setCheckoutError(apiErrorMessage(err, 'We couldn’t place your order. Please try again.'));
     } finally {
       setCheckoutLoading(false);
     }
@@ -655,20 +660,29 @@ export const CartPage: React.FC = () => {
                 </span>
               </div>
 
-              <button
-                className="checkout-place-order-btn"
-                onClick={handlePlaceOrder}
-                disabled={checkoutLoading || addresses.length === 0}
-              >
-                {checkoutLoading ? (
-                  <>
-                    <Loader size={18} className="cart-spinner-sm" />
-                    <span>Placing Order...</span>
-                  </>
-                ) : (
-                  <span>Place Order & Pay</span>
-                )}
-              </button>
+              {user?.email_verified === false ? (
+                <div style={{ marginTop: '1rem' }}>
+                  <EmailVerifyPanel compact reason="One last step before you pay." />
+                </div>
+              ) : (
+                <button
+                  className="checkout-place-order-btn"
+                  onClick={handlePlaceOrder}
+                  disabled={checkoutLoading || addresses.length === 0}
+                >
+                  {checkoutLoading ? (
+                    <>
+                      <Loader size={18} className="cart-spinner-sm" />
+                      <span>Placing your order…</span>
+                    </>
+                  ) : (
+                    <span>Place order & pay</span>
+                  )}
+                </button>
+              )}
+              {checkoutError && (
+                <p role="alert" style={{ margin: '0.75rem 0 0', color: '#B91C1C', fontSize: '0.85rem' }}>{checkoutError}</p>
+              )}
             </div>
           </div>
         </div>

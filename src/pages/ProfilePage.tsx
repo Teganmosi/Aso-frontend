@@ -12,6 +12,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { OrderWorkspaceChat } from '../components/orders/OrderWorkspaceChat';
+import { EmailVerifyPanel } from '../components/auth/EmailVerifyPanel';
 import './ProfilePage.css';
 
 
@@ -593,6 +594,12 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {user.email_verified === false && (
+        <div className="profile-verify-email">
+          <EmailVerifyPanel compact reason="You’ll need this before you can check out." />
+        </div>
+      )}
 
       {/* Main Account Navigation & Hub */}
       <div className="profile-hub-layout">

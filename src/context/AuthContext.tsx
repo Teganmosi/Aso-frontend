@@ -12,7 +12,8 @@ interface AuthContextType {
   authModalUserType: UserTypeMode;
   openAuthModal: (tab?: 'login' | 'register', userType?: UserTypeMode) => void;
   closeAuthModal: () => void;
-  login: (email: string, password: string) => Promise<void>;
+  /** Signs in. The caller decides whether to close the modal (designers without a studio continue in it). */
+  login: (email: string, password: string) => Promise<User>;
   register: (payload: {
     email: string;
     password: string;
@@ -88,10 +89,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthModalOpen(false);
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const res = await authApi.login({ email, password });
     setUser(res.user);
-    closeAuthModal();
+    return res.user;
   };
 
   const register = async (payload: {
@@ -101,9 +102,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     last_name: string;
     phone_number?: string;
   }): Promise<User> => {
+    // The modal stays open: the next step is the 6-digit email code.
     const res = await authApi.register(payload);
     setUser(res.user);
-    closeAuthModal();
     return res.user;
   };
 
