@@ -6,7 +6,6 @@ import { vendorApi, reviewApi, productApi, mediaApi, describeUploadError } from 
 import type { BankAccount, VerificationStatus } from '../../types';
 import {
   MapPin,
-  ShieldCheck,
   Landmark as LandmarkIcon,
   CheckCircle2,
   AlertCircle,
@@ -26,7 +25,6 @@ import {
   User as UserIcon,
   Clock,
   Lock,
-  Building,
 } from 'lucide-react';
 
 import { normalizeNigerianState, stateOptions } from '../../data/nigerianStates';
@@ -40,7 +38,7 @@ const STANDARD_SPECIALTIES = [
   'Suits', 'Kaftans', 'Bridal', 'Couture', 'Ready-to-Wear', 'Bespoke'
 ];
 
-export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavigateToEarnings: _onNavigateToEarnings }) => {
+export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavigateToEarnings }) => {
   // Stack the form and the sidebar on phones (fixed 2:1 columns crushed both).
   const isMobile = useIsMobile();
   const { user, refreshMe, logout } = useAuth();
@@ -116,9 +114,6 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   const dispatchHub = 'Dellyman Logistics Dispatch Terminal';
 
   // Section 3: Verification & KYC (Withdrawal Requirement)
-  const [kycMethod, setKycMethod] = useState<'nin' | 'cac'>('nin');
-  const [cacNumber, setCacNumber] = useState(user?.vendor_profile?.cac_number || '');
-  const [nin, setNin] = useState(user?.vendor_profile?.nin_number || '');
   const [isVerified, setIsVerified] = useState(user?.vendor_profile?.is_verified ?? false);
   // Identity (KYC) verification has been *submitted and saved* on the server. This is independent of
   // storefront approval status, and must not be inferred from what is currently typed in the form.
@@ -135,8 +130,6 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   /** Applies the private studio profile: the only source of saved NIN/CAC and the admin's decision. */
   const applyPrivateProfile = (p: any) => {
     if (!p) return;
-    if (p.nin_number) { setNin(p.nin_number); setKycMethod('nin'); }
-    else if (p.cac_number) { setCacNumber(p.cac_number); setKycMethod('cac'); }
     if (p.is_verified !== undefined) setIsVerified(Boolean(p.is_verified));
     if (p.verification_status) setVerificationState(p.verification_status);
     if (p.verification_rejection_reason !== undefined) setVerificationRejectionReason(p.verification_rejection_reason || '');
@@ -151,8 +144,6 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
   const [accountName, setAccountName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [bankName, setBankName] = useState('');
-  const [bankCode, setBankCode] = useState('033');
-  const [editingBank, setEditingBank] = useState(false);
 
   // Section 5: Social & Contact Links
   const [instagram, setInstagram] = useState('');
@@ -249,13 +240,6 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           if (user.vendor_profile?.slug && !slug) {
             setSlug(user.vendor_profile.slug);
           }
-          if (user.vendor_profile?.nin_number) {
-            setNin(user.vendor_profile.nin_number);
-            setKycMethod('nin');
-          } else if (user.vendor_profile?.cac_number) {
-            setCacNumber(user.vendor_profile.cac_number);
-            setKycMethod('cac');
-          }
         }
 
         // Fetch live bank account
@@ -264,7 +248,6 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           if (bank.account_name) setAccountName(bank.account_name);
           if (bank.account_number) setAccountNumber(bank.account_number);
           if (bank.bank_name) setBankName(bank.bank_name);
-          if (bank.bank_code) setBankCode(bank.bank_code);
         }
       } catch (err) {
         console.error('Error fetching live vendor profile from DB', err);
@@ -317,8 +300,6 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
         instagram_handle: instagram.trim() ? (instagram.startsWith('@') ? instagram.trim() : ('@' + instagram.trim())) : '',
         logo_url: logoUrl || undefined,
         banner_url: coverBannerUrl || undefined,
-        nin_number: nin.trim(),
-        cac_number: cacNumber.trim(),
         first_name,
         last_name,
         phone_number: whatsapp.trim(),
@@ -328,27 +309,6 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
         setSlug(updatedProfile.slug);
       }
       if (updatedProfile?.verification_status) applyPrivateProfile(updatedProfile);
-
-      // 2. Persist payout bank account if provided
-      if (accountNumber && bankName && accountName) {
-        await vendorApi.saveBankAccount({
-          account_name: accountName,
-          account_number: accountNumber,
-          bank_name: bankName,
-          bank_code: bankCode,
-        });
-        setEditingBank(false);
-      }
-
-      // 3. Send NIN/CAC to the Aso team for review (also re-queues after a rejection).
-      //    This never verifies the designer; only an admin can grant the Verified badge.
-      if (nin.trim() || cacNumber.trim()) {
-        const kycRes = await vendorApi.verifyKyc({
-          nin: nin.trim() || undefined,
-          cac_number: cacNumber.trim() || undefined,
-        });
-        if (kycRes?.vendor) applyPrivateProfile(kycRes.vendor);
-      }
 
       await refreshMe();
       setSaveSuccess(true);
@@ -401,7 +361,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
                 Profile &amp; Settings
               </span>
             </div>
-            <h1 style={{ margin: 0, fontSize: '1.65rem', fontFamily: 'serif', fontWeight: 600, color: '#1C1B1B' }}>
+            <h1 style={{ margin: 0, fontSize: '1.65rem', fontFamily: 'var(--font-serif)', fontWeight: 600, color: '#1C1B1B' }}>
               {storeName || 'Designer Profile'}
             </h1>
             <p style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: '#535F5C' }}>
@@ -520,26 +480,6 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
 
         <button
           type="button"
-          onClick={() => scrollToSection('kyc')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            paddingBottom: '0.75rem',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontWeight: activeSubTab === 'kyc' ? 700 : 500,
-            color: activeSubTab === 'kyc' ? '#004B44' : '#535F5C',
-            borderBottom: activeSubTab === 'kyc' ? '2px solid #004B44' : '2px solid transparent'
-          }}
-        >
-          <ShieldCheck size={15} />
-          <span>Identity &amp; Withdrawals</span>
-        </button>
-
-        <button
-          type="button"
           onClick={() => scrollToSection('payout')}
           style={{
             display: 'flex',
@@ -555,7 +495,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           }}
         >
           <LandmarkIcon size={15} />
-          <span>Payout Account</span>
+          <span>Getting paid</span>
         </button>
 
         <button
@@ -589,7 +529,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           <div id="section-general" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'var(--font-serif)', fontWeight: 600, color: '#004B44' }}>
                   Brand Identity &amp; Assets
                 </h2>
                 <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
@@ -624,9 +564,9 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
               }}
             >
               {!coverBannerUrl && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#707977' }}>
-                  <Camera size={24} />
-                  <span style={{ fontSize: '0.8rem', marginTop: '0.35rem', fontWeight: 500 }}>Upload Store Cover Banner</span>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', paddingTop: '2.6rem', color: '#707977', pointerEvents: 'none' }}>
+                  <Camera size={22} />
+                  <span style={{ fontSize: '0.8rem', marginTop: '0.3rem', fontWeight: 500 }}>Add a banner photo</span>
                 </div>
               )}
               <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', display: 'flex', gap: '0.5rem' }}>
@@ -759,28 +699,32 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
               {/* Storefront URL Handle */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                  Storefront URL Handle
+                  Your shop link
                 </label>
-                <div style={{ display: 'flex', borderRadius: '4px', border: '1px solid #E5E2E1', backgroundColor: '#F0EDED', overflow: 'hidden' }}>
-                  <span style={{ padding: '0.6rem 0.8rem', fontSize: '0.825rem', color: '#535F5C', backgroundColor: '#E5E2E1' }}>
-                    asomarketplace.com.ng/store/
+                <div style={{ display: 'flex', borderRadius: '4px', border: '1px solid #E5E2E1', backgroundColor: '#F0EDED', overflow: 'hidden', minWidth: 0 }}>
+                  <span style={{ padding: '0.6rem 0.6rem', fontSize: '0.825rem', color: '#535F5C', backgroundColor: '#E5E2E1', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    /store/
                   </span>
                   <input
                     type="text"
                     value={slug}
+                    aria-label="Shop link"
                     onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                     placeholder="brand-name"
-                    style={{ width: '100%', border: 'none', background: 'transparent', padding: '0.6rem 0.8rem', fontSize: '0.875rem', outline: 'none', color: '#1C1B1B' }}
+                    style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', padding: '0.6rem 0.8rem', fontSize: '0.875rem', outline: 'none', color: '#1C1B1B' }}
                   />
                   <button
                     type="button"
                     onClick={handleCopyLink}
-                    style={{ padding: '0.6rem 0.85rem', backgroundColor: '#004B44', border: 'none', color: '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', fontWeight: 600 }}
+                    style={{ flexShrink: 0, padding: '0.6rem 0.85rem', backgroundColor: '#004B44', border: 'none', color: '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', fontWeight: 600 }}
                   >
                     {copied ? <Check size={14} /> : <Copy size={14} />}
                     <span>{copied ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
+                <span style={{ fontSize: '0.72rem', color: '#707977', display: 'block', marginTop: '0.3rem', overflowWrap: 'anywhere' }}>
+                  asomarketplace.com.ng/store/{slug || 'brand-name'}
+                </span>
               </div>
 
               {/* Tagline / Bio */}
@@ -939,7 +883,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           <div id="section-location" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'var(--font-serif)', fontWeight: 600, color: '#004B44' }}>
                   Location &amp; Courier Pickup
                 </h2>
                 <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
@@ -1048,256 +992,52 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
             </div>
           </div>
 
-          {/* 3. IDENTITY VERIFICATION & WITHDRAWALS */}
-          <div id="section-kyc" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          {/* 3. GETTING PAID: summary only. Identity and bank details are managed on the Earnings page
+                 (one form, a bank picked from a list so the bank code payouts need is always saved). */}
+          <div id="section-payout" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
-                  Identity Verification &amp; Bank Withdrawals
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'var(--font-serif)', fontWeight: 600, color: '#004B44' }}>
+                  Getting paid
                 </h2>
                 <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
-                  To withdraw earnings to your bank account, Nigerian financial regulations require identity verification. You can list products and make sales immediately.
-                </p>
-              </div>
-              <ShieldCheck size={20} color="#004B44" />
-            </div>
-
-            {/* Status Banner: driven solely by the admin's review decision */}
-            {(() => {
-              const k = isVerified
-                ? { bg: '#ECFDF5', border: '#A7F3D0', icon: <CheckCircle2 size={18} color="#059669" />, titleColor: '#065F46', descColor: '#047857', pillBg: '#004B44',
-                    title: 'Verified Designer • Bank Withdrawals Active', pill: 'VERIFIED',
-                    desc: 'Aso has verified your identity. Your storefront shows the Verified badge and withdrawals are unlocked.' }
-                : kycSubmitted
-                ? { bg: '#FFFBEB', border: '#FDE68A', icon: <Clock size={18} color="#D97706" />, titleColor: '#92400E', descColor: '#B45309', pillBg: '#D97706',
-                    title: 'Verification in Progress', pill: 'UNDER REVIEW',
-                    desc: 'Your details have been sent to the Aso team for review. You can keep selling; withdrawals unlock once you are approved.' }
-                : kycRejected
-                ? { bg: '#FEF2F2', border: '#FECACA', icon: <Lock size={18} color="#DC2626" />, titleColor: '#991B1B', descColor: '#B91C1C', pillBg: '#DC2626',
-                    title: 'Verification Not Approved', pill: 'ACTION NEEDED',
-                    desc: `${verificationRejectionReason || 'We could not confirm the details you submitted.'} Update your NIN or CAC below and save to resubmit.` }
-                : { bg: '#F8FAFC', border: '#E2E8F0', icon: <Lock size={18} color="#64748B" />, titleColor: '#1E293B', descColor: '#64748B', pillBg: '#64748B',
-                    title: 'Action Required to Enable Withdrawals', pill: 'WITHDRAWALS LOCKED',
-                    desc: 'You can sell immediately. Submit your NIN or CAC below; once the Aso team verifies it you get the Verified badge and can withdraw.' };
-              return (
-                <div style={{
-                  backgroundColor: k.bg,
-                  border: `1px solid ${k.border}`,
-                  borderRadius: '6px',
-                  padding: '0.9rem 1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                  flexWrap: 'wrap'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    {k.icon}
-                    <div>
-                      <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 700, color: k.titleColor }}>{k.title}</p>
-                      <p style={{ margin: '0.15rem 0 0', fontSize: '0.775rem', color: k.descColor }}>{k.desc}</p>
-                    </div>
-                  </div>
-                  <span style={{
-                    backgroundColor: k.pillBg,
-                    color: '#FFFFFF',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    padding: '0.25rem 0.6rem',
-                    borderRadius: '12px'
-                  }}>
-                    {k.pill}
-                  </span>
-                </div>
-              );
-            })()}
-
-            {/* Verification Method Toggle */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.5rem' }}>
-                Choose Verification Document
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setKycMethod('nin')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '6px',
-                    border: kycMethod === 'nin' ? '2px solid #004B44' : '1px solid #D1D5DB',
-                    backgroundColor: kycMethod === 'nin' ? '#E8F5F1' : '#FFFFFF',
-                    color: kycMethod === 'nin' ? '#004B44' : '#374151',
-                    fontWeight: 600,
-                    fontSize: '0.825rem',
-                    cursor: 'pointer',
-                    textAlign: 'left'
-                  }}
-                >
-                  <UserIcon size={16} />
-                  <div>
-                    <div>NIN (National ID)</div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 400, color: '#535F5C' }}>For Individual Tailors &amp; Designers</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setKycMethod('cac')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '6px',
-                    border: kycMethod === 'cac' ? '2px solid #004B44' : '1px solid #D1D5DB',
-                    backgroundColor: kycMethod === 'cac' ? '#E8F5F1' : '#FFFFFF',
-                    color: kycMethod === 'cac' ? '#004B44' : '#374151',
-                    fontWeight: 600,
-                    fontSize: '0.825rem',
-                    cursor: 'pointer',
-                    textAlign: 'left'
-                  }}
-                >
-                  <Building size={16} />
-                  <div>
-                    <div>CAC Business Number</div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 400, color: '#535F5C' }}>For Registered Business Names &amp; Ltd</div>
-                  </div>
-                </button>
-              </div>
-
-              {kycMethod === 'nin' ? (
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                    11-Digit National Identification Number (NIN)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter 11-digit NIN"
-                    maxLength={11}
-                    value={nin}
-                    onChange={(e) => setNin(e.target.value.replace(/\D/g, ''))}
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', fontSize: '0.875rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
-                  />
-                  <span style={{ fontSize: '0.7rem', color: '#707977', display: 'block', marginTop: '0.25rem' }}>
-                    Used solely for one-time identity verification. Never displayed publicly.
-                  </span>
-                </div>
-              ) : (
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.35rem' }}>
-                    CAC Business Registration Number
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. BN-2938102 or RC-1928374"
-                    value={cacNumber}
-                    onChange={(e) => setCacNumber(e.target.value)}
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', fontSize: '0.875rem', border: '1px solid #E5E2E1', borderRadius: '4px', backgroundColor: '#FCF9F8', color: '#1C1B1B' }}
-                  />
-                  <span style={{ fontSize: '0.7rem', color: '#707977', display: 'block', marginTop: '0.25rem' }}>
-                    Corporate Affairs Commission registration number for your brand.
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: '#535F5C', backgroundColor: '#F8FAFC', padding: '0.6rem 0.8rem', borderRadius: '4px', border: '1px solid #E2E8F0' }}>
-              <Lock size={13} color="#004B44" />
-              <span>Identity information is encrypted and strictly protected under Nigerian data privacy regulations.</span>
-            </div>
-          </div>
-
-          {/* 4. PAYOUT DETAILS */}
-          <div id="section-payout" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ borderBottom: '1px solid #E5E2E1', paddingBottom: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
-                  Settlement Bank Account
-                </h2>
-                <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
-                  Bank account for receiving customer order settlements in Naira. Confidential and never exposed publicly.
+                  You can sell straight away. To withdraw, we need to confirm your identity and your bank account.
                 </p>
               </div>
               <LandmarkIcon size={20} color="#004B44" />
             </div>
 
-            {/* Current Bank Card */}
-            {accountNumber ? (
-              <div style={{ backgroundColor: '#FCF9F8', padding: '1.15rem', borderRadius: '6px', border: '1px solid #E5E2E1' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
-                  <div>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#535F5C', fontWeight: 600 }}>Active Settlement Account</span>
-                    <p style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: '#1C1B1B' }}>{bankName || 'Commercial Bank'}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setEditingBank(!editingBank)}
-                    style={{ background: 'none', border: '1px solid #004B44', color: '#004B44', padding: '0.3rem 0.65rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    {editingBank ? 'Close' : 'Update Account'}
-                  </button>
-                </div>
-                <p style={{ margin: '0.2rem 0', fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: '#004B44', letterSpacing: '0.1em' }}>
-                  •••• •••• {accountNumber.slice(-4)}
-                </p>
-                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#535F5C' }}>
-                  Beneficiary: <strong>{accountName}</strong>
-                </p>
+            <div style={{ display: 'grid', gap: '0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem', color: '#1C1B1B' }}>
+                {isVerified ? <CheckCircle2 size={18} color="#059669" /> : kycSubmitted ? <Clock size={18} color="#D97706" /> : <Lock size={18} color="#64748B" />}
+                <span>
+                  <strong>Identity: </strong>
+                  {isVerified
+                    ? 'Verified. Withdrawals are unlocked.'
+                    : kycSubmitted
+                    ? 'Sent to the Aso team for review.'
+                    : kycRejected
+                    ? `Not approved${verificationRejectionReason ? `: ${verificationRejectionReason}` : ''}. Please resubmit.`
+                    : 'Not submitted yet.'}
+                </span>
               </div>
-            ) : (
-              <div style={{ backgroundColor: '#F8FAFC', padding: '1.15rem', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
-                <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>No settlement account connected</p>
-                <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#64748B' }}>Add your Nigerian bank details to receive order settlements directly into your account.</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem', color: '#1C1B1B' }}>
+                {accountNumber ? <CheckCircle2 size={18} color="#059669" /> : <Lock size={18} color="#64748B" />}
+                <span>
+                  <strong>Bank account: </strong>
+                  {accountNumber ? `${bankName || 'Bank'} •••• ${accountNumber.slice(-4)}${accountName ? ` (${accountName})` : ''}` : 'Not added yet.'}
+                </span>
               </div>
-            )}
+            </div>
 
-            {/* Edit / Add Bank Form */}
-            {(editingBank || !accountNumber) && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', backgroundColor: '#F9FAFB', padding: '1rem', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.3rem' }}>
-                    Bank Name *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. GTBank, Zenith, Access"
-                    value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.3rem' }}>
-                    10-Digit NUBAN Account Number *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="0123456789"
-                    maxLength={10}
-                    value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
-                    style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3F4947', marginBottom: '0.3rem' }}>
-                    Account Beneficiary Name *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Adeyemi Alabi"
-                    value={accountName}
-                    onChange={(e) => setAccountName(e.target.value)}
-                    style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.85rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#1C1B1B' }}
-                  />
-                </div>
-              </div>
+            {onNavigateToEarnings && (
+              <button
+                type="button"
+                onClick={onNavigateToEarnings}
+                style={{ alignSelf: 'flex-start', background: '#004B44', color: '#FFFFFF', border: 'none', padding: '0.6rem 1rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                {isVerified && accountNumber ? 'View earnings' : 'Set up payouts'}
+              </button>
             )}
           </div>
         </div>
@@ -1398,7 +1138,7 @@ export const DesignerProfileView: React.FC<DesignerProfileViewProps> = ({ onNavi
           {/* 2. CHANNELS & PRIVATE NOTIFICATIONS */}
           <div id="section-social" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E2E1', borderRadius: '8px', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontFamily: 'serif', fontWeight: 600, color: '#004B44' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontFamily: 'var(--font-serif)', fontWeight: 600, color: '#004B44' }}>
                 Contact &amp; Notification Channels
               </h3>
               <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#535F5C' }}>

@@ -703,7 +703,7 @@ export const ProductDetailPage: React.FC = () => {
       <div className="pdp-reviews-section" style={{ marginTop: '4rem', borderTop: '1px solid #E5E7EB', paddingTop: '3rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Cinzel, Georgia, serif', color: '#111827', margin: 0 }}>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-serif)', color: '#111827', margin: 0 }}>
               Reviews
             </h2>
             <p style={{ color: '#6B7280', fontSize: '0.9rem', marginTop: '0.3rem' }}>
@@ -715,7 +715,7 @@ export const ProductDetailPage: React.FC = () => {
               state below already says there are no reviews. */}
           {product.review_count > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#F9FAFB', padding: '0.75rem 1.25rem', borderRadius: '8px' }}>
-            <div style={{ fontSize: product.review_count > 0 ? '2rem' : '1.25rem', fontWeight: 700, color: '#111827', fontFamily: 'Cinzel, Georgia, serif' }}>
+            <div style={{ fontSize: product.review_count > 0 ? '2rem' : '1.25rem', fontWeight: 700, color: '#111827', fontFamily: 'var(--font-serif)' }}>
               {product.review_count > 0 ? avgRatingNum.toFixed(1) : 'No reviews yet'}
             </div>
             <div>

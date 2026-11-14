@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { orderApi, deliveryApi } from '../../api/client';
+import { orderStatusLabel } from './studioLabels';
 import type { Order, Delivery } from '../../types';
 import {
   ShoppingBag, 
@@ -35,7 +36,16 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
   const [updateLoading, setUpdateLoading] = useState<string | null>(null);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const detailRef = useRef<HTMLDivElement>(null);
 
+  // On phones the details sit below the whole list, so tapping an order looked like
+  // nothing happened. Bring the details into view.
+  useEffect(() => {
+    if (!selectedOrder || !detailRef.current) return;
+    if (window.matchMedia('(max-width: 1024px)').matches) {
+      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedOrder?.id]);
 
   // Sync delivery details when selected order changes
   useEffect(() => {
@@ -219,13 +229,17 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
           {loading ? (
             <div className="loading-state-card">
               <div className="storefront-spinner" />
-              <p>Syncing orders pipeline...</p>
+              <p>Loading your orders…</p>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="empty-orders-state">
               <ShoppingBag size={42} color="#9CA3AF" />
-              <h4>No orders in this stage</h4>
-              <p>When orders transition through fulfillment, they will appear in this pipeline tab.</p>
+              <h4>{orders.length === 0 ? 'No orders yet' : 'Nothing here right now'}</h4>
+              <p>
+                {orders.length === 0
+                  ? 'When a shopper pays for one of your pieces, the order and their measurements appear here. We also email you.'
+                  : 'Orders move into this tab as you accept, make and pack them.'}
+              </p>
             </div>
           ) : (
             <div className="order-cards-stack">
@@ -258,7 +272,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                               <span className="order-time-text">{formattedDate}</span>
                             </div>
                             <span className={`status-badge-mini status-${order.order_status.toLowerCase()}`}>
-                              {order.order_status.replace(/_/g, ' ')}
+                              {orderStatusLabel(order.order_status)}
                             </span>
                           </div>
 
@@ -275,7 +289,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                                 {firstItem?.product_title_snapshot || 'Custom Garment'}
                               </strong>
                               <span className="order-variant-info">
-                                Size: {firstItem?.variant_size_snapshot || 'Standard'} • Color: {firstItem?.variant_color_snapshot || 'Bespoke'}
+                                Size: {firstItem?.variant_size_snapshot || 'Standard'}{firstItem?.variant_color_snapshot ? ` • Colour: ${firstItem.variant_color_snapshot}` : ''}
                               </span>
                               <div className="order-card-footer">
                                 <strong className="order-card-amount">
@@ -321,7 +335,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
         </div>
 
         {/* Right Column: Selected Order Detail & Transition Actions */}
-        <div className="order-detail-column">
+        <div className={`order-detail-column ${selectedOrder ? '' : 'nothing-selected'}`} ref={detailRef}>
           {selectedOrder ? (
             <div className="order-detail-card">
               <div className="detail-header-row">
@@ -332,7 +346,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                   </h3>
                 </div>
                 <span className={`status-badge-large status-${selectedOrder.order_status.toLowerCase()}`}>
-                  {selectedOrder.order_status.replace(/_/g, ' ')}
+                  {orderStatusLabel(selectedOrder.order_status)}
                 </span>
               </div>
 
@@ -463,7 +477,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                       <div className="dellyman-meta-item">
                         <span className="dellyman-meta-k">Status</span>
                         <span className="dellyman-meta-v stage-badge">
-                          {delivery?.status || selectedOrder.order_status.replace(/_/g, ' ')}
+                          {orderStatusLabel(delivery?.status || selectedOrder.order_status)}
                         </span>
                       </div>
 
@@ -520,7 +534,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                       <div className="detail-item-info">
                         <strong>{item.product_title_snapshot}</strong>
                         <p>
-                          Size: {item.variant_size_snapshot || 'Standard'} • Color: {item.variant_color_snapshot || 'Bespoke'} • Qty: {item.quantity}
+                          Size: {item.variant_size_snapshot || 'Standard'}{item.variant_color_snapshot ? ` • Colour: ${item.variant_color_snapshot}` : ''} • Qty: {item.quantity}
                         </p>
                         {item.custom_measurements && Object.keys(item.custom_measurements).length > 0 && (
                           <div className="tailor-cut-card" style={{ background: '#FFFDF5', border: '1px solid #D4AF37', borderRadius: '8px', padding: '0.65rem 0.85rem', marginTop: '0.5rem' }}>
@@ -618,8 +632,8 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                     <strong>₦ {selectedOrder.subtotal_naira?.toLocaleString() || '0'}</strong>
                   </div>
                   <div className="fin-row">
-                    <span>Marketplace Commission (10%):</span>
-                    <span className="text-muted">- ₦ {((selectedOrder.subtotal_naira || 0) * 0.1).toLocaleString()}</span>
+                    <span>Aso commission (10%):</span>
+                    <span className="text-muted">−₦{((selectedOrder.subtotal_naira || 0) * 0.1).toLocaleString()}</span>
                   </div>
                   <div className="fin-row total-row">
                     <span>You receive (after delivery):</span>
@@ -633,8 +647,8 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
           ) : (
             <div className="no-order-selected-card">
               <ShoppingBag size={48} color="#D1D5DB" />
-              <h3>Select an order to inspect</h3>
-              <p>Click on any order from the left pipeline to view customer measurements and transition tailoring status.</p>
+              <h3>Choose an order</h3>
+              <p>Pick an order to see the shopper’s measurements, the delivery address and what to do next.</p>
             </div>
           )}
         </div>
