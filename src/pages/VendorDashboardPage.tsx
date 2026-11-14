@@ -32,6 +32,7 @@ import { ProductsListView } from '../components/vendor/ProductsListView';
 import { AddProductView } from '../components/vendor/AddProductView';
 import { OrdersManagementView } from '../components/vendor/OrdersManagementView';
 import { DesignerProfileView } from '../components/vendor/DesignerProfileView';
+import { ledgerLine, payoutStatusLabel } from '../components/vendor/studioLabels';
 import './VendorDashboardPage.css';
 
 export type DesignerPortalTab = 'dashboard' | 'products' | 'add-product' | 'orders' | 'earnings' | 'profile';
@@ -755,7 +756,7 @@ export const VendorDashboardPage: React.FC = () => {
             </div>
 
             {/* LEDGER ENTRIES & PAYOUT REQUESTS SECTION */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(420px, 100%), 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
               {/* Financial Ledger Log */}
               <div className="dashboard-card" style={{ padding: '1.5rem' }}>
                 <div className="card-header-flex">
@@ -764,20 +765,27 @@ export const VendorDashboardPage: React.FC = () => {
                 {financeLoading ? (
                   <div style={{ padding: '2rem', textAlign: 'center', color: '#6B7280' }}><Loader size={20} className="cart-spinner" /></div>
                 ) : ledgerEntries.length === 0 ? (
-                  <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: '1.5rem 0' }}>No ledger transactions recorded yet.</p>
+                  <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: '1.5rem 0' }}>Nothing yet. Money from your orders will show here.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-                    {ledgerEntries.slice(0, 6).map((entry) => (
-                      <div key={entry.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: '#F9FAFB', borderRadius: '6px' }}>
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#111827' }}>{entry.description || entry.entry_type.replace(/_/g, ' ')}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>{new Date(entry.created_at).toLocaleString()}</div>
+                    {ledgerEntries.slice(0, 6).map((entry) => {
+                      const line = ledgerLine(entry.entry_type);
+                      const amount = Math.abs(entry.amount_naira);
+                      const color = line.tone === 'in' ? '#065F46' : line.tone === 'out' ? '#991B1B' : '#374151';
+                      return (
+                        <div key={entry.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', backgroundColor: '#F9FAFB', borderRadius: '6px' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#111827' }}>{line.label}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>
+                              {new Date(entry.created_at).toLocaleString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                            </div>
+                          </div>
+                          <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color, whiteSpace: 'nowrap' }}>
+                            {line.sign}₦{amount.toLocaleString()}
+                          </div>
                         </div>
-                        <div style={{ fontFamily: 'monospace', fontWeight: 700, color: entry.amount_naira >= 0 ? '#065F46' : '#991B1B' }}>
-                          {entry.amount_naira >= 0 ? '+' : ''}₦ {entry.amount_naira.toLocaleString()}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -790,7 +798,7 @@ export const VendorDashboardPage: React.FC = () => {
                 {financeLoading ? (
                   <div style={{ padding: '2rem', textAlign: 'center', color: '#6B7280' }}><Loader size={20} className="cart-spinner" /></div>
                 ) : payoutRequests.length === 0 ? (
-                  <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: '1.5rem 0' }}>No payout requests found.</p>
+                  <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: '1.5rem 0' }}>No withdrawals yet.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
                     {payoutRequests.slice(0, 6).map((req) => (
@@ -802,9 +810,9 @@ export const VendorDashboardPage: React.FC = () => {
                           <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>Ref: {req.reference} • {new Date(req.created_at).toLocaleDateString()}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontFamily: 'monospace', fontWeight: 700 }}>₦ {req.amount_naira.toLocaleString()}</div>
+                          <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>₦ {req.amount_naira.toLocaleString()}</div>
                           <span className={`status-pill status-${req.status.toLowerCase()}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>
-                            {req.status.replace(/_/g, ' ')}
+                            {payoutStatusLabel(req.status)}
                           </span>
                         </div>
                       </div>
@@ -815,7 +823,7 @@ export const VendorDashboardPage: React.FC = () => {
             </div>
 
             {/* KYC & BANK ACCOUNT CONFIGURATION */}
-            <div className="dashboard-grid-main" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
+            <div className="dashboard-grid-main" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: '2rem', marginTop: '2rem' }}>
               {/* CARD 1: Identity & Verification (KYC) */}
               <div className="payout-setup-card">
                 <div className="card-header-row">
@@ -1003,7 +1011,7 @@ export const VendorDashboardPage: React.FC = () => {
                   <div className="modal-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <Landmark size={20} color="#D4AF37" />
-                      <h3 style={{ margin: 0, fontSize: '1.2rem', fontFamily: 'Cinzel, Georgia, serif' }}>Withdraw Earnings</h3>
+                      <h3 style={{ margin: 0, fontSize: '1.2rem', fontFamily: 'var(--font-serif)' }}>Withdraw Earnings</h3>
                     </div>
                     <button 
                       onClick={() => setShowWithdrawModal(false)}
@@ -1015,7 +1023,7 @@ export const VendorDashboardPage: React.FC = () => {
 
                   <div style={{ backgroundColor: '#F9FAFB', padding: '1rem', borderRadius: '8px', marginBottom: '1.25rem' }}>
                     <span style={{ fontSize: '0.8rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Available for Settlement</span>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#064E3B', fontFamily: 'monospace', marginTop: '0.2rem' }}>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#064E3B', fontVariantNumeric: 'tabular-nums', marginTop: '0.2rem' }}>
                       ₦ {availableNaira.toLocaleString()}
                     </div>
                     {bankAccount ? (

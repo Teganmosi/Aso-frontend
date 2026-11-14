@@ -4295,3 +4295,99 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Studio review (Nov 2026) ---- */
+
+/* Stat labels are <h3>s, so they inherited the heading serif; tiny serif capitals read like Times. */
+.metric-label {
+  font-family: var(--font-sans);
+}
+
+/* Recent orders: on phones the 5-column table was crushed to one letter per line and the
+   Accept button was cut off. Each order becomes a small card instead. */
+@media (max-width: 640px) {
+  .heritage-orders-table thead {
+    display: none;
+  }
+  .heritage-orders-table,
+  .heritage-orders-table tbody {
+    display: block;
+    width: 100%;
+  }
+  .heritage-orders-table .heritage-table-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "id status"
+      "product product"
+      "amount action";
+    gap: 0.6rem 0.75rem;
+    padding: 0.9rem 1rem;
+    align-items: center;
+  }
+  .heritage-orders-table .heritage-table-row td {
+    padding: 0;
+    min-width: 0;
+  }
+  .heritage-orders-table .cell-order-id { grid-area: id; font-size: 0.8rem; }
+  .heritage-orders-table .cell-status { grid-area: status; justify-self: end; }
+  .heritage-orders-table .cell-product-info { grid-area: product; min-width: 0; }
+  .heritage-orders-table .cell-amount { grid-area: amount; font-weight: 700; }
+  .heritage-orders-table .cell-action { grid-area: action; justify-self: end; }
+}
+
+/* Order numbers: the heading serif uses old-style figures, so "C580E2" read as "C58oE2". */
+.detail-order-title {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+/* When orders and details stack (tablet/phone), the "Choose an order" placeholder
+   just sat under the list pointing "left". Hide it until an order is picked. */
+@media (max-width: 1024px) {
+  .order-detail-column.nothing-selected {
+    display: none;
+  }
+  .order-detail-column {
+    scroll-margin-top: 72px;
+  }
+}
+
+/* Long naira amounts were wrapping mid-number on phones ("- ₦" / "18,500"). */
+.order-detail-card .summary-amount,
+.order-detail-card [class*="amount"] {
+  white-space: nowrap;
+}
+
+/* Status labels are already written in sentence case ("New: accept it"). */
+.status-badge-mini,
+.status-badge-large {
+  text-transform: none;
+}
+
+/* Money in the order summary stays on one line; the label wraps instead. */
+.fin-row > :last-child {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  /* Recent-order cards: order number on its own line so the status pill can't cover it. */
+  .heritage-orders-table .heritage-table-row {
+    grid-template-areas:
+      "id id"
+      "status status"
+      "product product"
+      "amount action";
+  }
+  .heritage-orders-table .cell-status { justify-self: start; }
+  .heritage-orders-table .cell-order-id { overflow-wrap: anywhere; }
+}
+
+.withdrawal-requests-card .status-pill,
+.dashboard-card .status-pill {
+  text-transform: none;
+}

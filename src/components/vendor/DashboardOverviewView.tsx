@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { payoutApi, orderApi, productApi } from '../../api/client';
 import type { VendorBalance, PayoutRequest, Order } from '../../types';
+import { orderStatusLabel, payoutStatusLabel } from './studioLabels';
 
 interface DashboardOverviewViewProps {
   onNavigateToProducts: () => void;
@@ -249,7 +250,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
             ) : displayOrders.length === 0 ? (
               <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: '#6B7280' }}>
                 <ShoppingBag size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.4, color: '#00322d' }} />
-                <h3 style={{ fontSize: '1.1rem', color: '#111827', margin: '0 0 0.25rem', fontFamily: 'Cinzel, Georgia, serif' }}>
+                <h3 style={{ fontSize: '1.1rem', color: '#111827', margin: '0 0 0.25rem', fontFamily: 'var(--font-serif)' }}>
                   No orders received yet
                 </h3>
                 <p style={{ fontSize: '0.875rem', margin: '0 0 1rem', maxWidth: '380px', marginInline: 'auto' }}>
@@ -290,7 +291,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
 
                     return (
                       <tr key={order.id} className="heritage-table-row">
-                        <td className="cell-order-id">#{orderNum.replace('#', '')}</td>
+                        <td className="cell-order-id" data-label="Order">#{orderNum.replace('#', '')}</td>
                         <td className="cell-product-info">
                           <div className="product-media-group">
                             {itemImg ? (
@@ -311,30 +312,30 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
                           {status === 'PAID' && (
                             <span className="pill-status-paid">
                               <span className="dot-paid" />
-                              <span>Paid</span>
+                              <span>{orderStatusLabel(status)}</span>
                             </span>
                           )}
                           {(status === 'PREPARING' || status === 'VENDOR_ACCEPTED') && (
                             <span className="pill-status-preparing">
                               <span className="dot-preparing" />
-                              <span>Preparing</span>
+                              <span>{orderStatusLabel(status)}</span>
                             </span>
                           )}
                           {(status === 'READY_FOR_PICKUP' || (status as string) === 'PICKED_UP' || (status as string) === 'OUT_FOR_DELIVERY') && (
                             <span className="pill-status-shipped">
                               <span className="dot-shipped" />
-                              <span>Ready / Shipped</span>
+                              <span>{orderStatusLabel(status)}</span>
                             </span>
                           )}
                           {(status === 'COMPLETED' || status === 'DELIVERED') && (
                             <span className="pill-status-completed">
                               <span className="dot-completed" />
-                              <span>Delivered</span>
+                              <span>{orderStatusLabel(status)}</span>
                             </span>
                           )}
-                          {!['PAID', 'PREPARING', 'VENDOR_ACCEPTED', 'READY_FOR_PICKUP', 'COMPLETED', 'DELIVERED'].includes(status) && (
+                          {!['PAID', 'PREPARING', 'VENDOR_ACCEPTED', 'READY_FOR_PICKUP', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'COMPLETED', 'DELIVERED'].includes(status) && (
                             <span className="pill-status-preparing">
-                              <span>{String(status).replace(/_/g, ' ')}</span>
+                              <span>{orderStatusLabel(status)}</span>
                             </span>
                           )}
                         </td>
@@ -381,11 +382,16 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
               className="btn-heritage-payout relative-z"
               onClick={() => setShowWithdrawModal(true)}
               disabled={availableNaira <= 0}
-              style={{ opacity: availableNaira <= 0 ? 0.75 : 1 }}
+              style={{ opacity: availableNaira <= 0 ? 0.45 : 1, cursor: availableNaira <= 0 ? 'not-allowed' : 'pointer' }}
             >
               <Landmark size={18} />
-              <span>Request Payout</span>
+              <span>Withdraw to bank</span>
             </button>
+            {availableNaira <= 0 && (
+              <p className="heritage-sub-label relative-z" style={{ marginTop: '0.6rem', marginBottom: 0 }}>
+                Money from an order becomes available 48 hours after the shopper receives it.
+              </p>
+            )}
           </div>
 
           {/* Payout History Card */}
@@ -407,7 +413,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
               ) : displayPayouts.length === 0 ? (
                 <div style={{ padding: '1.5rem 0.5rem', textAlign: 'center', color: '#6B7280' }}>
                   <p style={{ fontSize: '0.85rem', margin: 0 }}>
-                    No payout settlements requested yet.
+                    No withdrawals yet.
                   </p>
                 </div>
               ) : (
@@ -415,7 +421,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
                   <div key={pay.id} className="payout-history-row">
                     <div>
                       <p className="history-bank-name">
-                        {pay.bank_name_snapshot ? `To ${pay.bank_name_snapshot}` : 'Bank Settlement'}
+                        {pay.bank_name_snapshot ? `To ${pay.bank_name_snapshot}` : 'To your bank'}
                       </p>
                       <p className="history-date-text">
                         {new Date(pay.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -425,7 +431,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
                       <p className="history-amount-text">₦ {(pay.amount_naira || 0).toLocaleString()}</p>
                       <p className="history-status-badge">
                         <CheckCircle2 size={13} color="#004b44" />
-                        <span>{pay.status.replace(/_/g, ' ')}</span>
+                        <span>{payoutStatusLabel(pay.status)}</span>
                       </p>
                     </div>
                   </div>

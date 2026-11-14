@@ -23,7 +23,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'ACTIVE' | 'PENDING' | 'DRAFT' | 'OUT_OF_STOCK'>('ALL');
+  const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'ACTIVE' | 'PENDING' | 'CHANGES' | 'DRAFT' | 'OUT_OF_STOCK'>('ALL');
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,6 +112,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
       let matchesStatus = true;
       if (selectedStatus === 'ACTIVE') matchesStatus = item.status === 'Active';
       else if (selectedStatus === 'PENDING') matchesStatus = item.status === 'Pending Approval';
+      else if (selectedStatus === 'CHANGES') matchesStatus = item.status === 'Changes Requested';
       else if (selectedStatus === 'DRAFT') matchesStatus = item.status === 'Draft';
       else if (selectedStatus === 'OUT_OF_STOCK') matchesStatus = item.status === 'Out of Stock';
 
@@ -122,6 +123,9 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
   const activeCount = products.filter((p) => p.status === 'Active').length;
   const pendingCount = products.filter((p) => p.status === 'Pending Approval').length;
   const draftCount = products.filter((p) => p.status === 'Draft').length;
+  const changesCount = products.filter((p) => p.status === 'Changes Requested').length;
+  const hasNoPieces = !loading && products.length === 0;
+  const clearFilters = () => { setSearchQuery(''); setSelectedCategory('All Categories'); setSelectedStatus('ALL'); };
 
   return (
     <div className="products-list-view">
@@ -139,7 +143,8 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
         </button>
       </div>
 
-      {/* Status Filter Tabs */}
+      {/* Status Filter Tabs (hidden until there is something to filter) */}
+      {!hasNoPieces && (<>
       <div className="product-status-tabs-row">
         <button
           className={`status-filter-tab ${selectedStatus === 'ALL' ? 'active' : ''}`}
@@ -159,9 +164,18 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           className={`status-filter-tab ${selectedStatus === 'PENDING' ? 'active' : ''}`}
           onClick={() => setSelectedStatus('PENDING')}
         >
-          <span>Pending Review</span>
+          <span>In review</span>
           <span className="count-pill count-pending">{pendingCount}</span>
         </button>
+        {changesCount > 0 && (
+          <button
+            className={`status-filter-tab ${selectedStatus === 'CHANGES' ? 'active' : ''}`}
+            onClick={() => setSelectedStatus('CHANGES')}
+          >
+            <span>Changes requested</span>
+            <span className="count-pill count-pending">{changesCount}</span>
+          </button>
+        )}
         <button
           className={`status-filter-tab ${selectedStatus === 'DRAFT' ? 'active' : ''}`}
           onClick={() => setSelectedStatus('DRAFT')}
@@ -177,7 +191,8 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           <Search size={16} className="search-icon" />
           <input
             type="text"
-            placeholder="Search by product title, SKU, or category..."
+            placeholder="Search your pieces"
+            aria-label="Search your pieces"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -216,21 +231,31 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           </button>
         </div>
       </div>
+      </>)}
 
       {/* Main Content Area */}
       {loading ? (
         <div className="loading-state-card">
           <div className="storefront-spinner" />
-          <p>Loading product inventory from database...</p>
+          <p>Loading your pieces…</p>
+        </div>
+      ) : hasNoPieces ? (
+        <div className="empty-products-card">
+          <Package size={48} color="#9CA3AF" />
+          <h3>Add your first piece</h3>
+          <p>Upload clear photos, set a price and the sizes you make. Our team reviews each piece, usually within a day, before shoppers can see it.</p>
+          <button className="btn-action-primary" onClick={onAddNewProduct}>
+            <Plus size={16} />
+            <span>Add a piece</span>
+          </button>
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="empty-products-card">
           <Package size={48} color="#9CA3AF" />
-          <h3>No products found</h3>
-          <p>Try refining your search terms or add a new product to your storefront.</p>
-          <button className="btn-action-primary" onClick={onAddNewProduct}>
-            <Plus size={16} />
-            <span>Add a piece</span>
+          <h3>No pieces match</h3>
+          <p>Try another search or tab.</p>
+          <button className="btn-action-primary" onClick={clearFilters}>
+            <span>Show all pieces</span>
           </button>
         </div>
       ) : viewMode === 'table' ? (
@@ -285,7 +310,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                     </td>
                     <td>
                       <span className={`inventory-status-pill ${statusClass}`}>
-                        {p.status === 'Active' ? 'Live' : p.status}
+                        {p.status === 'Active' ? 'Live' : p.status === 'Pending Approval' ? 'In review' : p.status}
                       </span>
                       {p.status === 'Changes Requested' && p.rejection_reason && (
                         <div style={{ fontSize: '0.75rem', color: '#92400E', marginTop: '0.35rem', maxWidth: '220px' }}>
@@ -325,7 +350,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
               <div className="grid-card-img-wrap">
                 <img src={p.image_url} alt={p.name} />
                 <span className={`grid-status-badge ${p.status === 'Active' ? 'active' : 'pending'}`}>
-                  {p.status === 'Active' ? 'Live' : p.status}
+                  {p.status === 'Active' ? 'Live' : p.status === 'Pending Approval' ? 'In review' : p.status}
                 </span>
               </div>
               <div className="grid-card-content">
