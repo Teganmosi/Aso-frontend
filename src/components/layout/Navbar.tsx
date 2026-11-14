@@ -210,7 +210,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenVendorRegister, logoOption
               )}
             </div>
           ) : (
-            <button className="stitch-icon-btn" onClick={() => openAuthModal('login')} title="Sign In">
+            <button className="stitch-icon-btn" onClick={() => openAuthModal('login')} title="Sign in" aria-label="Sign in">
               <UserIcon size={20} />
             </button>
           )}

@@ -156,6 +156,8 @@ export interface User {
   id: number;
   saved_measurements?: BespokeMeasurements | null;
   email: string;
+  /** False until the 6-digit sign-up code is entered. Needed to check out or open a studio. */
+  email_verified?: boolean;
   first_name: string;
   last_name: string;
   phone_number: string;

@@ -140,6 +140,20 @@ export const authApi = {
   }) => {
     await fetchCsrfToken();
     const res = await apiClient.post('/auth/register/', payload);
+    return res.data as { user: User; verification_sent?: boolean };
+  },
+
+  /** Confirms the signed-in user's email with the 6-digit code from the sign-up email. */
+  verifyEmail: async (code: string): Promise<{ message: string; user: User }> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post('/auth/verify-email/', { code });
+    return res.data;
+  },
+
+  /** Emails a new code. The server allows one a minute (429 with retry_after otherwise). */
+  resendVerification: async (): Promise<{ message: string; retry_after?: number }> => {
+    await fetchCsrfToken();
+    const res = await apiClient.post('/auth/verify-email/resend/');
     return res.data;
   },
 
@@ -431,6 +445,10 @@ export const apiErrorMessage = (err: any, fallback = 'Something went wrong. Plea
   if (!err?.response) return 'We couldn’t reach Aso. Check your connection and try again.';
   return fallback;
 };
+
+/** True when the server refused because the user hasn't confirmed their email yet. */
+export const isEmailNotVerifiedError = (err: any): boolean =>
+  err?.response?.status === 403 && err?.response?.data?.error?.code === 'email_not_verified';
 
 export const describeUploadError = (err: any, fileName: string): string => {
   const serverMessage = err?.response?.data?.message;

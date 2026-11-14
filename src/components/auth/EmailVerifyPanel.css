@@ -1,0 +1,112 @@
+.email-verify-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  text-align: left;
+}
+
+.email-verify-panel.compact {
+  background: #F6F3F2;
+  border: 1px solid #E5E2E1;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.evp-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.evp-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1C1B1B;
+}
+
+.evp-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #535F5C;
+  overflow-wrap: anywhere;
+}
+
+.evp-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #535F5C;
+  margin-top: 0.25rem;
+}
+
+.evp-row {
+  display: flex;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.email-verify-panel .evp-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 1.25rem;
+  letter-spacing: 0.35em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* .btn-primary is width:100% site-wide; here it sits beside the input. */
+.evp-submit.btn-primary {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 0.8rem 1.25rem;
+}
+
+@media (max-width: 480px) {
+  .evp-row {
+    flex-direction: column;
+  }
+  .evp-submit.btn-primary {
+    width: 100%;
+  }
+}
+
+.evp-error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #B91C1C;
+}
+
+.evp-notice {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #065F46;
+}
+
+.evp-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.evp-link {
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #064E3B;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.evp-link:disabled {
+  color: #9CA3AF;
+  text-decoration: none;
+  cursor: default;
+}
+
+.evp-link.muted {
+  color: #535F5C;
+}
