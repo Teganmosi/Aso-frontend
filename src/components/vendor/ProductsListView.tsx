@@ -12,6 +12,13 @@ import { categoryApi, productApi, apiErrorMessage } from '../../api/client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import type { Category, ProductItem } from '../../types';
 
+/** What the designer sees on each piece. Pieces go live on publish; Aso can take one down. */
+const statusLabel = (status: ProductItem['status']): string => ({
+  Active: 'Live',
+  'Pending Approval': 'Going live',
+  'Changes Requested': 'Taken down',
+} as Record<string, string>)[status] || status;
+
 interface ProductsListViewProps {
   onAddNewProduct: () => void;
   onEditProduct?: (product: ProductItem) => void;
@@ -134,7 +141,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
         <div>
           <h1 className="dashboard-serif-title">Your pieces</h1>
           <p className="dashboard-subtitle">
-            Add, edit and track your pieces. New pieces and edits are reviewed before they go live.
+            Add and edit your pieces. They go live as soon as you publish them.
           </p>
         </div>
         <button className="btn-action-primary" onClick={onAddNewProduct}>
@@ -160,19 +167,22 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
           <span>Live</span>
           <span className="count-pill count-active">{activeCount}</span>
         </button>
-        <button
-          className={`status-filter-tab ${selectedStatus === 'PENDING' ? 'active' : ''}`}
-          onClick={() => setSelectedStatus('PENDING')}
-        >
-          <span>In review</span>
-          <span className="count-pill count-pending">{pendingCount}</span>
-        </button>
+        {/* Pieces no longer wait for review; this only shows for any left over from before. */}
+        {pendingCount > 0 && (
+          <button
+            className={`status-filter-tab ${selectedStatus === 'PENDING' ? 'active' : ''}`}
+            onClick={() => setSelectedStatus('PENDING')}
+          >
+            <span>Going live</span>
+            <span className="count-pill count-pending">{pendingCount}</span>
+          </button>
+        )}
         {changesCount > 0 && (
           <button
             className={`status-filter-tab ${selectedStatus === 'CHANGES' ? 'active' : ''}`}
             onClick={() => setSelectedStatus('CHANGES')}
           >
-            <span>Changes requested</span>
+            <span>Taken down</span>
             <span className="count-pill count-pending">{changesCount}</span>
           </button>
         )}
@@ -243,7 +253,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
         <div className="empty-products-card">
           <Package size={48} color="#9CA3AF" />
           <h3>Add your first piece</h3>
-          <p>Upload clear photos, set a price and the sizes you make. Our team reviews each piece, usually within a day, before shoppers can see it.</p>
+          <p>Upload clear photos, set a price and the sizes you make. It goes live on Aso as soon as you publish it.</p>
           <button className="btn-action-primary" onClick={onAddNewProduct}>
             <Plus size={16} />
             <span>Add a piece</span>
@@ -310,11 +320,11 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                     </td>
                     <td>
                       <span className={`inventory-status-pill ${statusClass}`}>
-                        {p.status === 'Active' ? 'Live' : p.status === 'Pending Approval' ? 'In review' : p.status}
+                        {statusLabel(p.status)}
                       </span>
                       {p.status === 'Changes Requested' && p.rejection_reason && (
-                        <div style={{ fontSize: '0.75rem', color: '#92400E', marginTop: '0.35rem', maxWidth: '220px' }}>
-                          {p.rejection_reason}
+                        <div style={{ fontSize: '0.75rem', color: '#92400E', marginTop: '0.35rem', maxWidth: '240px' }}>
+                          {p.rejection_reason} <em>Fix it and save to put it back live.</em>
                         </div>
                       )}
                     </td>
@@ -350,7 +360,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
               <div className="grid-card-img-wrap">
                 <img src={p.image_url} alt={p.name} />
                 <span className={`grid-status-badge ${p.status === 'Active' ? 'active' : 'pending'}`}>
-                  {p.status === 'Active' ? 'Live' : p.status === 'Pending Approval' ? 'In review' : p.status}
+                  {statusLabel(p.status)}
                 </span>
               </div>
               <div className="grid-card-content">
@@ -358,7 +368,7 @@ export const ProductsListView: React.FC<ProductsListViewProps> = ({
                 <h4 className="grid-title">{p.name}</h4>
                 {p.status === 'Changes Requested' && p.rejection_reason && (
                   <p style={{ fontSize: '0.78rem', color: '#92400E', margin: '0.25rem 0 0.5rem', lineHeight: 1.4 }}>
-                    <strong>What to change:</strong> {p.rejection_reason}
+                    <strong>Why it was taken down:</strong> {p.rejection_reason} Fix it and save to put it back live.
                   </p>
                 )}
                 <div className="grid-bottom-row">

@@ -528,14 +528,13 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         setErrorMessage(photoErrors.join(' '));
       }
 
-      // Every new piece (and any change to title, description or price) is reviewed
-      // by the Aso team before it appears publicly.
+      // Pieces go live as soon as they're saved (Aso checks afterwards and can take one down).
       setSuccessMessage(
         targetStatus === 'Draft'
           ? 'Saved as a draft. Only you can see it.'
           : isEditing
-          ? 'Changes saved. If you changed the title, description or price, the piece goes back for a quick review before it’s live again.'
-          : 'Submitted for review. Your piece will appear on your storefront as soon as the Aso team approves it.'
+          ? 'Changes saved. Shoppers see the update straight away.'
+          : 'Your piece is live. Shoppers can see it on Aso now.'
       );
 
       if (onSaveProduct) {
@@ -607,7 +606,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             disabled={saving}
           >
             {saving ? <Loader size={16} className="spin-icon" /> : <Sparkles size={16} />}
-            <span>{isEditing ? 'Save & Update Piece' : 'Submit for Review'}</span>
+            <span>{isEditing ? 'Save changes' : 'Publish piece'}</span>
           </button>
         </div>
       </div>
@@ -1186,7 +1185,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
           {/* Publishing Checklist Card */}
           <div className="checklist-card">
-            <h4 className="checklist-title">Before you submit</h4>
+            <h4 className="checklist-title">Before you publish</h4>
             <div className={`checklist-item ${productName.trim() ? 'done' : ''}`}>
               <span className="check-box-indicator">
                 {productName.trim() ? <Check size={11} /> : null}
@@ -1222,7 +1221,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             disabled={saving}
           >
             {saving ? <Loader size={16} className="spin-icon" /> : <Sparkles size={16} />}
-            <span>{isEditing ? 'Save & Update Piece' : 'Submit for Review'}</span>
+            <span>{isEditing ? 'Save changes' : 'Publish piece'}</span>
           </button>
         </div>
       </div>
