@@ -303,9 +303,9 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
               <div className="desktop-why-icon-box">
                 <CheckCircle2 size={24} color="#004B44" />
               </div>
-              <h4 className="desktop-why-card-title">Reviewed Pieces</h4>
+              <h4 className="desktop-why-card-title">Real Nigerian Designers</h4>
               <p className="desktop-why-card-text">
-                Every piece is reviewed before it goes live. Designers with a Verified badge have also had their identity checked.
+                Buy straight from independent designers’ own studios. A Verified badge means Aso has checked the designer’s identity.
               </p>
             </div>
 

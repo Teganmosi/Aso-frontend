@@ -124,7 +124,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
   const vp = user?.vendor_profile;
   const setupSteps = [
     { done: !!(vp?.logo_url || vp?.banner_url), label: 'Add your logo and a banner photo', cta: 'Edit studio profile', go: 'profile' as const },
-    { done: (productCount ?? 0) > 0, label: 'Add your first piece (each piece is reviewed before it goes live)', cta: 'Add a piece', go: 'add' as const },
+    { done: (productCount ?? 0) > 0, label: 'Add your first piece (it goes live as soon as you publish it)', cta: 'Add a piece', go: 'add' as const },
     { done: !!vp?.has_bank_account, label: 'Add your bank account so we can pay you', cta: 'Add bank details', go: 'profile' as const },
   ];
   const showSetup = productCount !== null && setupSteps.some((st) => !st.done);
@@ -144,7 +144,7 @@ export const DashboardOverviewView: React.FC<DashboardOverviewViewProps> = ({
         <section className="heritage-orders-card ambient-shadow" style={{ padding: '1.25rem 1.25rem 0.5rem', marginBottom: '1.5rem' }}>
           <h2 className="heritage-card-title" style={{ marginBottom: '0.25rem' }}>Get your studio ready</h2>
           <p style={{ fontSize: '0.875rem', color: '#4B5563', margin: '0 0 0.75rem' }}>
-            {setupSteps.filter((st) => st.done).length} of {setupSteps.length} done. Shoppers only see studios with at least one approved piece.
+            {setupSteps.filter((st) => st.done).length} of {setupSteps.length} done. Shoppers see your studio once it has at least one live piece.
           </p>
           <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {setupSteps.map((st) => (

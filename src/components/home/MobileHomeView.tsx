@@ -360,8 +360,8 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
                 <CheckCircle2 size={20} color="#004B44" />
               </div>
               <div className="mobile-confidence-content">
-                <strong>Reviewed Pieces</strong>
-                <p>Every piece is reviewed before it goes live. Designers with a Verified badge have also had their identity checked.</p>
+                <strong>Real Nigerian Designers</strong>
+                <p>Buy straight from independent designers’ own studios. A Verified badge means Aso has checked the designer’s identity.</p>
               </div>
             </div>
             <div className="mobile-confidence-item">
