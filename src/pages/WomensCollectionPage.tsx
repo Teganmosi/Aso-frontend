@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { productApi, categoryApi } from '../api/client';
 import type { Product, Category, PublicVendorProfile } from '../types';
+import { DesignerLogo, designerBannerStyle } from '../components/common/DesignerImages';
 import { 
   Check, 
   ChevronRight, 
@@ -664,16 +665,16 @@ export const WomensCollectionPage: React.FC = () => {
           <div className="designer-month-grid">
             {/* Left Card: Designer Bio & Atelier Info */}
             <div className="designer-profile-card">
-              <div className="designer-portrait-wrap">
-                <img 
-                  src={featuredDesigner.logo_url && !featuredDesigner.logo_url.includes('traditional-women-1.png') ? featuredDesigner.logo_url : '/placeholder-piece.svg'} 
-                  alt={featuredDesigner.store_name} 
-                  className="designer-portrait-img"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-piece.svg';
-                  }}
-                />
+              <div className="designer-portrait-wrap" style={featuredDesigner.logo_url ? undefined : { ...designerBannerStyle(null), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {featuredDesigner.logo_url ? (
+                  <img
+                    src={featuredDesigner.logo_url}
+                    alt={`${featuredDesigner.store_name} logo`}
+                    className="designer-portrait-img"
+                  />
+                ) : (
+                  <DesignerLogo name={featuredDesigner.store_name} size={96} />
+                )}
               </div>
 
               <h3 className="designer-studio-title">{featuredDesigner.store_name}</h3>

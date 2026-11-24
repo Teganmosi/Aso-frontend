@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { PublicVendorProfile } from '../../types';
+import { DesignerLogo, designerBannerStyle } from '../common/DesignerImages';
 import { 
   ShieldCheck, 
   Sparkles, 
@@ -76,13 +77,13 @@ export const DesktopDesignersView: React.FC<DesktopDesignersViewProps> = ({
           </div>
           <h1 className="desktop-hero-headline">Nigerian Designers &amp; Fashion Houses</h1>
           <p className="desktop-hero-lead">
-            Direct access to verified Nigerian fashion houses, independent design hubs, and master tailors nationwide.
+            Buy direct from Nigerian fashion houses, independent designers and master tailors across the country.
           </p>
 
           <div className="desktop-hero-trust-strip">
             <div className="desktop-trust-item">
               <ShieldCheck size={16} color="#D4AF37" />
-              <span>Verified Artisans</span>
+              <span>Verified badge = identity checked</span>
             </div>
             <div className="desktop-trust-item">
               <Sparkles size={16} color="#064E3B" />
@@ -208,11 +209,10 @@ export const DesktopDesignersView: React.FC<DesktopDesignersViewProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="desktop-featured-image-single">
-                    <img
-                      src={featuredDesigner.banner_url || featuredDesigner.logo_url || '/female-work-suit.jpg'}
-                      alt={featuredDesigner.store_name}
-                    />
+                  <div className="desktop-featured-image-single" style={{ ...designerBannerStyle(featuredDesigner.banner_url), minHeight: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {!featuredDesigner.banner_url && (
+                      <DesignerLogo logoUrl={featuredDesigner.logo_url} name={featuredDesigner.store_name} size={120} />
+                    )}
                   </div>
                 )}
               </div>
@@ -249,7 +249,7 @@ export const DesktopDesignersView: React.FC<DesktopDesignersViewProps> = ({
           {!loading && !error && filteredDesigners.length === 0 && (
             <div className="desktop-directory-empty-card">
               <h3>No designers match your search</h3>
-              <p>Try adjusting your search criteria or explore all verified designers.</p>
+              <p>Try another search, or see all designers.</p>
               <button
                 type="button"
                 className="desktop-btn-reset-filters"
@@ -263,27 +263,21 @@ export const DesktopDesignersView: React.FC<DesktopDesignersViewProps> = ({
           {!loading && !error && filteredDesigners.length > 0 && (
             <div className="desktop-designers-grid">
               {filteredDesigners.map((designer, idx) => {
-                const fallbackCover = idx % 2 === 0 ? '/hero-bg.png' : '/traditional-men-1.png';
-                const bannerSrc = designer.banner_url || (designer.preview_images && designer.preview_images[0]) || fallbackCover;
-                const initials = designer.store_name ? designer.store_name.slice(0, 2).toUpperCase() : 'AS';
-
                 return (
                   <article key={designer.id || idx} className="desktop-designer-directory-card">
-                    <div className="desktop-card-media-banner">
-                      <img 
-                        src={bannerSrc} 
-                        alt={designer.store_name}
-                        className="desktop-card-banner-img"
-                        loading="lazy"
-                      />
+                    <div className="desktop-card-media-banner" style={designer.banner_url ? undefined : designerBannerStyle(null)}>
+                      {designer.banner_url && (
+                        <img
+                          src={designer.banner_url}
+                          alt={`${designer.store_name} banner`}
+                          className="desktop-card-banner-img"
+                          loading="lazy"
+                        />
+                      )}
                       <div className="desktop-card-banner-gradient"></div>
-                      
+
                       <div className="desktop-card-brand-avatar">
-                        {designer.logo_url ? (
-                          <img src={designer.logo_url} alt={designer.store_name} />
-                        ) : (
-                          <span>{initials}</span>
-                        )}
+                        <DesignerLogo logoUrl={designer.logo_url} name={designer.store_name} />
                       </div>
 
                       {designer.is_verified && (
@@ -301,13 +295,15 @@ export const DesktopDesignersView: React.FC<DesktopDesignersViewProps> = ({
                         </h3>
                       </div>
 
-                      <div className="desktop-card-meta-location">
-                        <MapPin size={13} />
-                        <span>{designer.city || 'Lagos'}, {designer.state || 'Lagos State'}</span>
-                      </div>
+                      {(designer.city || designer.state) && (
+                        <div className="desktop-card-meta-location">
+                          <MapPin size={13} />
+                          <span>{[designer.city, designer.state].filter(Boolean).join(', ')}</span>
+                        </div>
+                      )}
 
                       <p className="desktop-card-bio">
-                        {designer.description || 'Authentic Nigerian bespoke and ready-to-wear fashion from verified independent designers.'}
+                        {designer.description || 'New on Aso.'}
                       </p>
 
                       <div className="desktop-card-stats-row">

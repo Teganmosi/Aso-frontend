@@ -739,3 +739,12 @@
   line-height: 1.45;
   margin: 0;
 }
+
+/* Room for a real logo (was 32px, initials only). */
+.mobile-designer-avatar {
+  width: 44px;
+  height: 44px;
+  bottom: -16px;
+  overflow: hidden;
+  padding: 0;
+}

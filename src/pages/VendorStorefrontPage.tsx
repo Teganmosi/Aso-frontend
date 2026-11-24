@@ -551,8 +551,10 @@ export const VendorStorefrontPage: React.FC = () => {
                   </div>
                   <div>
                     <h4>Public Store Location</h4>
-                    <p>{profile.city}, {profile.state}</p>
-                    <span className="location-verified-note">Verified Nigerian Fashion Store</span>
+                    <p>{[profile.city, profile.state].filter(Boolean).join(', ') || 'Nigeria'}</p>
+                    {profile.is_verified && (
+                      <span className="location-verified-note">Identity verified by Aso</span>
+                    )}
                   </div>
                 </div>
               </div>

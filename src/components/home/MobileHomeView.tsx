@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Product, PublicVendorProfile } from '../../types';
+import { DesignerLogo, designerBannerStyle } from '../common/DesignerImages';
 import './MobileHomeView.css';
 
 import type { CategoryPillItem } from './DesktopHomeView';
@@ -98,7 +99,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
             Authentic Nigerian Fashion
           </h1>
           <p className="mobile-hero-sub">
-            Bespoke tailoring and ready-to-wear from verified independent designers.
+            Bespoke tailoring and ready-to-wear from independent Nigerian designers.
           </p>
             <div className="mobile-hero-actions">
               <button
@@ -225,7 +226,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
       <section className="mobile-designers-section">
         <div className="mobile-section-header">
           <div>
-            <span className="mobile-eyebrow">VERIFIED TALENT</span>
+            <span className="mobile-eyebrow">DESIGNERS ON ASO</span>
             <h2 className="mobile-section-title">Featured Designers</h2>
           </div>
           <Link to="/designers" className="mobile-see-all-link">
@@ -242,14 +243,9 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
 
             return (
               <div key={v.id || i} className="mobile-designer-card">
-                <div
-                  className="mobile-designer-banner"
-                  style={{
-                    backgroundImage: `url(${v.banner_url || (i === 0 ? '/hero-bg.png' : '/traditional-men-1.png')})`,
-                  }}
-                >
+                <div className="mobile-designer-banner" style={designerBannerStyle(v.banner_url)}>
                   <div className="mobile-designer-avatar">
-                    {v.store_name?.slice(0, 2).toUpperCase() || 'AS'}
+                    <DesignerLogo logoUrl={v.logo_url} name={v.store_name} />
                   </div>
                 </div>
                 <div className="mobile-designer-body">
@@ -259,9 +255,11 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
                       <CheckCircle2 size={13} color="#00322D" />
                     )}
                   </div>
-                  <p className="mobile-designer-loc">{v.city ? `${v.city}, Nigeria` : 'Lagos, Nigeria'}</p>
+                  {(v.city || v.state) && (
+                    <p className="mobile-designer-loc">{[v.city, v.state].filter(Boolean).join(', ')}</p>
+                  )}
                   <p className="mobile-designer-desc">
-                    {v.description ? v.description.slice(0, 65) + '...' : 'Bespoke & Ready-to-Wear Fashion'}
+                    {v.description ? (v.description.length > 65 ? v.description.slice(0, 65) + '…' : v.description) : 'New on Aso.'}
                   </p>
                   {hasValidRating && (
                     <div className="mobile-designer-rating">
@@ -301,7 +299,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
             </div>
             <h4 className="mobile-how-step-title">Discover</h4>
             <p className="mobile-how-step-text">
-              Explore pieces from verified independent designers across Nigeria, all in one marketplace.
+              Explore pieces from independent designers across Nigeria, all in one marketplace.
             </p>
           </div>
 

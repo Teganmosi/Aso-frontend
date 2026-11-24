@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Product, PublicVendorProfile } from '../../types';
+import { DesignerLogo, designerBannerStyle } from '../common/DesignerImages';
 import './DesktopHomeView.css';
 
 export interface CategoryPillItem {
@@ -61,7 +62,7 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
           </h1>
 
           <p className="desktop-hero-subtitle">
-            Bespoke tailoring and ready-to-wear from verified independent designers.
+            Bespoke tailoring and ready-to-wear from independent Nigerian designers.
           </p>
 
           <div className="desktop-hero-actions">
@@ -175,37 +176,37 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
       <section className="desktop-designers-section">
         <div className="desktop-container">
           <div className="desktop-section-header-center">
-            <span className="desktop-section-eyebrow">VERIFIED TALENT</span>
+            <span className="desktop-section-eyebrow">DESIGNERS ON ASO</span>
             <h2 className="desktop-section-title">Featured Designers</h2>
             <p className="desktop-section-subtitle">
-              Direct access to verified Nigerian fashion houses, independent design hubs, and master tailors nationwide.
+              Buy direct from Nigerian fashion houses, independent designers and master tailors. A ✓ means Aso has checked the designer’s identity.
             </p>
           </div>
 
           <div className="desktop-designers-grid">
             {vendors.map((v, i) => (
               <div key={v.id || i} className="desktop-designer-card">
-                <div
-                  className="desktop-designer-banner"
-                  style={{
-                    backgroundImage: `url(${v.banner_url || (i === 0 ? '/hero-bg.png' : '/traditional-men-1.png')})`,
-                  }}
-                >
+                <div className="desktop-designer-banner" style={designerBannerStyle(v.banner_url)}>
                   <div className="desktop-designer-avatar">
-                    <span>{v.store_name?.slice(0, 2).toUpperCase() || 'VD'}</span>
+                    <DesignerLogo logoUrl={v.logo_url} name={v.store_name} />
                   </div>
                 </div>
 
                 <div className="desktop-designer-body">
-                  <h3 className="desktop-store-name">{v.store_name || 'Aso Designer'}</h3>
+                  <h3 className="desktop-store-name">
+                    {v.store_name || 'Aso Designer'}
+                    {Boolean(v.is_verified) && (
+                      <CheckCircle2 size={16} color="#004B44" style={{ marginLeft: 6, verticalAlign: '-2px' }} aria-label="Verified designer" />
+                    )}
+                  </h3>
                   <p className="desktop-store-location">
-                    {v.city ? `${v.city}, ${v.state || 'Lagos State'}` : 'Lagos, Lagos State'}
+                    {[v.city, v.state].filter(Boolean).join(', ')}
                     {v.average_rating && Number(v.average_rating) > 0 && v.review_count && v.review_count > 0
-                      ? ` • ${Number(v.average_rating).toFixed(1)} ★ (${v.review_count})`
+                      ? `${v.city || v.state ? ' • ' : ''}${Number(v.average_rating).toFixed(1)} ★ (${v.review_count})`
                       : ''}
                   </p>
                   <p className="desktop-store-desc">
-                    {v.description || 'Verified Nigerian bespoke fashion designer.'}
+                    {v.description || 'New on Aso.'}
                   </p>
                   <Link to={`/store/${v.slug}`} className="desktop-store-link">
                     <span>Visit Designer Storefront</span>
@@ -240,7 +241,7 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
               </div>
               <h4 className="desktop-step-title">Discover</h4>
               <p className="desktop-step-text">
-                Explore pieces from verified independent designers across Nigeria, all in one marketplace.
+                Explore pieces from independent designers across Nigeria, all in one marketplace.
               </p>
             </div>
 
