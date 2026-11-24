@@ -309,7 +309,44 @@ export const categoryApi = {
 
 // ─── Product API ─────────────────────────────────────────────────────────────
 
+export interface HomeFeed {
+  pieces: Product[];
+  designers: PublicVendorProfile[];
+  /** Home-page pill slugs that have at least one live piece. */
+  categories_with_pieces: string[];
+}
+
+export interface ProductPage {
+  products: Product[];
+  count: number;
+  hasMore: boolean;
+}
+
 export const productApi = {
+  /** The home page selection: Aso's hand-picks first, then a fair daily mix (small and cached). */
+  getHomeFeed: async (): Promise<HomeFeed> => {
+    const res = await apiClient.get('/home/');
+    return {
+      pieces: Array.isArray(res.data?.pieces) ? res.data.pieces : [],
+      designers: Array.isArray(res.data?.designers) ? res.data.designers : [],
+      categories_with_pieces: Array.isArray(res.data?.categories_with_pieces) ? res.data.categories_with_pieces : [],
+    };
+  },
+
+  /** One page of the catalogue (24 by default), for "Load more". */
+  getPublicProductsPage: async (
+    params: Record<string, string | number | undefined>,
+    page = 1,
+    pageSize = 24,
+  ): Promise<ProductPage> => {
+    const res = await apiClient.get('/products/', { params: { ...params, page, page_size: pageSize } });
+    return {
+      products: Array.isArray(res.data?.products) ? res.data.products : [],
+      count: Number(res.data?.count) || 0,
+      hasMore: Boolean(res.data?.has_more),
+    };
+  },
+
   getPublicProducts: async (params?: {
     search?: string;
     category?: string;

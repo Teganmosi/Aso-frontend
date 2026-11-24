@@ -19,9 +19,9 @@ import type { Product, PublicVendorProfile } from '../../types';
 import { DesignerLogo, designerBannerStyle } from '../common/DesignerImages';
 import './MobileHomeView.css';
 
-import type { CategoryPillItem } from './DesktopHomeView';
+import type { CategoryPillItem, HomeBrowseProps } from './DesktopHomeView';
 
-interface MobileHomeViewProps {
+interface MobileHomeViewProps extends HomeBrowseProps {
   products: Product[];
   vendors: PublicVendorProfile[];
   loading: boolean;
@@ -45,6 +45,13 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
   onOpenVendorRegister,
   isDesigner,
   categories = [],
+  browsing = false,
+  showAll = false,
+  totalCount = 0,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
+  onSeeAll,
 }) => {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState(searchQuery);
@@ -144,19 +151,25 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
       <section id="mobile-curated-feed" className="mobile-curated-section">
         <div className="mobile-section-header">
           <div>
-            <span className="mobile-eyebrow">CURATED FOR YOU</span>
+            <span className="mobile-eyebrow">
+              {browsing ? `${totalCount.toLocaleString()} ${totalCount === 1 ? 'PIECE' : 'PIECES'}` : 'CURATED FOR YOU'}
+            </span>
             <h2 className="mobile-section-title">
               {searchQuery
                 ? `Search: "${searchQuery}"`
                 : selectedCategory
-                ? `${selectedCategory.toUpperCase()} COLLECTION`
+                ? `${selectedCategory.replace(/-/g, ' ').toUpperCase()} COLLECTION`
+                : showAll
+                ? 'All Pieces'
                 : 'Curated Pieces'}
             </h2>
           </div>
-          <Link to="/men" className="mobile-see-all-link">
-            <span>See all</span>
-            <ChevronRight size={16} />
-          </Link>
+          {!browsing && (
+            <button type="button" onClick={onSeeAll} className="mobile-see-all-link mobile-see-all-btn">
+              <span>See all</span>
+              <ChevronRight size={16} />
+            </button>
+          )}
         </div>
 
         {loading && products.length === 0 ? (
@@ -171,7 +184,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
             </button>
           </div>
         ) : (
-          <div className="mobile-products-carousel no-scrollbar">
+          <div className={`mobile-products-carousel no-scrollbar${browsing ? ' is-grid' : ''}`}>
             {products.map((prod) => {
               const prepDays = prod.preparation_time_days;
               const priceNaira = prod.base_price_naira ?? (prod.base_price_kobo ? Math.round(prod.base_price_kobo / 100) : 0);
@@ -216,6 +229,18 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {browsing && !loading && products.length > 0 && (
+          <div className="mobile-home-more">
+            {hasMore ? (
+              <button type="button" className="btn-mobile-load-more" onClick={onLoadMore} disabled={loadingMore}>
+                {loadingMore ? 'Loading…' : `Load more (${products.length} of ${totalCount.toLocaleString()})`}
+              </button>
+            ) : (
+              totalCount > 24 && <p className="mobile-home-more-note">You have seen all {totalCount.toLocaleString()} pieces.</p>
+            )}
           </div>
         )}
       </section>

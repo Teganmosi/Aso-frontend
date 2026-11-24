@@ -102,6 +102,12 @@ export const MensCollectionPage: React.FC = () => {
   // Data & Request State
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  // Loaded 24 at a time ("Load more"), so the page stays fast as the catalogue grows.
+  const [lastParams, setLastParams] = useState<Record<string, string | number | undefined>>({});
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [apiError, setApiError] = useState<boolean>(false);
 
   // Sync state into URL query params
@@ -162,8 +168,12 @@ export const MensCollectionPage: React.FC = () => {
         apiParams.max_lead_time = maxLeadDays;
       }
 
-      const results = await productApi.getPublicProducts(apiParams);
-      setProducts(results || []);
+      const res = await productApi.getPublicProductsPage(apiParams, 1, 24);
+      setProducts(res.products);
+      setHasMore(res.hasMore);
+      setTotalCount(res.count);
+      setPage(1);
+      setLastParams(apiParams);
     } catch (err) {
       console.error('API Error loading Men collection:', err);
       setApiError(true);
@@ -175,6 +185,24 @@ export const MensCollectionPage: React.FC = () => {
   useEffect(() => {
     loadCollection();
   }, [loadCollection]);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await productApi.getPublicProductsPage(lastParams, page + 1, 24);
+      setProducts((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...res.products.filter((p) => !seen.has(p.id))];
+      });
+      setHasMore(res.hasMore);
+      setPage(page + 1);
+    } catch (err) {
+      console.error('Failed to load more pieces:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Handlers for User Interactions
   const handleCategorySelect = (categorySlug: string) => {
@@ -228,12 +256,15 @@ export const MensCollectionPage: React.FC = () => {
     if (loading) return 'Loading pieces...';
     if (products.length === 0) return '0 pieces';
 
+    if (totalCount > products.length) {
+      return `Showing ${products.length} of ${totalCount.toLocaleString()} pieces`;
+    }
     const allVerified = products.every((p) => p.vendor?.is_verified === true);
     if (allVerified) {
       return `Showing ${products.length} ${products.length === 1 ? "piece" : "pieces"} from Nigerian designers`;
     }
     return `Showing ${products.length} pieces`;
-  }, [products, loading]);
+  }, [products, loading, totalCount]);
 
   // Extract unique active designers from loaded catalog to offer dynamic designer filter
   const availableDesigners = useMemo(() => {
@@ -459,6 +490,13 @@ export const MensCollectionPage: React.FC = () => {
                 {products.map((product) => (
                   <CollectionProductCard key={product.id} product={product} />
                 ))}
+              </div>
+            )}
+            {!loading && !apiError && hasMore && (
+              <div className="collection-load-more">
+                <button type="button" onClick={loadMore} disabled={loadingMore}>
+                  {loadingMore ? 'Loading…' : `Load more pieces (${products.length} of ${totalCount.toLocaleString()})`}
+                </button>
               </div>
             )}
           </main>

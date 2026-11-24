@@ -767,3 +767,12 @@
   font-size: 0.875rem;
   cursor: pointer;
 }
+
+.collection-load-more { display: flex; justify-content: center; margin: 32px 0 8px; }
+.collection-load-more button {
+  padding: 12px 26px; border-radius: 999px; border: 1.5px solid #004B44; background: transparent;
+  color: #004B44; font-weight: 700; font-size: 15px; font-family: inherit; cursor: pointer;
+}
+.collection-load-more button:hover:not(:disabled) { background: #004B44; color: #FFFFFF; }
+.collection-load-more button:disabled { opacity: .6; cursor: wait; }
+@media (max-width: 767px) { .collection-load-more button { width: 100%; } }

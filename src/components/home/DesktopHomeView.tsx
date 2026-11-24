@@ -15,6 +15,17 @@ import type { Product, PublicVendorProfile } from '../../types';
 import { DesignerLogo, designerBannerStyle } from '../common/DesignerImages';
 import './DesktopHomeView.css';
 
+/** Home "browse" mode: a category, a search or "see all", loaded 24 at a time. */
+export interface HomeBrowseProps {
+  browsing?: boolean;
+  showAll?: boolean;
+  totalCount?: number;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
+  onSeeAll?: () => void;
+}
+
 export interface CategoryPillItem {
   name: string;
   mobileName?: string;
@@ -22,7 +33,7 @@ export interface CategoryPillItem {
   count?: number;
 }
 
-interface DesktopHomeViewProps {
+interface DesktopHomeViewProps extends HomeBrowseProps {
   products: Product[];
   vendors: PublicVendorProfile[];
   loading: boolean;
@@ -44,6 +55,13 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
   onOpenVendorRegister,
   isDesigner,
   categories = [],
+  browsing = false,
+  showAll = false,
+  totalCount = 0,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
+  onSeeAll,
 }) => {
   const navigate = useNavigate();
 
@@ -89,9 +107,17 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
       <section id="desktop-collection-section" className="desktop-collection-section">
         <div className="desktop-container">
           <div className="desktop-section-header">
-            <span className="desktop-section-eyebrow">MARKETPLACE CURATION</span>
+            <span className="desktop-section-eyebrow">
+              {browsing ? `${totalCount.toLocaleString()} ${totalCount === 1 ? 'PIECE' : 'PIECES'}` : 'CURATED FOR YOU'}
+            </span>
             <h2 className="desktop-section-title">
-              {searchQuery ? `Search Results for "${searchQuery}"` : selectedCategory ? `${selectedCategory.toUpperCase()} COLLECTION` : 'Explore The Collection'}
+              {searchQuery
+                ? `Search Results for "${searchQuery}"`
+                : selectedCategory
+                ? `${selectedCategory.replace(/-/g, ' ').toUpperCase()} COLLECTION`
+                : showAll
+                ? 'All Pieces'
+                : 'Explore The Collection'}
             </h2>
           </div>
 
@@ -169,6 +195,24 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
               })}
             </div>
           )}
+
+          {!loading && products.length > 0 && (
+            <div className="desktop-home-more">
+              {browsing ? (
+                hasMore ? (
+                  <button type="button" className="btn-desktop-load-more" onClick={onLoadMore} disabled={loadingMore}>
+                    {loadingMore ? 'Loading…' : `Load more pieces (${products.length} of ${totalCount.toLocaleString()})`}
+                  </button>
+                ) : (
+                  totalCount > 24 && <p className="desktop-home-more-note">You have seen all {totalCount.toLocaleString()} pieces.</p>
+                )
+              ) : (
+                <button type="button" className="btn-desktop-load-more" onClick={onSeeAll}>
+                  See all pieces <ArrowRight size={16} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -216,6 +260,13 @@ export const DesktopHomeView: React.FC<DesktopHomeViewProps> = ({
               </div>
             ))}
           </div>
+          {vendors.length > 0 && (
+            <div className="desktop-home-more">
+              <Link to="/designers" className="btn-desktop-load-more">
+                See all designers <ArrowRight size={16} />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 

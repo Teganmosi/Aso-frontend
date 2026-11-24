@@ -748,3 +748,19 @@
   overflow: hidden;
   padding: 0;
 }
+
+/* Browsing a category / search / "see all": a two-column grid instead of the sideways carousel */
+.mobile-products-carousel.is-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow-x: visible;
+}
+.mobile-products-carousel.is-grid .mobile-product-card { min-width: 0; width: auto; }
+.mobile-see-all-btn { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; }
+.mobile-home-more { display: flex; justify-content: center; margin-top: 1rem; }
+.btn-mobile-load-more {
+  width: 100%; padding: 0.8rem 1rem; border-radius: 999px; border: 1.5px solid #00322D;
+  background: #FFFFFF; color: #00322D; font-weight: 700; font-size: 0.875rem; font-family: inherit; cursor: pointer;
+}
+.btn-mobile-load-more:disabled { opacity: .6; cursor: wait; }
+.mobile-home-more-note { color: #6B7280; font-size: 0.8rem; margin: 0; }

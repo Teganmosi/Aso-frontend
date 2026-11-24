@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { productApi, vendorApi } from '../api/client';
+import { productApi, type HomeFeed } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { MobileHomeView } from '../components/home/MobileHomeView';
 import { DesktopHomeView, type CategoryPillItem } from '../components/home/DesktopHomeView';
-import type { Product, PublicVendorProfile } from '../types';
+import type { Product } from '../types';
 
 interface HomePageProps {
   onOpenVendorRegister?: () => void;
@@ -114,41 +114,26 @@ export const matchesCategory = (product: Product, slug: string | null): boolean 
   return title.includes(s) || desc.includes(s);
 };
 
-// ── In-Memory & Session Storage Cache for 0ms Instant Home Loading ──
-let memoryCachedCatalog: Product[] | null = null;
-let memoryCachedVendors: PublicVendorProfile[] | null = null;
-const CACHE_CATALOG_KEY = 'aso_cached_home_catalog';
-const CACHE_VENDORS_KEY = 'aso_cached_home_vendors';
+// ── Home feed cache: the page shows instantly from the last visit, then refreshes quietly ──
+let memoryHomeFeed: HomeFeed | null = null;
+const CACHE_HOME_KEY = 'aso_cached_home_feed_v2';
 
-function getInitialCachedCatalog(): Product[] {
-  if (memoryCachedCatalog && memoryCachedCatalog.length > 0) return memoryCachedCatalog;
+function getCachedHomeFeed(): HomeFeed | null {
+  if (memoryHomeFeed) return memoryHomeFeed;
   try {
-    const raw = sessionStorage.getItem(CACHE_CATALOG_KEY);
+    const raw = sessionStorage.getItem(CACHE_HOME_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        memoryCachedCatalog = parsed;
+      if (parsed && Array.isArray(parsed.pieces)) {
+        memoryHomeFeed = parsed;
         return parsed;
       }
     }
   } catch {}
-  return [];
+  return null;
 }
 
-function getInitialCachedVendors(): PublicVendorProfile[] {
-  if (memoryCachedVendors && memoryCachedVendors.length > 0) return memoryCachedVendors;
-  try {
-    const raw = sessionStorage.getItem(CACHE_VENDORS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        memoryCachedVendors = parsed;
-        return parsed;
-      }
-    }
-  } catch {}
-  return [];
-}
+const PAGE_SIZE = 24;
 
 export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
   const isMobile = useIsMobile(768);
@@ -157,94 +142,96 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
 
   const searchQuery = searchParams.get('search') || '';
   const urlCategory = searchParams.get('category') || null;
+  // "See all pieces": the whole catalogue, a page at a time.
+  const showAll = searchParams.get('view') === 'all';
 
-  const [allProducts, setAllProducts] = useState<Product[]>(getInitialCachedCatalog);
-  const [products, setProducts] = useState<Product[]>(getInitialCachedCatalog);
-  const [featuredVendors, setFeaturedVendors] = useState<PublicVendorProfile[]>(getInitialCachedVendors);
-  const [loading, setLoading] = useState<boolean>(() => getInitialCachedCatalog().length === 0);
+  const [homeFeed, setHomeFeed] = useState<HomeFeed | null>(getCachedHomeFeed);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(urlCategory);
+
+  // Browsing (a category, a search or "see all"): pages of 24 with "Load more".
+  const browsing = Boolean(selectedCategory || searchQuery || showAll);
+  const [browseProducts, setBrowseProducts] = useState<Product[]>([]);
+  const [browsePage, setBrowsePage] = useState(1);
+  const [browseHasMore, setBrowseHasMore] = useState(false);
+  const [browseTotal, setBrowseTotal] = useState(0);
+  const [browseLoading, setBrowseLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [homeLoading, setHomeLoading] = useState<boolean>(() => !getCachedHomeFeed());
 
   useEffect(() => {
     setSelectedCategory(urlCategory);
   }, [urlCategory]);
 
-  // Optimized SWR Data Fetching: 0ms instant display with silent background revalidation
-  const refreshCatalog = useCallback(async (categorySlug?: string | null, search?: string) => {
-    // Only show visible loading state if we have zero cached products to display
-    if (products.length === 0) {
-      setLoading(true);
-    }
-
-    try {
-      const params: Record<string, string> = {};
-      if (categorySlug) params.category = categorySlug;
-      if (search) params.search = search;
-
-      const [allData, filteredData] = await Promise.all([
-        // If not searching or filtering, fetch base catalog
-        (!categorySlug && !search) ? productApi.getPublicProducts({}).catch(() => []) : Promise.resolve(null),
-        (categorySlug || search) ? productApi.getPublicProducts(params).catch(() => []) : Promise.resolve(null)
-      ]);
-
-      if (allData && Array.isArray(allData)) {
-        setAllProducts(allData);
-        setProducts(allData);
-        memoryCachedCatalog = allData;
-        try {
-          sessionStorage.setItem(CACHE_CATALOG_KEY, JSON.stringify(allData));
-        } catch {}
-      } else if (filteredData && Array.isArray(filteredData)) {
-        let result = filteredData;
-        // Fallback filter if backend returns empty
-        if (result.length === 0 && allProducts.length > 0) {
-          result = allProducts.filter((p) => {
-            const matchesCat = categorySlug ? matchesCategory(p, categorySlug) : true;
-            const matchesSearch = search
-              ? (p.title || '').toLowerCase().includes(search.toLowerCase()) ||
-                (p.description || '').toLowerCase().includes(search.toLowerCase()) ||
-                (p.vendor?.store_name || '').toLowerCase().includes(search.toLowerCase())
-              : true;
-            return matchesCat && matchesSearch;
-          });
-        }
-        setProducts(result);
-      }
-    } catch (err) {
-      console.error('Failed to load products:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [products.length, allProducts]);
-
-  // Load featured vendors with SWR caching
+  // Home selection (hand-picked pieces and designers). Small, so it is cheap to refresh.
   useEffect(() => {
-    vendorApi.getVendors().then((vList) => {
-      if (Array.isArray(vList) && vList.length > 0) {
-        setFeaturedVendors(vList);
-        memoryCachedVendors = vList;
+    let cancelled = false;
+    productApi.getHomeFeed()
+      .then((feed) => {
+        if (cancelled) return;
+        setHomeFeed(feed);
+        memoryHomeFeed = feed;
         try {
-          sessionStorage.setItem(CACHE_VENDORS_KEY, JSON.stringify(vList));
+          sessionStorage.setItem(CACHE_HOME_KEY, JSON.stringify(feed));
         } catch {}
-      }
-    }).catch(() => {});
+      })
+      .catch((err) => console.error('Failed to load home page:', err))
+      .finally(() => { if (!cancelled) setHomeLoading(false); });
+    return () => { cancelled = true; };
   }, []);
 
-  // Trigger catalog fetch whenever filter/search changes
+  // First page whenever the category or search changes.
   useEffect(() => {
-    refreshCatalog(selectedCategory, searchQuery);
-  }, [selectedCategory, searchQuery]);
+    if (!browsing) return;
+    let cancelled = false;
+    setBrowseLoading(true);
+    setBrowseProducts([]);
+    const params: Record<string, string> = {};
+    if (selectedCategory) params.category = selectedCategory;
+    if (searchQuery) params.search = searchQuery;
+    productApi.getPublicProductsPage(params, 1, PAGE_SIZE)
+      .then((res) => {
+        if (cancelled) return;
+        setBrowseProducts(res.products);
+        setBrowseHasMore(res.hasMore);
+        setBrowseTotal(res.count);
+        setBrowsePage(1);
+      })
+      .catch((err) => {
+        console.error('Failed to load pieces:', err);
+        if (!cancelled) { setBrowseProducts([]); setBrowseHasMore(false); setBrowseTotal(0); }
+      })
+      .finally(() => { if (!cancelled) setBrowseLoading(false); });
+    return () => { cancelled = true; };
+  }, [browsing, selectedCategory, searchQuery]);
 
-  // Only show categories that currently have at least 1 product available
-  const availableCategories = useMemo(() => {
-    if (allProducts.length === 0) {
-      return [{ name: 'All Pieces', mobileName: 'All', slug: null }];
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMore || !browseHasMore) return;
+    setLoadingMore(true);
+    try {
+      const params: Record<string, string> = {};
+      if (selectedCategory) params.category = selectedCategory;
+      if (searchQuery) params.search = searchQuery;
+      const next = browsePage + 1;
+      const res = await productApi.getPublicProductsPage(params, next, PAGE_SIZE);
+      setBrowseProducts((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...res.products.filter((p) => !seen.has(p.id))];
+      });
+      setBrowseHasMore(res.hasMore);
+      setBrowsePage(next);
+    } catch (err) {
+      console.error('Failed to load more pieces:', err);
+    } finally {
+      setLoadingMore(false);
     }
+  }, [loadingMore, browseHasMore, selectedCategory, searchQuery, browsePage]);
 
-    return ALL_TAXONOMY_CANDIDATES.filter((cat) => {
-      if (cat.slug === null) return true;
-      return allProducts.some((p) => matchesCategory(p, cat.slug));
-    });
-  }, [allProducts]);
+  // Only show category pills that have at least one live piece.
+  const availableCategories = useMemo(() => {
+    const withPieces = homeFeed?.categories_with_pieces;
+    if (!withPieces) return ALL_TAXONOMY_CANDIDATES.filter((c) => c.slug === null);
+    return ALL_TAXONOMY_CANDIDATES.filter((cat) => cat.slug === null || withPieces.includes(cat.slug));
+  }, [homeFeed]);
 
   const handleCategorySelect = (slug: string | null) => {
     setSelectedCategory(slug);
@@ -263,33 +250,38 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenVendorRegister }) => {
     }
   };
 
+  const handleSeeAll = () => {
+    setSelectedCategory(null);
+    setSearchParams({ view: 'all' });
+  };
+
   const isDesigner = Boolean(user?.is_vendor || user?.vendor_profile);
 
+  const products = browsing ? browseProducts : homeFeed?.pieces ?? [];
+  const loading = browsing ? browseLoading : homeLoading && !homeFeed;
+  const shared = {
+    products,
+    vendors: homeFeed?.designers ?? [],
+    loading,
+    selectedCategory,
+    onCategorySelect: handleCategorySelect,
+    searchQuery,
+    onOpenVendorRegister,
+    isDesigner,
+    categories: availableCategories,
+    browsing,
+    showAll,
+    totalCount: browseTotal,
+    hasMore: browsing && browseHasMore,
+    loadingMore,
+    onLoadMore: handleLoadMore,
+    onSeeAll: handleSeeAll,
+  };
+
   return isMobile ? (
-    <MobileHomeView
-      products={products}
-      vendors={featuredVendors}
-      loading={loading}
-      selectedCategory={selectedCategory}
-      onCategorySelect={handleCategorySelect}
-      searchQuery={searchQuery}
-      onSearchSubmit={handleSearchSubmit}
-      onOpenVendorRegister={onOpenVendorRegister}
-      isDesigner={isDesigner}
-      categories={availableCategories}
-    />
+    <MobileHomeView {...shared} onSearchSubmit={handleSearchSubmit} />
   ) : (
-    <DesktopHomeView
-      products={products}
-      vendors={featuredVendors}
-      loading={loading}
-      selectedCategory={selectedCategory}
-      onCategorySelect={handleCategorySelect}
-      searchQuery={searchQuery}
-      onOpenVendorRegister={onOpenVendorRegister}
-      isDesigner={isDesigner}
-      categories={availableCategories}
-    />
+    <DesktopHomeView {...shared} />
   );
 };
 

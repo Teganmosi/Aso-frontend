@@ -581,3 +581,15 @@
   overflow: hidden;
   padding: 0;
 }
+
+/* "Load more" / "See all" under the home grids */
+.desktop-home-more { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 36px; }
+.btn-desktop-load-more {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 28px; border-radius: 999px; border: 1.5px solid #004B44;
+  background: transparent; color: #004B44; font-weight: 700; font-size: 15px;
+  cursor: pointer; text-decoration: none; transition: background .15s, color .15s;
+}
+.btn-desktop-load-more:hover:not(:disabled) { background: #004B44; color: #FFFFFF; }
+.btn-desktop-load-more:disabled { opacity: .6; cursor: wait; }
+.desktop-home-more-note { color: #6B7280; font-size: 14px; margin: 0; }
