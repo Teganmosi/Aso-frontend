@@ -575,3 +575,9 @@
 .btn-desktop-studio-action:hover {
   transform: translateY(-2px);
 }
+
+/* The avatar now holds the designer's logo (or initials): clip it to the circle. */
+.desktop-designer-avatar {
+  overflow: hidden;
+  padding: 0;
+}

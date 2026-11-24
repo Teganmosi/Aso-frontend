@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { PublicVendorProfile } from '../../types';
+import { DesignerLogo, designerBannerStyle } from '../common/DesignerImages';
 import { 
   ShieldCheck, 
   Search, 
@@ -135,20 +136,15 @@ export const MobileDesignersView: React.FC<MobileDesignersViewProps> = ({
           <span className="mobile-section-label">FEATURED HOUSES</span>
           <div className="mobile-stories-track">
             {spotlightDesigners.map((designer) => {
-              const initials = designer.store_name ? designer.store_name.slice(0, 2).toUpperCase() : 'AS';
               return (
-                <Link 
-                  key={designer.id} 
-                  to={`/store/${designer.slug}`} 
+                <Link
+                  key={designer.id}
+                  to={`/store/${designer.slug}`}
                   className="mobile-story-item"
                 >
                   <div className="mobile-story-ring">
                     <div className="mobile-story-avatar">
-                      {designer.logo_url ? (
-                        <img src={designer.logo_url} alt={designer.store_name} />
-                      ) : (
-                        <span>{initials}</span>
-                      )}
+                      <DesignerLogo logoUrl={designer.logo_url} name={designer.store_name} />
                     </div>
                   </div>
                   <span className="mobile-story-name">{designer.store_name}</span>
@@ -191,21 +187,13 @@ export const MobileDesignersView: React.FC<MobileDesignersViewProps> = ({
         )}
 
         {!loading && !error && filteredDesigners.map((designer, idx) => {
-          const fallbackCover = idx % 2 === 0 ? '/hero-bg.png' : '/traditional-men-1.png';
-          const bannerImg = designer.banner_url || (designer.preview_images && designer.preview_images[0]) || fallbackCover;
-          const initials = designer.store_name ? designer.store_name.slice(0, 2).toUpperCase() : 'AS';
-
           return (
             <article key={designer.id || idx} className="mobile-app-designer-card">
               {/* Card Header (Brand + Location + Action) */}
               <div className="mobile-card-top">
                 <div className="mobile-card-brand">
                   <div className="mobile-brand-avatar">
-                    {designer.logo_url ? (
-                      <img src={designer.logo_url} alt={designer.store_name} />
-                    ) : (
-                      <span>{initials}</span>
-                    )}
+                    <DesignerLogo logoUrl={designer.logo_url} name={designer.store_name} />
                   </div>
                   <div className="mobile-brand-info">
                     <div className="mobile-brand-name-row">
@@ -214,10 +202,12 @@ export const MobileDesignersView: React.FC<MobileDesignersViewProps> = ({
                         <ShieldCheck size={14} color="#064E3B" className="verified-icon" />
                       )}
                     </div>
-                    <div className="mobile-brand-location">
-                      <MapPin size={11} />
-                      <span>{designer.city || 'Lagos'}, {designer.state || 'Lagos State'}</span>
-                    </div>
+                    {(designer.city || designer.state) && (
+                      <div className="mobile-brand-location">
+                        <MapPin size={11} />
+                        <span>{[designer.city, designer.state].filter(Boolean).join(', ')}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -229,10 +219,7 @@ export const MobileDesignersView: React.FC<MobileDesignersViewProps> = ({
 
               {/* Showcase Banner / Media Feed */}
               <Link to={`/store/${designer.slug}`} className="mobile-card-media-wrap">
-                <div 
-                  className="mobile-card-banner"
-                  style={{ backgroundImage: `url(${bannerImg})` }}
-                >
+                <div className="mobile-card-banner" style={designerBannerStyle(designer.banner_url)}>
                   <div className="mobile-banner-gradient" />
                   
                   {/* Floating Chips */}
