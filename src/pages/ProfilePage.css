@@ -1798,3 +1798,20 @@
   margin: 0 auto 1.75rem;
   padding: 0 1rem;
 }
+
+/* "Did it fit?" on delivered pieces */
+.order-item-card { flex-wrap: wrap; }
+.fit-question { flex-basis: 100%; border-top: 1px dashed #E2E8F0; padding-top: 0.6rem; }
+.fit-question__title { margin: 0 0 0.4rem; font-weight: 700; font-size: 0.85rem; color: #0C3B2E; }
+.fit-question__options { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.4rem; }
+.fit-question__btn, .fit-question__chip {
+  border: 1px solid #D1D5DB; background: #FFFFFF; border-radius: 999px; padding: 0.35rem 0.8rem;
+  font-size: 0.78rem; font-weight: 600; color: #374151; cursor: pointer; font-family: inherit;
+}
+.fit-question__btn:hover, .fit-question__chip:hover { border-color: #0C3B2E; }
+.fit-question__btn.active, .fit-question__chip.active { background: #0C3B2E; border-color: #0C3B2E; color: #FFFFFF; }
+.fit-question__more textarea { width: 100%; box-sizing: border-box; margin: 0.3rem 0 0.4rem; }
+.fit-question__hint { margin: 0.2rem 0; font-size: 0.74rem; color: #6B7280; }
+.fit-question__error { margin: 0.3rem 0 0; color: #B91C1C; font-size: 0.78rem; font-weight: 600; }
+.fit-question--done { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #374151; }
+.fit-question__link { border: none; background: none; color: #065F46; text-decoration: underline; cursor: pointer; font-size: 0.78rem; font-family: inherit; }

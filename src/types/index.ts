@@ -35,6 +35,12 @@ export interface BodyMeasurementRow {
   waist_cm?: string;
   hip_cm?: string;
   height_cm?: string;
+  /** Women's UK dress size for this row (general guide). */
+  uk_size?: string;
+  underbust?: string;
+  underbust_cm?: string;
+  neck_collar?: string;
+  neck_collar_cm?: string;
 }
 
 export interface GarmentTopsRow {
@@ -77,6 +83,9 @@ export interface SizeChart {
   garment_type?: string;
   /** True when the designer hasn't added a chart and Aso shows typical sizes instead. */
   is_generic?: boolean;
+  /** Who the general guide is for. */
+  wearer?: 'female' | 'male' | null;
+  allows_custom_tailoring?: boolean;
   body_measurements?: BodyMeasurementRow[];
   garment_measurements?: {
     tops?: GarmentTopsRow[];
@@ -252,6 +261,8 @@ export interface ProductMedia {
 export interface Product {
   id: string;
   title: string;
+  /** Who the piece is for, worked out from its department and title (null: can't tell). */
+  wearer?: 'female' | 'male' | null;
   slug: string;
   description: string;
   base_price_kobo: number;
@@ -424,7 +435,11 @@ export interface OrderItem {
   total_price_naira: number;
   created_at: string;
   review?: Review | null;
+  /** The shopper's "Did it fit?" answer, once given. */
+  fit_feedback?: FitResult | null;
 }
+
+export type FitResult = 'GREAT' | 'TOO_SMALL' | 'TOO_BIG' | 'LENGTH' | 'OTHER';
 
 export interface Delivery {
   id: string;

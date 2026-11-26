@@ -25,6 +25,30 @@ import {
 } from 'lucide-react';
 import { categoryApi, productApi, mediaApi, describeUploadError } from '../../api/client';
 import type { Category, ProductItem, CreateProductPayload } from '../../types';
+import { MEASUREMENT_LIMITS } from '../../utils/measurements';
+
+// Designer size chart: columns, labels, and the limits each column is checked against.
+const CHART_COLUMN_ORDER = ['bust', 'underbust', 'waist', 'hip', 'neck_collar'];
+const CHART_LABELS: Record<string, string> = {
+  bust: 'Bust / chest', underbust: 'Underbust', waist: 'Waist', hip: 'Hips', neck_collar: 'Neck', length: 'Length of the piece',
+};
+const CHART_LIMITS: Record<string, string> = {
+  bust: 'chest_bust', underbust: 'underbust', waist: 'waist', hip: 'hips', neck_collar: 'neck_collar', length: 'top_length',
+};
+/** One chart cell: a number or a range in inches. Returns a short problem, or null. */
+const chartCellError = (col: string, raw: string): string | null => {
+  if (!raw || !raw.trim()) return null;
+  const m = raw.trim().match(/^(\d+(?:\.\d+)?)(?:\s*[-–]\s*(\d+(?:\.\d+)?))?$/);
+  if (!m) return 'Use a number or a range like 36-38';
+  const lo = parseFloat(m[1]);
+  const hi = m[2] ? parseFloat(m[2]) : lo;
+  if (lo > hi) return 'Put the smaller number first';
+  const lim = MEASUREMENT_LIMITS[CHART_LIMITS[col]];
+  if (lim && (lo < lim.min || hi > lim.max)) {
+    return hi > lim.max && hi / 2.54 <= lim.max ? 'Looks like cm: use inches' : `Expected ${lim.min}-${lim.max} in`;
+  }
+  return null;
+};
 import './AddProductView.css';
 
 interface AddProductViewProps {
@@ -160,6 +184,26 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     }
     return true; // Default to true to encourage bespoke custom fit availability
   });
+
+  // 4b. The designer's own size chart (body measurements per size, plus garment length).
+  const [chartCols, setChartCols] = useState<string[]>(() => {
+    const rows = (productToEdit?.raw_product?.size_chart as any)?.body_measurements || [];
+    const cols = CHART_COLUMN_ORDER.filter((c) => rows.some((r: any) => r[c]));
+    return cols.length ? cols : ['bust', 'waist', 'hip'];
+  });
+  const [chartRows, setChartRows] = useState<Record<string, Record<string, string>>>(() => {
+    const sc = (productToEdit?.raw_product?.size_chart as any) || {};
+    const out: Record<string, Record<string, string>> = {};
+    (sc.body_measurements || []).forEach((r: any) => {
+      out[r.size] = { bust: r.bust || '', underbust: r.underbust || '', waist: r.waist || '', hip: r.hip || '', neck_collar: r.neck_collar || '' };
+    });
+    (sc.garment_measurements?.tops || []).forEach((r: any) => {
+      out[r.size] = { ...(out[r.size] || {}), length: r.length || '' };
+    });
+    return out;
+  });
+  const [typicalLoading, setTypicalLoading] = useState(false);
+  const [typicalNote, setTypicalNote] = useState('');
 
   // 5. Fabric & Garment Cut Specs
   const [stretchLevel, setStretchLevel] = useState<'NON' | 'SLIGHT' | 'MEDIUM' | 'HIGH'>(
@@ -404,6 +448,43 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     setImages([target, ...rest]);
   };
 
+  // Sizes that get a row in the size chart (not "Free Size" or custom fit).
+  const chartSizes = selectedSizes.filter((s) => !/free|bespoke|custom/i.test(s));
+  const setChartCell = (size: string, col: string, value: string) =>
+    setChartRows((prev) => ({ ...prev, [size]: { ...(prev[size] || {}), [col]: value } }));
+
+  const fillTypicalChart = async () => {
+    if (!chartSizes.length) return;
+    setTypicalLoading(true);
+    setTypicalNote('');
+    try {
+      const res = await productApi.getTypicalSizeChart({ category_id: categoryId, title: productName, sizes: chartSizes });
+      const colMap: Record<string, string> = { chest_bust: 'bust', underbust: 'underbust', waist: 'waist', hips: 'hip', neck_collar: 'neck_collar' };
+      const cols = res.columns.map((c) => colMap[c]).filter(Boolean);
+      if (cols.length) setChartCols(cols);
+      setChartRows((prev) => {
+        const next = { ...prev };
+        res.rows.forEach((r) => {
+          const cur = { ...(next[r.size] || {}) };
+          // Only fill empty cells: never overwrite what the designer typed.
+          cols.forEach((c) => { if (!cur[c] && r[c]) cur[c] = r[c]; });
+          next[r.size] = cur;
+        });
+        return next;
+      });
+      const missing = chartSizes.filter((s) => !res.rows.some((r) => r.size === s));
+      const who = res.wearer === 'male' ? "men's " : res.wearer === 'female' ? "women's " : '';
+      setTypicalNote(
+        `Filled with typical ${who}sizes. Change any number that doesn't match how you cut.` +
+        (missing.length ? ` No typical numbers for ${missing.join(', ')}: please fill those in.` : ''),
+      );
+    } catch {
+      setTypicalNote("Couldn't load typical numbers. Check your connection and try again.");
+    } finally {
+      setTypicalLoading(false);
+    }
+  };
+
   // Submit Handler
   const handleSave = async (targetStatus: 'Active' | 'Draft') => {
     setErrorMessage('');
@@ -437,6 +518,16 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
       }
     }
 
+    const chartProblems: string[] = [];
+    chartSizes.forEach((sz) => [...chartCols, 'length'].forEach((col) => {
+      const e = chartCellError(col, chartRows[sz]?.[col] || '');
+      if (e) chartProblems.push(`Size chart, ${sz} ${CHART_LABELS[col].toLowerCase()}: ${e}.`);
+    }));
+    if (chartProblems.length) {
+      setErrorMessage(chartProblems.slice(0, 3).join(' '));
+      return;
+    }
+
     setSaving(true);
     try {
       const numericPrice = parseFloat(price) || 0;
@@ -458,6 +549,14 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         garment_type: garmentCut,
         sizing_system: allowBespoke ? 'HYBRID' : 'STANDARD',
         allows_custom_tailoring: allowBespoke,
+        body_measurements: chartSizes
+          .map((sz) => {
+            const r = chartRows[sz] || {};
+            const row: Record<string, string> & { size: string } = { size: sz };
+            [...chartCols, 'length'].forEach((c) => { if ((r[c] || '').trim()) row[c] = r[c].trim(); });
+            return row;
+          })
+          .filter((row) => Object.keys(row).length > 1),
       };
 
       const finalStock = fulfillmentMode === 'MADE_TO_ORDER' ? 99 : (parseInt(stockQuantity) || 5);
@@ -987,6 +1086,73 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 </button>
               </form>
             </div>
+
+            {/* Section A2: the designer's own size chart */}
+            {chartSizes.length > 0 && (
+              <div className="field-group size-chart-editor">
+                <div className="field-label-row">
+                  <label className="field-label">Your size chart <span className="char-counter">(recommended)</span></label>
+                  <button type="button" className="btn-save-draft" onClick={fillTypicalChart} disabled={typicalLoading} style={{ whiteSpace: 'nowrap' }}>
+                    {typicalLoading ? 'Loading…' : 'Fill in typical numbers'}
+                  </button>
+                </div>
+                <p className="field-hint-text" style={{ marginBottom: '0.6rem' }}>
+                  The body measurements each size fits, in inches (a number or a range like 36-38). Shoppers choose their
+                  size from this, so match how you cut. Without it, shoppers see a general guide.
+                </p>
+                {typicalNote && <p className="field-hint-text" role="status" style={{ color: '#065F46', fontWeight: 600 }}>{typicalNote}</p>}
+                <div className="size-chart-table-wrap">
+                  <table className="size-chart-table">
+                    <thead>
+                      <tr>
+                        <th>Size</th>
+                        {[...chartCols, 'length'].map((c) => <th key={c}>{CHART_LABELS[c]}{c === 'length' ? ' (optional)' : ''}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {chartSizes.map((sz) => (
+                        <tr key={sz}>
+                          <th scope="row">{sz}</th>
+                          {[...chartCols, 'length'].map((c) => {
+                            const v = chartRows[sz]?.[c] || '';
+                            const e = chartCellError(c, v);
+                            return (
+                              <td key={c}>
+                                <input
+                                  className={`field-input${e ? ' input-error' : ''}`}
+                                  inputMode="decimal"
+                                  value={v}
+                                  placeholder={c === 'length' ? 'e.g. 56' : 'e.g. 36-38'}
+                                  aria-label={`${sz} ${CHART_LABELS[c]}`}
+                                  aria-invalid={!!e}
+                                  onChange={(ev) => setChartCell(sz, c, ev.target.value)}
+                                />
+                                {e && <span className="size-chart-cell-error">{e}</span>}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="size-chart-col-toggles">
+                  <span className="field-hint-text">Columns:</span>
+                  {CHART_COLUMN_ORDER.map((c) => (
+                    <label key={c} className="size-chart-col-toggle">
+                      <input
+                        type="checkbox"
+                        checked={chartCols.includes(c)}
+                        onChange={(e) => setChartCols((prev) => e.target.checked
+                          ? CHART_COLUMN_ORDER.filter((x) => x === c || prev.includes(x))
+                          : prev.filter((x) => x !== c))}
+                      />
+                      {CHART_LABELS[c]}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Section B: Hybrid Bespoke Tailoring Toggle Card */}
             <div className={`bespoke-enable-card ${allowBespoke ? 'active' : ''}`}>

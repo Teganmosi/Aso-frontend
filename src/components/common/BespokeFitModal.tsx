@@ -33,6 +33,8 @@ interface BespokeFitModalProps {
   garmentTypeHint?: string;
   currentMeasurements?: BespokeMeasurements | null;
   onApplyMeasurements: (measurements: BespokeMeasurements) => void;
+  /** Who the piece is for, from the product (null when it can't be told: then we ask). */
+  wearer?: 'female' | 'male' | null;
 }
 
 export type GarmentType = 'full_set' | 'tops_senator' | 'trousers' | 'corset_gown' | 'boubou';
@@ -291,6 +293,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
   garmentTypeHint = '',
   currentMeasurements,
   onApplyMeasurements,
+  wearer = null,
 }) => {
   const { user } = useAuth();
   const [unit, setUnit] = useState<'IN' | 'CM'>('IN');
@@ -316,8 +319,10 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
 
   // Rough estimate inputs
   const [estSex, setEstSex] = useState<'female' | 'male'>(
-    ['corset_gown', 'boubou'].includes(initialDetection.type) ? 'female' : 'male',
+    wearer || (['corset_gown', 'boubou'].includes(initialDetection.type) ? 'female' : 'male'),
   );
+  // Only ask "who is it for?" when the piece doesn't tell us (or the shopper wants to change it).
+  const [askWearer, setAskWearer] = useState<boolean>(!wearer);
   const [estStandardSize, setEstStandardSize] = useState('M');
   const [estHeightFeet, setEstHeightFeet] = useState('5');
   const [estHeightInches, setEstHeightInches] = useState('6');
@@ -337,8 +342,9 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
       setIsAutoDetected(res.isAutoDetected);
       setShowManualTypeSelector(!res.isAutoDetected);
       setSubmitAttempted(false);
+      if (wearer) { setEstSex(wearer); setAskWearer(false); }
     }
-  }, [categoryName, productTitle, garmentTypeHint, categorySlug, isOpen]);
+  }, [categoryName, productTitle, garmentTypeHint, categorySlug, isOpen, wearer]);
 
   useEffect(() => {
     if (currentMeasurements && Object.keys(currentMeasurements).length > 0) {
@@ -820,18 +826,27 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
               </div>
 
               <div className="v12-estimator-inputs">
-                <div className="v12-step-card">
-                  <label className="v12-step-label">1. Who is this outfit for?</label>
-                  <div className="v12-frame-chips">
-                    <button type="button" className={`v12-frame-pill ${estSex === 'female' ? 'active' : ''}`}
-                      onClick={() => setEstSex('female')}>A woman</button>
-                    <button type="button" className={`v12-frame-pill ${estSex === 'male' ? 'active' : ''}`}
-                      onClick={() => { setEstSex('male'); if (estStandardSize === 'XS') setEstStandardSize('S'); }}>A man</button>
+                {askWearer ? (
+                  <div className="v12-step-card">
+                    <label className="v12-step-label">Who is this outfit for?</label>
+                    <div className="v12-frame-chips">
+                      <button type="button" className={`v12-frame-pill ${estSex === 'female' ? 'active' : ''}`}
+                        onClick={() => setEstSex('female')}>A woman</button>
+                      <button type="button" className={`v12-frame-pill ${estSex === 'male' ? 'active' : ''}`}
+                        onClick={() => { setEstSex('male'); if (estStandardSize === 'XS') setEstStandardSize('S'); }}>A man</button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <p className="v12-helper-text" style={{ margin: '0 0 4px' }}>
+                    Using {estSex === 'female' ? "women's" : "men's"} sizes for this outfit.{' '}
+                    <button type="button" className="bespoke-howto-toggle" style={{ margin: 0 }} onClick={() => setAskWearer(true)}>
+                      Change
+                    </button>
+                  </p>
+                )}
 
                 <div className="v12-step-card">
-                  <label className="v12-step-label">2. What size do you usually buy?</label>
+                  <label className="v12-step-label">What size do you usually buy?</label>
                   <div className="v12-size-chips">
                     {sizeOptions.map((sz) => (
                       <button key={sz} type="button" className={`v12-size-pill ${estStandardSize === sz ? 'active' : ''}`}
@@ -844,7 +859,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
                 </div>
 
                 <div className="v12-step-card">
-                  <label className="v12-step-label">3. How tall are you?</label>
+                  <label className="v12-step-label">How tall are you?</label>
                   <div className="v12-height-selects">
                     <select value={estHeightFeet} onChange={(e) => setEstHeightFeet(e.target.value)} className="v12-select" aria-label="Feet">
                       {['4', '5', '6'].map((f) => <option key={f} value={f}>{f} ft</option>)}
@@ -856,7 +871,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
                 </div>
 
                 <div className="v12-step-card">
-                  <label className="v12-step-label">4. Your build</label>
+                  <label className="v12-step-label">Your build</label>
                   <div className="v12-frame-chips">
                     <button type="button" className={`v12-frame-pill ${estBuild === 'slim' ? 'active' : ''}`} onClick={() => setEstBuild('slim')}>Slim</button>
                     <button type="button" className={`v12-frame-pill ${estBuild === 'regular' ? 'active' : ''}`} onClick={() => setEstBuild('regular')}>Average</button>

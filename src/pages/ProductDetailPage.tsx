@@ -809,6 +809,7 @@ export const ProductDetailPage: React.FC = () => {
           categoryName={product.category?.name}
           categorySlug={product.category?.slug}
           garmentTypeHint={product.size_chart?.garment_type}
+          wearer={product.wearer ?? null}
           currentMeasurements={bespokeMeasurements}
           onApplyMeasurements={(m) => { setBespokeMeasurements(m); setIsBespokeMode(true); }}
         />

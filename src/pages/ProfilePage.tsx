@@ -1,3 +1,4 @@
+import { FitQuestion } from '../components/orders/FitQuestion';
 import { crossFieldErrors, measurementEntries, measurementError, measurementLabel } from '../utils/measurements';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
@@ -835,6 +836,8 @@ export const ProfilePage: React.FC = () => {
                                 <span className="text-gold font-bold">Total: ₦{item.total_price_naira.toLocaleString()}</span>
                               </div>
                             </div>
+
+                            {canReview && <FitQuestion orderId={selectedOrder.id} item={item} />}
 
                             {canReview && (
                               <div className="item-review-action">

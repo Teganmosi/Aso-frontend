@@ -1424,3 +1424,16 @@
   border-radius: 999px;
   padding: 0.15rem 0.5rem;
 }
+
+/* Designer size chart editor */
+.size-chart-editor { margin-top: 1.1rem; }
+.size-chart-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #E5E7EB; border-radius: 10px; }
+.size-chart-table { width: 100%; border-collapse: collapse; min-width: 480px; }
+.size-chart-table th, .size-chart-table td { padding: 6px 8px; border-bottom: 1px solid #F3F4F6; text-align: left; vertical-align: top; }
+.size-chart-table thead th { font-size: 0.72rem; color: #6B7280; font-weight: 700; background: #F9FAFB; }
+.size-chart-table tbody th { font-weight: 800; color: #004B44; white-space: nowrap; }
+.size-chart-table .field-input { min-width: 84px; padding: 0.45rem 0.55rem; }
+.size-chart-table .input-error { border-color: #DC2626; background: #FEF2F2; }
+.size-chart-cell-error { display: block; font-size: 0.68rem; color: #B91C1C; font-weight: 600; margin-top: 2px; }
+.size-chart-col-toggles { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 0.6rem; }
+.size-chart-col-toggle { display: inline-flex; gap: 4px; align-items: center; font-size: 0.78rem; color: #374151; }

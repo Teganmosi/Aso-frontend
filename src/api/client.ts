@@ -333,6 +333,14 @@ export const productApi = {
     };
   },
 
+  /** Typical body measurements for the sizes a designer offers: a starting point for their chart. */
+  getTypicalSizeChart: async (params: { category_id?: string; title?: string; sizes: string[] }) => {
+    const res = await apiClient.get('/size-guide/typical/', {
+      params: { category_id: params.category_id || undefined, title: params.title || undefined, sizes: params.sizes.join(',') },
+    });
+    return res.data as { wearer: 'female' | 'male' | null; cut: string; columns: string[]; rows: Record<string, string>[] };
+  },
+
   /** One page of the catalogue (24 by default), for "Load more". */
   getPublicProductsPage: async (
     params: Record<string, string | number | undefined>,
@@ -548,6 +556,12 @@ export const mediaApi = {
 // ─── Order API ───────────────────────────────────────────────────────────────
 
 export const orderApi = {
+  /** "Did it fit?" for a delivered piece. Answering again replaces the earlier answer. */
+  submitFit: async (orderId: string, itemId: string, payload: { result: string; areas?: string[]; notes?: string }) => {
+    await fetchCsrfToken();
+    const res = await apiClient.post(`/orders/${orderId}/items/${itemId}/fit/`, payload);
+    return res.data;
+  },
   /** Shopper reports a problem with a delivered order; payment to the designer is put on hold. */
   reportProblem: async (orderId: string, reason: string): Promise<{ message: string; data: Order }> => {
     await fetchCsrfToken();
