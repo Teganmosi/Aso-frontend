@@ -1,3 +1,4 @@
+import { crossFieldErrors, measurementEntries, measurementError, measurementLabel } from '../utils/measurements';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -57,33 +58,40 @@ export const ProfilePage: React.FC = () => {
       const sm = user.saved_measurements;
       setSavedFitUnit(sm.unit || 'IN');
       const loaded: Record<string, string> = {};
-      Object.keys(sm).forEach(k => {
-        if (!['unit', 'notes', 'category_type', 'gender'].includes(k)) {
-          loaded[k] = String(sm[k] ?? '');
-        }
-      });
+      measurementEntries(sm).forEach(([k, v]) => { loaded[k] = v; });
       setSavedFitData(loaded);
       if (sm.notes) setSavedFitNotes(sm.notes);
     }
   }, [user]);
 
   const handleSaveAtelierFit = async () => {
+    const problems = Object.entries(savedFitData)
+      .map(([k, v]) => [k, measurementError(k, v, savedFitUnit)] as const)
+      .filter(([, e]) => e)
+      .map(([k, e]) => `${measurementLabel(k)}: ${e}`);
+    problems.push(...crossFieldErrors(savedFitData));
+    if (problems.length) {
+      setFitFeedback(problems.join(' '));
+      return;
+    }
     setFitSaving(true);
     setFitFeedback(null);
     try {
+      const values = Object.fromEntries(Object.entries(savedFitData).filter(([, v]) => String(v).trim() !== ''));
       const payload: BespokeMeasurements = {
         unit: savedFitUnit,
         notes: savedFitNotes.trim() || undefined,
-        ...savedFitData,
+        fit_source: 'manual_atelier',
+        ...values,
       };
       await measurementsApi.saveMeasurements(payload);
       if (user) {
         user.saved_measurements = payload;
       }
-      setFitFeedback('Your My Aso Fit atelier profile has been saved successfully!');
+      setFitFeedback('Your measurements are saved.');
       setTimeout(() => setFitFeedback(null), 4000);
     } catch (e) {
-      setFitFeedback('Failed to save measurements. Please try again.');
+      setFitFeedback(apiErrorMessage(e, 'Your measurements weren’t saved. Please try again.'));
     } finally {
       setFitSaving(false);
     }
@@ -1303,8 +1311,14 @@ export const ProfilePage: React.FC = () => {
                     placeholder="—"
                     value={savedFitData[f.key] || ''}
                     onChange={(e) => setSavedFitData(prev => ({ ...prev, [f.key]: e.target.value }))}
-                    style={{ width: '100%', border: '1px solid #D1D5DB', borderRadius: '6px', padding: '0.45rem 0.6rem', fontSize: '0.9rem', fontWeight: 600, outline: 'none', background: '#FFFFFF', boxSizing: 'border-box' }}
+                    aria-invalid={!!measurementError(f.key, savedFitData[f.key] || '', savedFitUnit)}
+                    style={{ width: '100%', border: `1px solid ${measurementError(f.key, savedFitData[f.key] || '', savedFitUnit) ? '#DC2626' : '#D1D5DB'}`, borderRadius: '6px', padding: '0.45rem 0.6rem', fontSize: '0.9rem', fontWeight: 600, outline: 'none', background: '#FFFFFF', boxSizing: 'border-box' }}
                   />
+                  {measurementError(f.key, savedFitData[f.key] || '', savedFitUnit) && (
+                    <span style={{ display: 'block', marginTop: 4, fontSize: '0.72rem', color: '#B91C1C', fontWeight: 600 }}>
+                      {measurementError(f.key, savedFitData[f.key] || '', savedFitUnit)}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

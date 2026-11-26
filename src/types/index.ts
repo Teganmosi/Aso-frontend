@@ -75,6 +75,8 @@ export interface SizeChart {
   stretch?: StretchLevel;
   unit_default?: 'IN' | 'CM';
   garment_type?: string;
+  /** True when the designer hasn't added a chart and Aso shows typical sizes instead. */
+  is_generic?: boolean;
   body_measurements?: BodyMeasurementRow[];
   garment_measurements?: {
     tops?: GarmentTopsRow[];

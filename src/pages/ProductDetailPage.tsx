@@ -1,3 +1,4 @@
+import { estimatedFields, measurementEntries, measurementLabel } from '../utils/measurements';
 import { BrandLoader } from '../components/common/BrandLoader';
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -586,19 +587,12 @@ export const ProductDetailPage: React.FC = () => {
                     </div>
 
                     {bespokeMeasurements && Object.keys(bespokeMeasurements).length > 0 ? (() => {
-                      const isSmartEstimated = bespokeMeasurements.fit_source === 'smart_estimator_v1.2';
-                      const sizeSnap = bespokeMeasurements.size_snapshot;
-                      const heightSnap = bespokeMeasurements.height_snapshot;
+                      const estCount = estimatedFields(bespokeMeasurements).length;
                       const unit = bespokeMeasurements.unit || 'IN';
-
-                      // Filter out internal metadata keys & non-scalar object maps
-                      const metaKeys = ['unit', 'category_type', 'notes', 'estimated_ranges', 'fit_source', 'height_snapshot', 'size_snapshot'];
-                      const keyMeasurements = Object.entries(bespokeMeasurements)
-                        .filter(([k, v]) => !metaKeys.includes(k) && typeof v !== 'object' && v !== undefined && v !== '' && !isNaN(Number(v)))
-                        .map(([k, v]) => ({
-                          label: k.replace(/_/g, ' '),
-                          value: `${v} ${unit.toLowerCase()}`
-                        }));
+                      const keyMeasurements = measurementEntries(bespokeMeasurements).map(([k, v]) => ({
+                        label: measurementLabel(k),
+                        value: `${v} ${unit.toLowerCase()}`,
+                      }));
 
                       const primaryPills = keyMeasurements.slice(0, 3);
 
@@ -608,10 +602,10 @@ export const ProductDetailPage: React.FC = () => {
                             <CheckCircle2 size={16} color="#10B981" style={{ flexShrink: 0 }} />
                             <div>
                               <div style={{ fontWeight: 700, color: '#0C3B2E', fontSize: '0.85rem' }}>
-                                {isSmartEstimated ? (
-                                  <>✨ Smart Fit Calibrated {sizeSnap ? `(Size ${sizeSnap}` : ''}{heightSnap ? ` • ${heightSnap})` : ')'}</>
+                                {estCount > 0 ? (
+                                  <>Measurements added ({estCount} rough estimate{estCount === 1 ? '' : 's'}; the designer will confirm)</>
                                 ) : (
-                                  <>Atelier Fit Configured ({unit})</>
+                                  <>Your measurements are added ({unit})</>
                                 )}
                               </div>
                               {primaryPills.length > 0 && (
@@ -627,7 +621,7 @@ export const ProductDetailPage: React.FC = () => {
                             className="btn-edit-bespoke-spec"
                             onClick={() => setShowBespokeModal(true)}
                           >
-                            Edit Spec
+                            Edit
                           </button>
                         </div>
                       );

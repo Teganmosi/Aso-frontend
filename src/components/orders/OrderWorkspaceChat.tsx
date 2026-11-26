@@ -10,7 +10,7 @@ import {
   Info,
   Lock
 } from 'lucide-react';
-import { orderChatApi } from '../../api/client';
+import { apiErrorMessage, orderChatApi } from '../../api/client';
 import type { OrderMessage } from '../../types';
 import './OrderWorkspaceChat.css';
 
@@ -51,6 +51,7 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
   // Resolving action state (Customer side)
   const [resolvingMsgId, setResolvingMsgId] = useState<string | null>(null);
   const [resolveValue, setResolveValue] = useState('');
+  const [resolveError, setResolveError] = useState<string | null>(null);
   const [resolveLoading, setResolveLoading] = useState(false);
 
   const feedContainerRef = useRef<HTMLDivElement>(null);
@@ -162,6 +163,7 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
   const handleResolveAction = async (msg: OrderMessage) => {
     if (!resolveValue.trim() || resolveLoading) return;
     setResolveLoading(true);
+    setResolveError(null);
     try {
       const key = msg.action_payload?.measurement_key || 'measurement';
       const auditMsg = await orderChatApi.resolveMeasurement(orderId, {
@@ -195,6 +197,7 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
       setResolveValue('');
     } catch (err) {
       console.error('Failed to resolve measurement', err);
+      setResolveError(apiErrorMessage(err, 'That number wasn’t saved. Please check it and try again.'));
     } finally {
       setResolveLoading(false);
     }
@@ -428,10 +431,15 @@ export const OrderWorkspaceChat: React.FC<OrderWorkspaceChatProps> = ({
                           <button
                             type="button"
                             className="btn-cancel-action"
-                            onClick={() => setResolvingMsgId(null)}
+                            onClick={() => { setResolvingMsgId(null); setResolveError(null); }}
                           >
                             Cancel
                           </button>
+                          {resolveError && (
+                            <p role="alert" style={{ flexBasis: '100%', margin: '0.35rem 0 0', color: '#B91C1C', fontSize: '0.78rem', fontWeight: 600 }}>
+                              {resolveError}
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <button

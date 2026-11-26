@@ -816,6 +816,7 @@ export const measurementsApi = {
 export const fitApi = {
   estimate: async (payload: {
     category?: string;
+    sex?: 'female' | 'male';
     rtw_size?: string;
     height_inches?: number;
     build?: string;

@@ -1,3 +1,4 @@
+import { estimatedFields, isFromGarment, measurementEntries, measurementLabel } from '../utils/measurements';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -744,12 +745,10 @@ export const CartPage: React.FC = () => {
                   {/* Bespoke Fit & Smart Estimator Spec Card */}
                   {item.custom_measurements && Object.keys(item.custom_measurements).length > 0 && (() => {
                     const m = item.custom_measurements;
-                    const isSmartEstimated = m.fit_source === 'smart_estimator_v1.2';
-                    const sizeSnap = m.size_snapshot || item.size;
-                    const heightSnap = m.height_snapshot;
+                    const estKeys = estimatedFields(m);
+                    const isSmartEstimated = estKeys.length > 0;
                     const unit = m.unit || 'IN';
-                    const metaKeys = ['unit', 'category_type', 'notes', 'estimated_ranges', 'fit_source', 'height_snapshot', 'size_snapshot'];
-                    const entries = Object.entries(m).filter(([k, v]) => !metaKeys.includes(k) && typeof v !== 'object' && v !== undefined && v !== '' && !isNaN(Number(v)));
+                    const entries = measurementEntries(m);
                     const ranges = m.estimated_ranges || {};
                     const isExpanded = expandedCutSheets.has(item.id);
 
@@ -761,11 +760,11 @@ export const CartPage: React.FC = () => {
                           </span>
                           {isSmartEstimated ? (
                             <span className="cart-bespoke-source-note">
-                              ✨ Calibrated via Smart Estimator (Size {sizeSnap}{heightSnap ? ` • ${heightSnap}` : ''})
+                              {estKeys.length} rough estimate{estKeys.length === 1 ? '' : 's'}: the designer will confirm with you before cutting
                             </span>
                           ) : (
                             <span className="cart-bespoke-source-note">
-                              📏 Your measurements ({unit})
+                              📏 {isFromGarment(m) ? 'Measured from clothes that fit' : 'Your measurements'} ({unit})
                             </span>
                           )}
                         </div>
@@ -773,7 +772,7 @@ export const CartPage: React.FC = () => {
                         {/* Primary Measurement Pills */}
                         <div className="cart-bespoke-dims-list">
                           {entries.slice(0, 4).map(([k, v]) => {
-                            const rangeObj = ranges[k];
+                            const rangeObj = estKeys.includes(k) ? ranges[k] : undefined;
                             const bracketStr = typeof rangeObj === 'object' && rangeObj !== null
                               ? (rangeObj.bracket || `${rangeObj.min} - ${rangeObj.max}`)
                               : typeof rangeObj === 'string'
@@ -781,11 +780,11 @@ export const CartPage: React.FC = () => {
                                 : null;
                             return (
                               <span key={k} className="cart-bespoke-dim-pill">
-                                <span className="dim-pill-key">{k.replace(/_/g, ' ')}:</span>
+                                <span className="dim-pill-key">{measurementLabel(k)}{estKeys.includes(k) ? ' (est.)' : ''}:</span>
                                 <span className="dim-pill-val">{v} {unit.toLowerCase()}</span>
                                 {bracketStr && (
-                                  <span className="dim-pill-bracket" title="Estimated safe range bracket">
-                                    ({bracketStr} {unit.toLowerCase()})
+                                  <span className="dim-pill-bracket" title="Likely range for an estimate">
+                                    (likely {bracketStr} in)
                                   </span>
                                 )}
                               </span>

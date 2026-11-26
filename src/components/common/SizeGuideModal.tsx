@@ -77,6 +77,13 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
           </button>
         </div>
 
+        {sizeChart?.is_generic && (
+          <div role="note" style={{ margin: '0 1.25rem', padding: '0.6rem 0.85rem', borderRadius: 8, background: '#FEF3C7', color: '#92400E', fontSize: '0.8rem', lineHeight: 1.45 }}>
+            <strong>General guide.</strong> This designer hasn't added their own size chart, so these are typical
+            sizes only. If you're between sizes or unsure, choose <strong>Custom fit</strong> and enter your measurements.
+          </div>
+        )}
+
         {/* Control Bar: Switch Sizing, Units, and Stretch */}
         <div className="size-guide-controls-bar">
           {/* Sizing Standard Switch */}

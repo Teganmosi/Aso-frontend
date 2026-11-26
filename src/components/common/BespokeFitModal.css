@@ -981,3 +981,32 @@
 .btn-apply-guide-spec:hover {
   background: #08291F;
 }
+
+/* ── Nov 2026: measured-on choice, how-to, required fields, errors, estimates ── */
+.bespoke-measured-on { margin: 0 0 12px; }
+.bespoke-measured-on__options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.bespoke-measured-on__btn {
+  display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px 12px; border-radius: 10px;
+  border: 1.5px solid #E5E7EB; background: #FFFFFF; cursor: pointer; font-family: inherit;
+}
+.bespoke-measured-on__btn strong { font-size: 0.85rem; color: #0C3B2E; }
+.bespoke-measured-on__btn span { font-size: 0.72rem; color: #6B7280; }
+.bespoke-measured-on__btn.active { border-color: #0C3B2E; background: #F0FDF4; }
+.bespoke-howto-toggle {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; padding: 0; border: none; background: none;
+  color: #065F46; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit; text-decoration: underline;
+}
+.bespoke-howto { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
+.bespoke-howto ul { margin: 0; padding-left: 18px; font-size: 0.8rem; color: #374151; line-height: 1.6; }
+.field-required { color: #B91C1C; font-weight: 700; }
+.field-optional { color: #9CA3AF; font-weight: 400; font-size: 0.72rem; }
+.bespoke-input-card.is-estimated { border-color: #F59E0B; background: #FFFBEB; }
+.bespoke-input-card.has-error { border-color: #DC2626; }
+.bespoke-input-wrapper input.input-error { border-color: #DC2626; background: #FEF2F2; }
+.field-error-text { display: flex; align-items: flex-start; gap: 4px; font-size: 0.72rem; color: #B91C1C; font-weight: 600; margin-top: 4px; }
+.bespoke-input-card.is-estimated .field-bracket-pill { background: #FEF3C7; color: #92400E; }
+.bespoke-cross-errors { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 8px 12px; margin: 10px 0; }
+.bespoke-cross-errors p { margin: 2px 0; color: #B91C1C; font-size: 0.8rem; font-weight: 600; display: flex; gap: 6px; align-items: center; }
+@media (max-width: 520px) {
+  .bespoke-measured-on__options { grid-template-columns: 1fr; }
+}

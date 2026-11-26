@@ -1,3 +1,4 @@
+import { estimatedFields, isEstimated, isFromGarment, measurementEntries, measurementLabel } from '../../utils/measurements';
 import React, { useState, useEffect, useRef } from 'react';
 import { orderApi, deliveryApi } from '../../api/client';
 import { orderStatusLabel } from './studioLabels';
@@ -28,12 +29,18 @@ interface OrdersManagementViewProps {
 export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRefreshStats }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrderRaw] = useState<Order | null>(null);
+  const setSelectedOrder: typeof setSelectedOrderRaw = (v) => { setActionError(null); setSelectedOrderRaw(v); };
   const [orderDetailTab, setOrderDetailTab] = useState<'DETAILS' | 'WORKSPACE'>('DETAILS');
   
   // Filtering Tabs
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'PAID' | 'PREPARING' | 'READY_FOR_PICKUP' | 'DELIVERY' | 'COMPLETED'>('ALL');
   const [updateLoading, setUpdateLoading] = useState<string | null>(null);
+  // Shown when a status change fails, so a designer never thinks an order moved when it didn't.
+  const [actionError, setActionError] = useState<string | null>(null);
+  const failMessage = (err: any, what: string) =>
+    err?.response?.data?.detail || err?.response?.data?.message ||
+    `Couldn't ${what}. Check your connection and try again. Nothing was changed.`;
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
@@ -92,6 +99,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
   // Handler: Order Acceptance
   const handleAcceptOrder = async (orderId: string) => {
     setUpdateLoading('accept');
+    setActionError(null);
     try {
       await orderApi.acceptOrder(orderId);
       await loadOrders();
@@ -100,11 +108,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
       }
       if (onRefreshStats) onRefreshStats();
     } catch (err: any) {
-      // Local fallback for smooth demonstration
-      setOrders(orders.map(o => o.id === orderId ? { ...o, order_status: 'VENDOR_ACCEPTED' } : o));
-      if (selectedOrder?.id === orderId) {
-        setSelectedOrder(prev => prev ? { ...prev, order_status: 'VENDOR_ACCEPTED' } : null);
-      }
+      setActionError(failMessage(err, 'accept the order'));
     } finally {
       setUpdateLoading(null);
     }
@@ -112,7 +116,15 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
 
   // Handler: Move to Preparing / Tailoring
   const handlePreparingOrder = async (orderId: string) => {
+    const target = orders.find(o => o.id === orderId) || selectedOrder;
+    const estimatedItems = (target?.items || []).filter((it: any) => isEstimated(it.custom_measurements));
+    if (estimatedItems.length && !window.confirm(
+      'Some measurements on this order are rough estimates, not measured. ' +
+      'Have you confirmed them with the shopper? Press OK only if you have.')) {
+      return;
+    }
     setUpdateLoading('preparing');
+    setActionError(null);
     try {
       await orderApi.preparingOrder(orderId);
       await loadOrders();
@@ -120,10 +132,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
         setSelectedOrder(prev => prev ? { ...prev, order_status: 'PREPARING' } : null);
       }
     } catch (err: any) {
-      setOrders(orders.map(o => o.id === orderId ? { ...o, order_status: 'PREPARING' } : o));
-      if (selectedOrder?.id === orderId) {
-        setSelectedOrder(prev => prev ? { ...prev, order_status: 'PREPARING' } : null);
-      }
+      setActionError(failMessage(err, 'start sewing on this order'));
     } finally {
       setUpdateLoading(null);
     }
@@ -132,6 +141,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
   // Handler: Mark Ready for Courier Pickup
   const handleReadyOrder = async (orderId: string) => {
     setUpdateLoading('ready');
+    setActionError(null);
     try {
       await orderApi.readyOrder(orderId);
       await loadOrders();
@@ -145,10 +155,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
         console.warn('Failed to load delivery immediately after readying', e);
       }
     } catch (err: any) {
-      setOrders(orders.map(o => o.id === orderId ? { ...o, order_status: 'READY_FOR_PICKUP' } : o));
-      if (selectedOrder?.id === orderId) {
-        setSelectedOrder(prev => prev ? { ...prev, order_status: 'READY_FOR_PICKUP' } : null);
-      }
+      setActionError(failMessage(err, 'mark the order ready'));
     } finally {
       setUpdateLoading(null);
     }
@@ -349,6 +356,11 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                   {orderStatusLabel(selectedOrder.order_status)}
                 </span>
               </div>
+              {actionError && (
+                <div role="alert" style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', borderRadius: 8, padding: '0.6rem 0.8rem', margin: '0.5rem 0', fontSize: '0.85rem', fontWeight: 600 }}>
+                  {actionError}
+                </div>
+              )}
 
               {/* Workspace / Details Tab Switcher */}
               <div className="order-detail-tab-switcher">
@@ -543,27 +555,34 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                                 <Scissors size={13} color="#D4AF37" />
                                 <span>Shopper’s measurements ({item.custom_measurements.unit || 'IN'}):</span>
                               </div>
-                              {item.custom_measurements.fit_source === 'smart_estimator_v1.2' && (
-                                <span style={{ fontSize: '0.7rem', fontWeight: 600, background: '#FEF3C7', color: '#92400E', padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
-                                  ✨ Smart Fit Spec ({item.custom_measurements.size_snapshot || 'L'} • {item.custom_measurements.height_snapshot || "5'10\""})
+                              {isFromGarment(item.custom_measurements) && (
+                                <span style={{ fontSize: '0.7rem', fontWeight: 600, background: '#E0F2FE', color: '#075985', padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
+                                  Measured from clothes that fit (room already included)
                                 </span>
                               )}
                             </div>
+                            {isEstimated(item.custom_measurements) && (
+                              <div role="alert" style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', borderRadius: '6px', padding: '0.45rem 0.6rem', fontSize: '0.75rem', marginBottom: '0.45rem', lineHeight: 1.45 }}>
+                                <strong>Confirm before cutting.</strong> {estimatedFields(item.custom_measurements).length} of these measurements are rough estimates from the shopper's size and height
+                                {item.custom_measurements.size_snapshot ? ` (${item.custom_measurements.sex === 'female' ? 'woman' : item.custom_measurements.sex === 'male' ? 'man' : 'size'} ${item.custom_measurements.size_snapshot}${item.custom_measurements.height_snapshot ? `, ${item.custom_measurements.height_snapshot}` : ''})` : ''}, not measured.
+                                Message or call the shopper to confirm them before you cut. Use "Request re-check" in the chat to update a number.
+                              </div>
+                            )}
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.4rem', fontSize: '0.78rem' }}>
-                              {Object.entries(item.custom_measurements)
-                                .filter(([k]) => !['unit', 'category_type', 'notes', 'estimated_ranges', 'fit_source', 'height_snapshot', 'size_snapshot'].includes(k))
+                              {measurementEntries(item.custom_measurements)
                                 .map(([k, v]) => {
-                                  const rangeInfo = item.custom_measurements?.estimated_ranges?.[k];
+                                  const est = estimatedFields(item.custom_measurements).includes(k);
+                                  const rangeInfo = est ? item.custom_measurements?.estimated_ranges?.[k] : undefined;
                                   const bracketStr = typeof rangeInfo === 'object' && rangeInfo !== null ? rangeInfo.bracket : rangeInfo;
                                   return (
-                                    <div key={k} style={{ background: '#FFFFFF', padding: '0.35rem 0.55rem', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
-                                      <div style={{ color: '#6B7280', textTransform: 'capitalize', fontSize: '0.72rem' }}>{k.replace(/_/g, ' ')}:</div>
+                                    <div key={k} style={{ background: est ? '#FFFBEB' : '#FFFFFF', padding: '0.35rem 0.55rem', borderRadius: '6px', border: `1px solid ${est ? '#F59E0B' : '#E5E7EB'}` }}>
+                                      <div style={{ color: '#6B7280', fontSize: '0.72rem' }}>{measurementLabel(k)}{est ? ' (estimate)' : ''}:</div>
                                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
                                         <strong style={{ color: '#0C3B2E', fontSize: '0.85rem' }}>{String(v)} {item.custom_measurements?.unit?.toLowerCase() || 'in'}</strong>
                                       </div>
                                       {bracketStr && (
                                         <div style={{ fontSize: '0.68rem', color: '#065F46', fontWeight: 600 }}>
-                                          Bracket: {bracketStr} in
+                                          Likely {bracketStr} in
                                         </div>
                                       )}
                                     </div>
@@ -572,7 +591,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ onRe
                             </div>
                             {item.custom_measurements.notes && (
                               <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#92400E', background: '#FEF3C7', padding: '0.35rem 0.55rem', borderRadius: '6px' }}>
-                                <strong>Drape Notes:</strong> {item.custom_measurements.notes}
+                                <strong>Shopper's notes:</strong> {item.custom_measurements.notes}
                               </div>
                             )}
                           </div>
