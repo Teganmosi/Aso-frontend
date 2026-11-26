@@ -27,13 +27,33 @@ import { categoryApi, productApi, mediaApi, describeUploadError } from '../../ap
 import type { Category, ProductItem, CreateProductPayload } from '../../types';
 import { MEASUREMENT_LIMITS } from '../../utils/measurements';
 
+// How a piece is sized. Same rules as the server (apps/products/sizing.py fit_kind), so the
+// designer sees the same thing shoppers will: caps by head, beads and geles one size.
+const CLOTHING_WORDS = /agbada|kaftan|caftan|dashiki|jalabiya|senator|tunic|shirt|\bsuit\b|blazer|two-piece|2-piece|co-ord|tuxedo|pantsuit|boubou|bubu|abaya|rich auntie|trouser|\bpants?\b|palazzo|shorts|jogger|corset|boned|gown|dress|skirt|aso ebi|\biro\b|buba/;
+const HEADWEAR_WORDS = /\b(caps?|fila|filas|filan|hats?|beret|crowns?|turbans?|kufi|skull ?cap|abeti[- ]?aja)\b/;
+const ONE_SIZE_WORDS = /\b(beads?|coral|necklaces?|bracelets?|bangles?|earrings?|jewel(?:le)?ry|rings?|anklets?|gele|geles|head ?ties?|head ?wraps?|headbands?|sash|sashes|bags?|purses?|clutch|clutches|headpieces?|hand ?fans?|fans?|brooch|cufflinks?|ipele|shawl|stole|scarf|scarves|irukere|walking stick)\b/;
+export type PieceKind = 'clothing' | 'headwear' | 'one_size';
+export const pieceKindFor = (title: string, categoryName: string, department: string): PieceKind => {
+  const t = (title || '').toLowerCase().replace(/head ?(dress|piece)/g, 'headpiece');
+  if (CLOTHING_WORDS.test(t)) return 'clothing';
+  if (HEADWEAR_WORDS.test(t)) return 'headwear';
+  if (ONE_SIZE_WORDS.test(t)) return 'one_size';
+  if (department === 'Accessories') {
+    const c = (categoryName || '').toLowerCase();
+    return HEADWEAR_WORDS.test(c) || c.includes('headwear') ? 'headwear' : 'one_size';
+  }
+  return 'clothing';
+};
+
 // Designer size chart: columns, labels, and the limits each column is checked against.
 const CHART_COLUMN_ORDER = ['bust', 'underbust', 'waist', 'hip', 'neck_collar'];
 const CHART_LABELS: Record<string, string> = {
   bust: 'Bust / chest', underbust: 'Underbust', waist: 'Waist', hip: 'Hips', neck_collar: 'Neck', length: 'Length of the piece',
+  head: 'Head',
 };
 const CHART_LIMITS: Record<string, string> = {
   bust: 'chest_bust', underbust: 'underbust', waist: 'waist', hip: 'hips', neck_collar: 'neck_collar', length: 'top_length',
+  head: 'head',
 };
 /** One chart cell: a number or a range in inches. Returns a short problem, or null. */
 const chartCellError = (col: string, raw: string): string | null => {
@@ -195,7 +215,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     const sc = (productToEdit?.raw_product?.size_chart as any) || {};
     const out: Record<string, Record<string, string>> = {};
     (sc.body_measurements || []).forEach((r: any) => {
-      out[r.size] = { bust: r.bust || '', underbust: r.underbust || '', waist: r.waist || '', hip: r.hip || '', neck_collar: r.neck_collar || '' };
+      out[r.size] = { bust: r.bust || '', underbust: r.underbust || '', waist: r.waist || '', hip: r.hip || '', neck_collar: r.neck_collar || '', head: r.head || '' };
     });
     (sc.garment_measurements?.tops || []).forEach((r: any) => {
       out[r.size] = { ...(out[r.size] || {}), length: r.length || '' };
@@ -448,6 +468,14 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     setImages([target, ...rest]);
   };
 
+  // Caps are sized by head; beads, geles and the like are one size.
+  const pieceKind: PieceKind = pieceKindFor(
+    productName, categories.find((c) => c.id === categoryId)?.name || '', selectedDepartment,
+  );
+  // Size-chart columns for this kind of piece (length only matters for clothing).
+  const bodyCols = pieceKind === 'headwear' ? ['head'] : chartCols.filter((c) => c !== 'head');
+  const tableCols = pieceKind === 'headwear' ? bodyCols : [...bodyCols, 'length'];
+
   // Sizes that get a row in the size chart (not "Free Size" or custom fit).
   const chartSizes = selectedSizes.filter((s) => !/free|bespoke|custom/i.test(s));
   const setChartCell = (size: string, col: string, value: string) =>
@@ -459,9 +487,9 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     setTypicalNote('');
     try {
       const res = await productApi.getTypicalSizeChart({ category_id: categoryId, title: productName, sizes: chartSizes });
-      const colMap: Record<string, string> = { chest_bust: 'bust', underbust: 'underbust', waist: 'waist', hips: 'hip', neck_collar: 'neck_collar' };
+      const colMap: Record<string, string> = { chest_bust: 'bust', underbust: 'underbust', waist: 'waist', hips: 'hip', neck_collar: 'neck_collar', head: 'head' };
       const cols = res.columns.map((c) => colMap[c]).filter(Boolean);
-      if (cols.length) setChartCols(cols);
+      if (cols.length && pieceKind === 'clothing') setChartCols(cols);
       setChartRows((prev) => {
         const next = { ...prev };
         res.rows.forEach((r) => {
@@ -473,7 +501,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         return next;
       });
       const missing = chartSizes.filter((s) => !res.rows.some((r) => r.size === s));
-      const who = res.wearer === 'male' ? "men's " : res.wearer === 'female' ? "women's " : '';
+      const who = pieceKind === 'headwear' ? 'head ' : res.wearer === 'male' ? "men's " : res.wearer === 'female' ? "women's " : '';
       setTypicalNote(
         `Filled with typical ${who}sizes. Change any number that doesn't match how you cut.` +
         (missing.length ? ` No typical numbers for ${missing.join(', ')}: please fill those in.` : ''),
@@ -519,7 +547,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
     }
 
     const chartProblems: string[] = [];
-    chartSizes.forEach((sz) => [...chartCols, 'length'].forEach((col) => {
+    chartSizes.forEach((sz) => tableCols.forEach((col) => {
       const e = chartCellError(col, chartRows[sz]?.[col] || '');
       if (e) chartProblems.push(`Size chart, ${sz} ${CHART_LABELS[col].toLowerCase()}: ${e}.`);
     }));
@@ -538,8 +566,11 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         targetCategoryId = categories[0].id;
       }
 
-      const finalSizes = [...selectedSizes];
-      if (allowBespoke && !finalSizes.includes('Bespoke Fit')) {
+      // Beads, geles and similar are one size, with no size chart and no custom measurements.
+      const isOneSize = pieceKind === 'one_size';
+      const offerCustomFit = allowBespoke && !isOneSize;
+      const finalSizes = isOneSize ? ['Free Size'] : [...selectedSizes];
+      if (offerCustomFit && !finalSizes.includes('Bespoke Fit')) {
         finalSizes.push('Bespoke Fit');
       }
 
@@ -547,13 +578,13 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
         stretch: stretchLevel,
         unit_default: 'IN' as const,
         garment_type: garmentCut,
-        sizing_system: allowBespoke ? 'HYBRID' : 'STANDARD',
-        allows_custom_tailoring: allowBespoke,
-        body_measurements: chartSizes
+        sizing_system: offerCustomFit ? 'HYBRID' : 'STANDARD',
+        allows_custom_tailoring: offerCustomFit,
+        body_measurements: (isOneSize ? [] : chartSizes)
           .map((sz) => {
             const r = chartRows[sz] || {};
             const row: Record<string, string> & { size: string } = { size: sz };
-            [...chartCols, 'length'].forEach((c) => { if ((r[c] || '').trim()) row[c] = r[c].trim(); });
+            tableCols.forEach((c) => { if ((r[c] || '').trim()) row[c] = r[c].trim(); });
             return row;
           })
           .filter((row) => Object.keys(row).length > 1),
@@ -802,7 +833,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
               <label className="field-label">Description</label>
               <textarea
                 className="field-textarea"
-                placeholder="Detail the fabric composition (e.g. 100% Swiss Damask, Aso Oke), embroidery motif, silhouette cut, and styling recommendations..."
+                placeholder="e.g. Hand-woven Aso Oke with gold embroidery on the chest. Loose, flowing cut. Comes with a matching cap."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
@@ -951,7 +982,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
 
             {/* Fulfillment Mode Switch */}
             <div className="field-group">
-              <label className="field-label">Production &amp; Inventory Model *</label>
+              <label className="field-label">Made to order or ready? *</label>
               <div className="fulfillment-switch-row">
                 <div
                   className={`fulfillment-card-option ${fulfillmentMode === 'MADE_TO_ORDER' ? 'active' : ''}`}
@@ -961,7 +992,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                     <span className="fulfillment-title">✨ Made to order</span>
                     {fulfillmentMode === 'MADE_TO_ORDER' && <Check size={16} color="#004B44" />}
                   </div>
-                  <p>You sew it after the shopper pays, within the time you choose below.</p>
+                  <p>You make it after the shopper pays, within the time you choose below.</p>
                 </div>
 
                 <div
@@ -972,7 +1003,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                     <span className="fulfillment-title">📦 Ready to wear (in stock)</span>
                     {fulfillmentMode === 'READY_TO_WEAR' && <Check size={16} color="#004B44" />}
                   </div>
-                  <p>Already sewn. You hand it to the rider within 24 hours of the order.</p>
+                  <p>Already made. You hand it to the rider within 24 hours of the order.</p>
                 </div>
               </div>
             </div>
@@ -980,7 +1011,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
             {/* Conditional: Prep Days vs Stock Units */}
             {fulfillmentMode === 'MADE_TO_ORDER' ? (
               <div className="field-group">
-                <label className="field-label">How many days do you need to sew it? *</label>
+                <label className="field-label">How many days do you need to make it? *</label>
                 <div className="lead-time-options-bar">
                   {['2', '3', '5', '7', '10', '14'].map((days) => (
                     <button
@@ -1028,14 +1059,28 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
               </div>
             </div>
 
+            {pieceKind === 'one_size' && (
+              <div className="field-group">
+                <label className="field-label">One size</label>
+                <p className="field-hint-text">
+                  Beads, geles and similar accessories are sold as one size, so there are no sizes or
+                  measurements to set. If this piece does come in sizes, give it a name that says what it is
+                  (for example "Velvet Fila Cap").
+                </p>
+              </div>
+            )}
+
             {/* Section A: Standard Ready-To-Wear Sizes */}
+            {pieceKind !== 'one_size' && (<>
             <div className="field-group">
               <div className="field-label-row">
                 <label className="field-label">Standard sizes</label>
                 <span className="char-counter">{selectedSizes.length} sizes active</span>
               </div>
               <p className="field-hint-text" style={{ marginBottom: '0.65rem' }}>
-                Tap every size you can make this piece in.
+                {pieceKind === 'headwear'
+                  ? 'Tap every cap size you make. Use Free Size for an adjustable cap.'
+                  : 'Tap every size you can make this piece in.'}
               </p>
 
               {/* Size Chips Matrix */}
@@ -1097,8 +1142,11 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                   </button>
                 </div>
                 <p className="field-hint-text" style={{ marginBottom: '0.6rem' }}>
-                  The body measurements each size fits, in inches (a number or a range like 36-38). Shoppers choose their
-                  size from this, so match how you cut. Without it, shoppers see a general guide.
+                  {pieceKind === 'headwear'
+                    ? <>The head size each cap fits, in inches, measured round the head just above the ears (a range like
+                      22-22.75). Shoppers choose their size from this. Without it, shoppers see a general guide.</>
+                    : <>The body measurements each size fits, in inches (a number or a range like 36-38). Shoppers choose their
+                      size from this, so match how you cut. Without it, shoppers see a general guide.</>}
                 </p>
                 {typicalNote && <p className="field-hint-text" role="status" style={{ color: '#065F46', fontWeight: 600 }}>{typicalNote}</p>}
                 <div className="size-chart-table-wrap">
@@ -1106,14 +1154,14 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                     <thead>
                       <tr>
                         <th>Size</th>
-                        {[...chartCols, 'length'].map((c) => <th key={c}>{CHART_LABELS[c]}{c === 'length' ? ' (optional)' : ''}</th>)}
+                        {tableCols.map((c) => <th key={c}>{CHART_LABELS[c]}{c === 'length' ? ' (optional)' : ''}</th>)}
                       </tr>
                     </thead>
                     <tbody>
                       {chartSizes.map((sz) => (
                         <tr key={sz}>
                           <th scope="row">{sz}</th>
-                          {[...chartCols, 'length'].map((c) => {
+                          {tableCols.map((c) => {
                             const v = chartRows[sz]?.[c] || '';
                             const e = chartCellError(c, v);
                             return (
@@ -1122,7 +1170,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                                   className={`field-input${e ? ' input-error' : ''}`}
                                   inputMode="decimal"
                                   value={v}
-                                  placeholder={c === 'length' ? 'e.g. 56' : 'e.g. 36-38'}
+                                  placeholder={c === 'length' ? 'e.g. 56' : c === 'head' ? 'e.g. 22-22.75' : 'e.g. 36-38'}
                                   aria-label={`${sz} ${CHART_LABELS[c]}`}
                                   aria-invalid={!!e}
                                   onChange={(ev) => setChartCell(sz, c, ev.target.value)}
@@ -1136,6 +1184,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                     </tbody>
                   </table>
                 </div>
+                {pieceKind === 'clothing' && (
                 <div className="size-chart-col-toggles">
                   <span className="field-hint-text">Columns:</span>
                   {CHART_COLUMN_ORDER.map((c) => (
@@ -1151,6 +1200,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                     </label>
                   ))}
                 </div>
+                )}
               </div>
             )}
 
@@ -1164,7 +1214,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                     <span className="badge-recommended">Recommended</span>
                   </div>
                   <p className="bespoke-enable-desc">
-                    Shoppers can pick a standard size or choose <strong>Custom fit</strong> and send their measurements (bust/chest, waist, hips, sleeve, length).
+                    Shoppers can pick a standard size or choose <strong>Custom fit</strong> and send their {pieceKind === 'headwear' ? 'head measurement' : 'measurements (bust/chest, waist, hips, sleeve, length)'}.
                   </p>
                 </div>
                 <label className="aso-switch">
@@ -1186,6 +1236,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 </div>
               )}
             </div>
+            </>)}
           </div>
 
           {/* Card 5: Color Swatches & Stretch */}
@@ -1254,20 +1305,21 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 </div>
                 <button type="submit" className="btn-save-draft" style={{ whiteSpace: 'nowrap' }}>
                   <Plus size={14} />
-                  <span>Add Color</span>
+                  <span>Add colour</span>
                 </button>
               </form>
             </div>
 
+            {pieceKind === 'clothing' && (<>
             {/* Garment Cut / Silhouette */}
             <div className="field-group" style={{ marginTop: '1rem' }}>
               <label className="field-label">Cut</label>
               <div className="lead-time-options-bar">
                 {[
-                  { id: 'TAILORED', label: 'Tailored Fit (Traditional)' },
-                  { id: 'REGULAR', label: 'Regular Classic' },
-                  { id: 'SLIM', label: 'Slim / Form-Fitting' },
-                  { id: 'OVERSIZED', label: 'Oversized / Flowing' },
+                  { id: 'TAILORED', label: 'Tailored (traditional)' },
+                  { id: 'REGULAR', label: 'Regular' },
+                  { id: 'SLIM', label: 'Slim / fitted' },
+                  { id: 'OVERSIZED', label: 'Loose / flowing' },
                 ].map((c) => (
                   <button
                     key={c.id}
@@ -1286,10 +1338,10 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
               <label className="field-label">Fabric stretch</label>
               <div className="lead-time-options-bar">
                 {[
-                  { id: 'NON', label: 'No Stretch (Structured)' },
-                  { id: 'SLIGHT', label: 'Slight Stretch' },
-                  { id: 'MEDIUM', label: 'Medium Stretch' },
-                  { id: 'HIGH', label: 'High Stretch (Spandex)' },
+                  { id: 'NON', label: 'No stretch' },
+                  { id: 'SLIGHT', label: 'A little stretch' },
+                  { id: 'MEDIUM', label: 'Some stretch' },
+                  { id: 'HIGH', label: 'Very stretchy' },
                 ].map((s) => (
                   <button
                     key={s.id}
@@ -1302,6 +1354,7 @@ export const AddProductView: React.FC<AddProductViewProps> = ({
                 ))}
               </div>
             </div>
+            </>)}
           </div>
         </div>
 

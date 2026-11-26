@@ -2,7 +2,7 @@
 export interface BespokeMeasurements {
   unit: 'IN' | 'CM';
   gender?: 'men' | 'women' | 'unisex';
-  category_type?: 'tops_senator' | 'trousers' | 'corset_gown' | 'full_set' | 'boubou' | 'custom';
+  category_type?: 'tops_senator' | 'trousers' | 'corset_gown' | 'full_set' | 'boubou' | 'headwear' | 'custom';
   chest_bust?: number | string;
   underbust?: number | string;
   waist?: number | string;
@@ -41,6 +41,9 @@ export interface BodyMeasurementRow {
   underbust_cm?: string;
   neck_collar?: string;
   neck_collar_cm?: string;
+  /** Caps: head measurement this size fits. */
+  head?: string;
+  head_cm?: string;
 }
 
 export interface GarmentTopsRow {
@@ -83,6 +86,7 @@ export interface SizeChart {
   garment_type?: string;
   /** True when the designer hasn't added a chart and Aso shows typical sizes instead. */
   is_generic?: boolean;
+  fit_kind?: FitKind;
   /** Who the general guide is for. */
   wearer?: 'female' | 'male' | null;
   allows_custom_tailoring?: boolean;
@@ -263,6 +267,8 @@ export interface Product {
   title: string;
   /** Who the piece is for, worked out from its department and title (null: can't tell). */
   wearer?: 'female' | 'male' | null;
+  /** clothing, headwear (sized by head) or one_size (beads, geles...). */
+  fit_kind?: FitKind;
   slug: string;
   description: string;
   base_price_kobo: number;
@@ -626,3 +632,6 @@ export interface OrderMessage {
   read_at?: string | null;
   created_at: string;
 }
+
+/** How a piece is sized: clothing by body, caps by head, beads and geles one size. */
+export type FitKind = 'clothing' | 'headwear' | 'one_size';

@@ -213,12 +213,18 @@ export const ProductDetailPage: React.FC = () => {
     const isCustomSize = (size: string) => /bespoke|custom/i.test(size);
     // Custom fit only when the shopper chose it; measurements typed earlier don't follow a standard size.
     const isBespoke = isBespokeMode || isCustomSize(selectedVariant.size);
+    const customVariant = product?.variants?.find(v => isCustomSize(v.size) && v.is_active);
+    if (isBespoke && !customVariant) {
+      // The designer doesn't take custom measurements for this piece.
+      setIsBespokeMode(false);
+      setCartMessage({ type: 'error', text: 'This piece is only sold in the sizes shown. Please choose a size.' });
+      return;
+    }
     // Custom-fit orders go on the piece's custom-fit variant (same colour if possible), so the
     // designer sees "Bespoke Fit" on the order instead of the last standard size tapped.
     const variantToAdd = isBespoke
       ? (product?.variants?.find(v => isCustomSize(v.size) && v.is_active && (!selectedColor || v.color?.toLowerCase() === selectedColor.toLowerCase()))
-        || product?.variants?.find(v => isCustomSize(v.size) && v.is_active)
-        || selectedVariant)
+        || customVariant || selectedVariant)
       : selectedVariant;
     if (isBespoke && !hasBespokeMeasurements) {
       setShowBespokeModal(true);
@@ -431,10 +437,16 @@ export const ProductDetailPage: React.FC = () => {
             // Active display values
             const currentColor = selectedColor || (selectedVariant?.color && selectedVariant.color !== 'Standard' ? selectedVariant.color : '');
             const currentSize = selectedSize || selectedVariant?.size || '';
+            // Custom fit only when the designer offers it (they add a custom-fit option to the piece).
+            const offersCustomFit = product.fit_kind !== 'one_size'
+              && variants.some(v => /bespoke|custom/i.test(v.size) && v.is_active);
+            const hasSizeGuide = product.fit_kind !== 'one_size'
+              && (product.size_chart?.body_measurements?.length ?? 0) > 0;
 
             return (
               <div className="pdp-variants-section">
                 {/* Sizing Track Mode Selector Tabs */}
+                {offersCustomFit && (
                 <div className="pdp-track-mode-tabs">
                   <button
                     type="button"
@@ -455,6 +467,7 @@ export const ProductDetailPage: React.FC = () => {
                     <span>Custom fit</span>
                   </button>
                 </div>
+                )}
 
                 {/* TIER 1: Color Palette Selector (Only shown if vendor offered multiple colors) */}
                 {uniqueColors.length > 1 && !isBespokeMode && (
@@ -514,7 +527,7 @@ export const ProductDetailPage: React.FC = () => {
                         </>
                       )}
                     </p>
-                    {!isBespokeMode && (
+                    {!isBespokeMode && hasSizeGuide && (
                       <button
                         className="pdp-size-guide-btn"
                         onClick={() => setShowSizeGuide(true)}
@@ -552,6 +565,7 @@ export const ProductDetailPage: React.FC = () => {
                     })}
 
                     {/* Dedicated Bespoke Chip */}
+                    {offersCustomFit && (
                     <button
                       type="button"
                       className={`pdp-variant-chip pdp-bespoke-chip ${isBespokeMode ? 'active' : ''}`}
@@ -563,6 +577,7 @@ export const ProductDetailPage: React.FC = () => {
                       <Scissors size={12} className="chip-scissors-icon" />
                       <span>Bespoke Fit</span>
                     </button>
+                    )}
                   </div>
                 </div>
 
@@ -810,6 +825,7 @@ export const ProductDetailPage: React.FC = () => {
           categorySlug={product.category?.slug}
           garmentTypeHint={product.size_chart?.garment_type}
           wearer={product.wearer ?? null}
+          fitKind={product.fit_kind ?? null}
           currentMeasurements={bespokeMeasurements}
           onApplyMeasurements={(m) => { setBespokeMeasurements(m); setIsBespokeMode(true); }}
         />

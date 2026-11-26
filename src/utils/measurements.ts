@@ -27,6 +27,7 @@ export const MEASUREMENT_LIMITS: Record<string, { label: string; min: number; ma
   thigh: { label: 'Thigh', min: 12, max: 45 },
   ankle_opening: { label: 'Ankle opening', min: 6, max: 30 },
   shoulder_to_underbust: { label: 'Shoulder to underbust', min: 6, max: 25 },
+  head: { label: 'Head', min: 17, max: 28 },
 };
 
 export const measurementLabel = (key: string): string =>

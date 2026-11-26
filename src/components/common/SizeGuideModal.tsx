@@ -23,6 +23,7 @@ const BODY_COLUMNS: [keyof BodyMeasurementRow, string, string | null][] = [
   ['waist', 'Waist', 'waist'],
   ['hip', 'Hips', 'hips'],
   ['neck_collar', 'Neck', 'neck_collar'],
+  ['head', 'Head', 'head'],
 ];
 
 const STRETCH: Record<string, { label: string; desc: string }> = {
@@ -74,6 +75,9 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
 
   const columns = BODY_COLUMNS.filter(([key]) => bodyRows.some((r) => r[key]));
   const showUk = bodyRows.some((r) => r.uk_size);
+  const isHead = columns.some(([k]) => k === 'head');
+  // Only point shoppers to Custom fit when the designer offers it on this piece.
+  const offersCustom = variants.some((v) => /bespoke|custom/i.test(v.size) && v.is_active !== false);
   const showUs = !sizeChart?.is_generic && bodyRows.some((r) => r.us_size);
   const showHeight = !sizeChart?.is_generic && bodyRows.some((r) => r.height);
   const stretch = sizeChart?.stretch ? STRETCH[sizeChart.stretch] : null;
@@ -134,9 +138,9 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
         {sizeChart?.is_generic ? (
           <div role="note" style={{ margin: '0 1.25rem', padding: '0.6rem 0.85rem', borderRadius: 8, background: '#FEF3C7', color: '#92400E', fontSize: '0.8rem', lineHeight: 1.45 }}>
             <strong>General guide.</strong> This designer hasn't added their own size chart, so these are typical
-            {sizeChart.wearer === 'male' ? " men's" : sizeChart.wearer === 'female' ? " women's" : ''} body measurements
-            for each size. If you're between sizes or unsure,
-            {sizeChart.allows_custom_tailoring !== false ? <> choose <strong>Custom fit</strong> and send your measurements.</> : ' choose the bigger size.'}
+            {isHead ? ' head sizes' : <>{sizeChart.wearer === 'male' ? " men's" : sizeChart.wearer === 'female' ? " women's" : ''} body measurements</>}
+            {' '}for each size. If you're between sizes or unsure,
+            {offersCustom ? <> choose <strong>Custom fit</strong> and send your measurements.</> : ' choose the bigger size.'}
           </div>
         ) : (
           <div role="note" style={{ margin: '0 1.25rem', padding: '0.5rem 0.85rem', borderRadius: 8, background: '#ECFDF5', color: '#065F46', fontSize: '0.8rem' }}>
@@ -198,8 +202,10 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
                 <div className="table-disclaimer-banner">
                   <Info size={14} color="#0C3B2E" />
                   <span>
-                    Measure your body, not your clothes, and pick the size whose ranges fit you. If you're between two
-                    sizes, choose the bigger one (or Custom fit).
+                    {isHead
+                      ? 'Measure round your head, just above your ears and eyebrows, and pick the size whose range fits you.'
+                      : 'Measure your body, not your clothes, and pick the size whose ranges fit you.'}
+                    {' '}If you're between two sizes, choose the bigger one{offersCustom ? ' (or Custom fit)' : ''}.
                   </span>
                 </div>
                 <div className="table-responsive-wrapper">
@@ -282,14 +288,17 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
         {activeTab === 'how-to-measure' && (
           <div className="size-guide-tab-content how-to-measure-content">
             <div className="measure-guide-grid">
-              {[
+              {(columns.some(([k]) => k === 'head') ? [
+                ['Head', 'Round your head, just above your ears and eyebrows, where the cap sits. Keep the tape snug, not tight.'],
+                ['No tape?', 'Measure the inside band of a cap that fits you well, all the way round.'],
+              ] : [
                 ['Bust / chest', 'Around the fullest part of your chest, under the armpits, tape level across your back.'],
                 ['Underbust', 'Around your ribcage just below the bust.'],
                 ['Waist', 'Around your natural waist, the narrowest part (or where you wear your trousers).'],
                 ['Hips', 'Around the fullest part of your hips and bottom, feet together.'],
                 ['Neck', 'Around the base of your neck, with one finger under the tape.'],
                 ['Length', 'From the top of your shoulder, by the neck, straight down to where you want the hem.'],
-              ].map(([title, tip], i) => (
+              ]).map(([title, tip], i) => (
                 <div className="measure-step-card" key={title}>
                   <div className="step-num">{i + 1}</div>
                   <div>

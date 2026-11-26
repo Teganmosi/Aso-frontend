@@ -35,9 +35,11 @@ interface BespokeFitModalProps {
   onApplyMeasurements: (measurements: BespokeMeasurements) => void;
   /** Who the piece is for, from the product (null when it can't be told: then we ask). */
   wearer?: 'female' | 'male' | null;
+  /** 'headwear' for caps: measured by head only. */
+  fitKind?: 'clothing' | 'headwear' | 'one_size' | null;
 }
 
-export type GarmentType = 'full_set' | 'tops_senator' | 'trousers' | 'corset_gown' | 'boubou';
+export type GarmentType = 'full_set' | 'tops_senator' | 'trousers' | 'corset_gown' | 'boubou' | 'headwear';
 
 interface FieldConfig {
   key: string;
@@ -56,6 +58,9 @@ export interface RangeEstimate {
 }
 
 const FIELD_CONFIGS: Record<GarmentType, FieldConfig[]> = {
+  headwear: [
+    { key: 'head', label: 'Head', placeholder: 'e.g. 22.5', tip: 'Round your head, just above the ears and eyebrows, where the cap sits', minIn: 17, maxIn: 28 },
+  ],
   full_set: [
     { key: 'chest_bust', label: 'Bust / Chest', placeholder: 'e.g. 38', tip: 'Widest circumference around chest/bust', minIn: 28, maxIn: 65 },
     { key: 'shoulder', label: 'Shoulder Width', placeholder: 'e.g. 18', tip: 'Across back from shoulder bone to shoulder bone', minIn: 13, maxIn: 26 },
@@ -255,6 +260,7 @@ export const detectGarmentType = (
 
 // What the designer can't cut without, per cut. Saving is blocked until these are filled.
 const REQUIRED_FIELDS: Record<GarmentType, string[]> = {
+  headwear: ['head'],
   full_set: ['chest_bust', 'shoulder', 'waist', 'hips', 'top_length', 'sleeve_length', 'trouser_length'],
   tops_senator: ['chest_bust', 'shoulder', 'sleeve_length', 'top_length', 'neck_collar'],
   corset_gown: ['chest_bust', 'underbust', 'waist', 'hips', 'top_length'],
@@ -264,6 +270,7 @@ const REQUIRED_FIELDS: Record<GarmentType, string[]> = {
 
 // How to take each measurement from clothes that already fit well (laid flat on a table).
 const GARMENT_TIPS: Record<string, string> = {
+  head: 'Measure the inside band of a cap that fits you well, all the way round.',
   chest_bust: 'Lay the top flat, buttoned. Measure straight across from armpit to armpit, then double it.',
   underbust: 'On a fitted dress or bodice: measure across just under the bust seam, then double it.',
   waist: 'Trousers or skirt flat and closed: measure straight across the waistband, then double it.',
@@ -294,12 +301,17 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
   currentMeasurements,
   onApplyMeasurements,
   wearer = null,
+  fitKind = null,
 }) => {
   const { user } = useAuth();
   const [unit, setUnit] = useState<'IN' | 'CM'>('IN');
   const [activeTab, setActiveTab] = useState<'custom_form' | 'estimator'>('custom_form');
 
-  const initialDetection = detectGarmentType(categoryName, productTitle, garmentTypeHint, categorySlug);
+  // Caps are measured by head only; everything else from the piece's name and category.
+  const detect = (): DetectedGarmentResult => (fitKind === 'headwear'
+    ? { type: 'headwear', label: 'Cap / headwear', isAutoDetected: true }
+    : detectGarmentType(categoryName, productTitle, garmentTypeHint, categorySlug));
+  const initialDetection = detect();
   const [garmentType, setGarmentType] = useState<GarmentType>(initialDetection.type);
   const [detectedLabel, setDetectedLabel] = useState<string>(initialDetection.label);
   const [isAutoDetected, setIsAutoDetected] = useState<boolean>(initialDetection.isAutoDetected);
@@ -336,8 +348,9 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      const res = detectGarmentType(categoryName, productTitle, garmentTypeHint, categorySlug);
+      const res = detect();
       setGarmentType(res.type);
+      if (res.type === 'headwear') setActiveTab('custom_form');
       setDetectedLabel(res.label);
       setIsAutoDetected(res.isAutoDetected);
       setShowManualTypeSelector(!res.isAutoDetected);
@@ -562,12 +575,14 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
             >
               📏 Enter measurements
             </button>
-            <button
-              className={`bespoke-tab-btn ${activeTab === 'estimator' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('estimator'); setSavingFeedback(null); }}
-            >
-              No tape? Rough estimate
-            </button>
+            {garmentType !== 'headwear' && (
+              <button
+                className={`bespoke-tab-btn ${activeTab === 'estimator' ? 'active' : ''}`}
+                onClick={() => { setActiveTab('estimator'); setSavingFeedback(null); }}
+              >
+                No tape? Rough estimate
+              </button>
+            )}
           </div>
 
           <div className="bespoke-unit-toggle">
@@ -683,6 +698,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
                       </div>
                     </div>
                   </div>
+                  {garmentType !== 'headwear' && (
                   <button
                     type="button"
                     className="btn-toggle-manual-archetype"
@@ -690,6 +706,7 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
                   >
                     {showManualTypeSelector ? 'Done' : 'Not right? Change'}
                   </button>
+                  )}
                 </div>
               )}
 
@@ -793,7 +810,9 @@ export const BespokeFitModal: React.FC<BespokeFitModalProps> = ({
                   id="bespoke-notes"
                   rows={2}
                   maxLength={1000}
-                  placeholder="e.g. I like sleeves a little loose. Make the gown 2 in longer: I'll wear 4-inch heels."
+                  placeholder={garmentType === 'headwear'
+                    ? 'e.g. I like my cap slightly loose. Please make it a bit taller.'
+                    : "e.g. I like sleeves a little loose. Make the gown 2 in longer: I'll wear 4-inch heels."}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
